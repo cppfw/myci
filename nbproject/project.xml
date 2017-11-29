@@ -6,11 +6,12 @@
             <name>myci</name>
             <c-extensions/>
             <cpp-extensions/>
-            <header-extensions/>
+            <header-extensions>txt</header-extensions>
             <sourceEncoding>UTF-8</sourceEncoding>
             <make-dep-projects/>
             <sourceRootList>
                 <sourceRootElem>src</sourceRootElem>
+                <sourceRootElem>tests</sourceRootElem>
             </sourceRootList>
             <confList>
                 <confElem>

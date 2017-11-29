@@ -3,6 +3,13 @@
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="src" name="0">
     </df>
+    <df root="tests" name="1">
+      <df name="deb-prepare">
+        <df name="src">
+          <in>soname.txt</in>
+        </df>
+      </df>
+    </df>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
                    projectFiles="false"
@@ -18,6 +25,7 @@
   <sourceFolderFilter>^(nbproject)$</sourceFolderFilter>
   <sourceRootList>
     <Elem>src</Elem>
+    <Elem>tests</Elem>
   </sourceRootList>
   <projectmakefile></projectmakefile>
   <confs>
@@ -41,6 +49,8 @@
           <preBuildCommand></preBuildCommand>
         </preBuild>
       </makefileType>
+      <item path="tests/deb-prepare/src/soname.txt" ex="false" tool="3" flavor2="0">
+      </item>
     </conf>
   </confs>
 </configurationDescriptor>
