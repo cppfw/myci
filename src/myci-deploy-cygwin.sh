@@ -104,7 +104,7 @@ done
 cd $repodir
 
 	#run mksetupini
-	mksetupini --arch $architecture --inifile=$architecture/setup.ini --releasearea=. --okmissing=required-package --okmissing=curr
+	mksetupini --arch $architecture --inifile=$architecture/setup.ini --releasearea=. --okmissing=required-package
 	[ $? -ne 0 ] && source myci-error.sh "'mksetupini' failed";
 
 	bzip2 <$architecture/setup.ini >$architecture/setup.bz2

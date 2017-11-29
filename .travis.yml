@@ -95,7 +95,8 @@ script:
   fi
 #NOTE: tests on mac os do not pass curretnly, probably libcairo is build with some different optimizations and produce slightly different result.
 - if [ "$BUILD_NAME" == "macosx" ]; then
-    make test;
+    make test &&
+    make install;
   fi
 - if [ "$BUILD_NAME" == "raspberry_pi" ]; then
     sudo chroot /srv/chroot/rasp-armhf bash -c "cd /build && src/myci-deb-prepare.sh" &&
