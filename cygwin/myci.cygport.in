@@ -1,0 +1,23 @@
+NAME="myci"
+VERSION=$(version)
+RELEASE=1
+
+CATEGORY="Devel"
+SUMMARY="Helper CI scripts"
+DESCRIPTION="Helper CI scripts.
+some helper CI scripts, mainly for deployment to various repositories."
+
+SRC_URI="https://github.com/igagis/myci/archive/${VERSION}.tar.gz"
+
+src_compile() {
+  cd ${B}
+  lndirs
+  cygmake
+}
+
+src_install() {
+  cd ${B}
+  cyginstall PREFIX=/usr
+}
+
+# use the standard src_test
