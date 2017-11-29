@@ -73,7 +73,7 @@ before_install:
     sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 379CE192D401AB61 &&
     sudo apt-get update -qq &&
     sudo apt-get install -qq sbuild;
-    sudo src/prorab-make-raspberry-chroot.sh /srv/chroot/rasp-armhf &&
+    sudo src/myci-make-raspberry-chroot.sh /srv/chroot/rasp-armhf &&
     echo "deb http://dl.bintray.com/igagis/rasp unstable main" | sudo tee /srv/chroot/rasp-armhf/etc/apt/sources.list.d/igagis.list > /dev/null &&
     sudo chroot /srv/chroot/rasp-armhf apt-get update &&
     sudo chroot /srv/chroot/rasp-armhf apt-get install --allow-unauthenticated -qq -y $linuxDependencies g++ &&
