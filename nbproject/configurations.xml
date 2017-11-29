@@ -4,6 +4,9 @@
     <df root="src" name="0">
     </df>
     <df root="tests" name="1">
+      <df name="apply-version">
+        <in>test-1.2.3.txt</in>
+      </df>
       <df name="deb-prepare">
         <df name="src">
           <in>soname.txt</in>
@@ -16,6 +19,7 @@
                    kind="IMPORTANT_FILES_FOLDER">
       <itemPath>.travis.yml</itemPath>
       <itemPath>appveyor.yml</itemPath>
+      <itemPath>debian/control.in</itemPath>
       <itemPath>nbproject/private/launcher.properties</itemPath>
       <itemPath>travis_bintray_deb.json.in</itemPath>
       <itemPath>travis_bintray_rasp.json.in</itemPath>
@@ -49,6 +53,8 @@
           <preBuildCommand></preBuildCommand>
         </preBuild>
       </makefileType>
+      <item path="tests/apply-version/test-1.2.3.txt" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="tests/deb-prepare/src/soname.txt" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
