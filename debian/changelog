@@ -1,3 +1,9 @@
+myci (0.1.8) unstable; urgency=medium
+
+  * test release
+
+ -- Ivan Gagis <igagis@gmail.com>  Wed, 29 Nov 2017 16:13:10 +0200
+
 myci (0.1.7) unstable; urgency=medium
 
   * test release
