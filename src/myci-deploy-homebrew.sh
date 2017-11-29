@@ -51,9 +51,9 @@ echo "username: ${username}, tapname: ${tapname}"
 
 #update version numbers
 echo "getting version from Debian changelog"
-version=$(prorab-deb-version.sh debian/changelog)
+version=$(myci-deb-version.sh debian/changelog)
 #echo $version
-prorab-apply-version.sh -v $version $infiles
+myci-apply-version.sh -v $version $infiles
 
 #clean if needed
 rm -rf $tapname

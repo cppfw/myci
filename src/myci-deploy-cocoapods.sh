@@ -38,11 +38,11 @@ fi
 echo "Deploying to cocoapods..."
 
 #update version numbers
-version=$(prorab-deb-version.sh debian/changelog)
+version=$(myci-deb-version.sh debian/changelog)
 
 echo "current package version is $version, applying it to podspecs..."
 
-prorab-apply-version.sh -v $version $infiles
+myci-apply-version.sh -v $version $infiles
 
 echo "version $version applied to podspec"
 

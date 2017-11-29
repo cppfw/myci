@@ -30,22 +30,22 @@ while [[ $# > 0 ]] ; do
     esac
 done
 
-[ -z "$reponame" ] && source prorab-error.sh "repo name is not given";
+[ -z "$reponame" ] && source myci-error.sh "repo name is not given";
 
 if [ -z "$infiles" ]; then
 	infiles=$(ls cygwin/*.cygport.in)
 fi
 
-[ -z "$infiles" ] && source prorab-error.sh "no input files found";
+[ -z "$infiles" ] && source myci-error.sh "no input files found";
 
 echo "Deploying to cygwin..."
 
 #update version numbers
-version=$(prorab-deb-version.sh debian/changelog)
+version=$(myci-deb-version.sh debian/changelog)
 
 #echo "current package version is $version, applying it to cygport files..."
 #
-#prorab-apply-version.sh -v $version $infiles
+#myci-apply-version.sh -v $version $infiles
 #
 #echo "version $version applied to cygport files"
 
@@ -57,7 +57,7 @@ version=$(prorab-deb-version.sh debian/changelog)
 [ -z "$PRORAB_GIT_USERNAME" ] && echo "Error: PRORAB_GIT_USERNAME is not set" && exit 1;
 
 #Make sure PRORAB_GIT_ACCESS_TOKEN is set
-[ -z "$PRORAB_GIT_ACCESS_TOKEN" ] && source prorab-error.sh "Error: PRORAB_GIT_ACCESS_TOKEN is not set";
+[ -z "$PRORAB_GIT_ACCESS_TOKEN" ] && source myci-error.sh "Error: PRORAB_GIT_ACCESS_TOKEN is not set";
 
 cutSecret="sed -e s/$PRORAB_GIT_ACCESS_TOKEN/<secret>/"
 
@@ -70,7 +70,7 @@ repo=https://$PRORAB_GIT_USERNAME:$PRORAB_GIT_ACCESS_TOKEN@github.com/$reponame.
 
 git clone $repo $repodir 2>&1 | $cutSecret
 
-[ $? -ne 0 ] && source prorab-error.sh "'git clone' failed";
+[ $? -ne 0 ] && source myci-error.sh "'git clone' failed";
 
 #--- repo cloned ---
 
@@ -92,7 +92,7 @@ do
 
 #	echo $dist
 	cp -r $dist/* $repodir/$architecture/release
-	[ $? -ne 0 ] && source prorab-error.sh "could not copy packages to cygwin repo directory tree";
+	[ $? -ne 0 ] && source myci-error.sh "could not copy packages to cygwin repo directory tree";
 
 	f=$(echo $fin | sed -n -e 's/\(.*\)\.cygport\.in$/\1/p' | sed -n -e 's/.*\///p')
 
@@ -105,12 +105,12 @@ cd $repodir
 
 	#run mksetupini
 	mksetupini --arch $architecture --inifile=$architecture/setup.ini --releasearea=. --okmissing=required-package
-	[ $? -ne 0 ] && source prorab-error.sh "'mksetupini' failed";
+	[ $? -ne 0 ] && source myci-error.sh "'mksetupini' failed";
 
 	bzip2 <$architecture/setup.ini >$architecture/setup.bz2
 	xz -6e <$architecture/setup.ini >$architecture/setup.xz
 
-	git config user.email "prorab@prorab.org"
+	git config user.email "myci@myci.org"
 	git config user.name "Prorab Prorabov"
 
 	git add .
