@@ -54,7 +54,7 @@ version=$(myci-deb-version.sh debian/changelog)
 #=== clone repo ===
 
 #Make sure MYCI_GIT_USERNAME is set
-[ -z "$MYCI_GIT_USERNAME" ] && echo "Error: MYCI_GIT_USERNAME is not set" && exit 1;
+[ -z "$MYCI_GIT_USERNAME" ] && source myci-error.sh "Error: MYCI_GIT_USERNAME is not set";
 
 #Make sure MYCI_GIT_ACCESS_TOKEN is set
 [ -z "$MYCI_GIT_ACCESS_TOKEN" ] && source myci-error.sh "Error: MYCI_GIT_ACCESS_TOKEN is not set";
