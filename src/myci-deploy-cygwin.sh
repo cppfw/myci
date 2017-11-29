@@ -12,7 +12,7 @@ while [[ $# > 0 ]] ; do
             echo "Usage:"
             echo "	$(basename $0) -r <repo-name> [<spec1.cygport.in> <spec2.cygport.in>...]"
             echo " "
-            echo "Environment variable PRORAB_GIT_ACCESS_TOKEN should be set to git access token, it will be stripped out from the script output."
+            echo "Environment variable MYCI_GIT_ACCESS_TOKEN should be set to git access token, it will be stripped out from the script output."
             echo " "
             echo "Example:"
             echo "	$(basename $0) -r igagis/cygwin-repo cygwin/*.cygport.in"
@@ -53,20 +53,20 @@ version=$(myci-deb-version.sh debian/changelog)
 
 #=== clone repo ===
 
-#Make sure PRORAB_GIT_USERNAME is set
-[ -z "$PRORAB_GIT_USERNAME" ] && echo "Error: PRORAB_GIT_USERNAME is not set" && exit 1;
+#Make sure MYCI_GIT_USERNAME is set
+[ -z "$MYCI_GIT_USERNAME" ] && echo "Error: MYCI_GIT_USERNAME is not set" && exit 1;
 
-#Make sure PRORAB_GIT_ACCESS_TOKEN is set
-[ -z "$PRORAB_GIT_ACCESS_TOKEN" ] && source myci-error.sh "Error: PRORAB_GIT_ACCESS_TOKEN is not set";
+#Make sure MYCI_GIT_ACCESS_TOKEN is set
+[ -z "$MYCI_GIT_ACCESS_TOKEN" ] && source myci-error.sh "Error: MYCI_GIT_ACCESS_TOKEN is not set";
 
-cutSecret="sed -e s/$PRORAB_GIT_ACCESS_TOKEN/<secret>/"
+cutSecret="sed -e s/$MYCI_GIT_ACCESS_TOKEN/<secret>/"
 
 repodir=cygwin-repo
 
 #clean if needed
 rm -rf $repodir
 
-repo=https://$PRORAB_GIT_USERNAME:$PRORAB_GIT_ACCESS_TOKEN@github.com/$reponame.git
+repo=https://$MYCI_GIT_USERNAME:$MYCI_GIT_ACCESS_TOKEN@github.com/$reponame.git
 
 git clone $repo $repodir 2>&1 | $cutSecret
 

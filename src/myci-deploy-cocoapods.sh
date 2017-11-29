@@ -13,7 +13,7 @@ while [[ $# > 0 ]] ; do
             echo "Usage:"
             echo "	$(basename $0) -r <repo-name> [<spec1.podspec.in> <spec2.podspec.in>...]"
             echo " "
-            echo "Environment variable PRORAB_GIT_ACCESS_TOKEN can be set to git access token, so that it will be stripped out from the script output."
+            echo "Environment variable MYCI_GIT_ACCESS_TOKEN can be set to git access token, so that it will be stripped out from the script output."
             echo " "
             echo "Example:"
             echo "	$(basename $0) -r igagis cocoapods/*.podspec.in"
@@ -46,10 +46,10 @@ myci-apply-version.sh -v $version $infiles
 
 echo "version $version applied to podspec"
 
-#Make sure PRORAB_GIT_ACCESS_TOKEN is set
-[ -z "$PRORAB_GIT_ACCESS_TOKEN" ] && echo "Error: PRORAB_GIT_ACCESS_TOKEN is not set" && exit 1;
+#Make sure MYCI_GIT_ACCESS_TOKEN is set
+[ -z "$MYCI_GIT_ACCESS_TOKEN" ] && echo "Error: MYCI_GIT_ACCESS_TOKEN is not set" && exit 1;
 
-cutSecret="sed -e s/$PRORAB_GIT_ACCESS_TOKEN/<secret>/"
+cutSecret="sed -e s/$MYCI_GIT_ACCESS_TOKEN/<secret>/"
 
 for fin in $infiles
 do

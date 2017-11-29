@@ -13,7 +13,7 @@ while [[ $# > 0 ]] ; do
 			echo "Usage:"
 			echo "\t$(basename $0) -t <tap-name> <recipe-file-name.rb.in> ..."
 			echo " "
-			echo "GitHub username and access token should be in PRORAB_GIT_USERNAME and PRORAB_GIT_ACCESS_TOKEN environment variables."
+			echo "GitHub username and access token should be in MYCI_GIT_USERNAME and MYCI_GIT_ACCESS_TOKEN environment variables."
 			echo " "
 			echo "Example:"
 			echo "\t$(basename $0) -t igagis/tap homebrew/*.rb.in"
@@ -65,15 +65,15 @@ git config --global credential.helper store
 
 echo "Cloning tap repo from github..."
 #clone tap repo
-repo=https://$PRORAB_GIT_USERNAME:$PRORAB_GIT_ACCESS_TOKEN@github.com/$username/$tapname.git
+repo=https://$MYCI_GIT_USERNAME:$MYCI_GIT_ACCESS_TOKEN@github.com/$username/$tapname.git
 
-#Make sure PRORAB_GIT_ACCESS_TOKEN is set
-[ -z "$PRORAB_GIT_ACCESS_TOKEN" ] && echo "Error: PRORAB_GIT_ACCESS_TOKEN is not set" && exit 1;
+#Make sure MYCI_GIT_ACCESS_TOKEN is set
+[ -z "$MYCI_GIT_ACCESS_TOKEN" ] && echo "Error: MYCI_GIT_ACCESS_TOKEN is not set" && exit 1;
 
-#Make sure PRORAB_GIT_USERNAME is set
-[ -z "$PRORAB_GIT_USERNAME" ] && echo "Error: PRORAB_GIT_USERNAME is not set" && exit 1;
+#Make sure MYCI_GIT_USERNAME is set
+[ -z "$MYCI_GIT_USERNAME" ] && echo "Error: MYCI_GIT_USERNAME is not set" && exit 1;
 
-cutSecret="sed -e s/$PRORAB_GIT_ACCESS_TOKEN/<secret>/"
+cutSecret="sed -e s/$MYCI_GIT_ACCESS_TOKEN/<secret>/"
 
 
 #echo "git clone $repo | $cutSecret"
