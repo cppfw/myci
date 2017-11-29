@@ -1,3 +1,9 @@
+myci (0.1.3) unstable; urgency=medium
+
+  * allow missing curr in cygwin deploy
+
+ -- Ivan Gagis <igagis@gmail.com>  Wed, 29 Nov 2017 14:32:30 +0200
+
 myci (0.1.2) unstable; urgency=medium
 
   * removed all prorab references
