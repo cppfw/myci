@@ -1,3 +1,9 @@
+myci (0.1.11) unstable; urgency=medium
+
+  * updated cygwin deploy to latest changes in mksetupini
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 01 Feb 2018 20:53:30 +0200
+
 myci (0.1.10) unstable; urgency=medium
 
   * rasp deploy fix
