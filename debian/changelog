@@ -1,3 +1,9 @@
+myci (0.1.14) unstable; urgency=medium
+
+  * print cocoapods version
+
+ -- Ivan Gagis <igagis@gmail.com>  Tue, 13 Feb 2018 22:34:20 +0200
+
 myci (0.1.13) unstable; urgency=medium
 
   * cocoapods deployment script, quick validation

@@ -51,6 +51,8 @@ echo "version $version applied to podspec"
 
 cutSecret="sed -e s/$MYCI_GIT_ACCESS_TOKEN/<secret>/"
 
+echo "Cocoapods version = $(pod --version)"
+
 for fin in $infiles
 do
     f=$(echo $fin | sed -n -e 's/\(.*\)\.in$/\1/p')
@@ -58,7 +60,7 @@ do
 	#Need to pass --use-libraries because before pushing the spec it will run 'pod lint'
 	#on it. And 'pod lint' uses framework integration by default which will fail to copy
 	#some header files to the right places.
-	pod repo push $reponame $f --use-libraries --skip-import-validation --quick --allow-warnings 2>&1 | $cutSecret
+	pod repo push $reponame $f --use-libraries --skip-import-validation --allow-warnings 2>&1 | $cutSecret
 done
 
 echo "Deploying to cocoapods done!"
