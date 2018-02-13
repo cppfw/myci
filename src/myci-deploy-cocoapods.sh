@@ -58,7 +58,7 @@ do
 	#Need to pass --use-libraries because before pushing the spec it will run 'pod lint'
 	#on it. And 'pod lint' uses framework integration by default which will fail to copy
 	#some header files to the right places.
-	pod repo push $reponame $f --use-libraries --skip-import-validation --allow-warnings 2>&1 | $cutSecret
+	pod repo push $reponame $f --use-libraries --skip-import-validation --quick --allow-warnings 2>&1 | $cutSecret
 done
 
 echo "Deploying to cocoapods done!"
