@@ -1,0 +1,46 @@
+# Maintainer: Ivan Gagis <igagis@gmail.com>
+pkgname=myci
+pkgver=$(version)
+pkgrel=1
+epoch=
+pkgdesc="Ivan Gagis's CI scripts"
+arch=('any')
+url="http://github.com/igagis/myci"
+license=('MIT')
+groups=()
+depends=()
+makedepends=()
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=("https://github.com/igagis/$pkgname/archive/$pkgver.tar.gz")
+noextract=()
+md5sums=()
+validpgpkeys=()
+
+prepare() {
+	cd "$pkgname-$pkgver"
+#	patch -p1 -i "$srcdir/$pkgname-$pkgver.patch"
+}
+
+build() {
+#	cd "$pkgname-$pkgver"
+#	./configure --prefix=/usr
+	make autojobs=true
+}
+
+check() {
+#	cd "$pkgname-$pkgver"
+#	make -k check
+}
+
+package() {
+	cd "$pkgname-$pkgver"
+	make DESTDIR="$pkgdir/" install
+}
