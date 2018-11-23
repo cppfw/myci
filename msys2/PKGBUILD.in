@@ -26,21 +26,19 @@ validpgpkeys=()
 
 prepare() {
 	cd "$pkgname-$pkgver"
-#	patch -p1 -i "$srcdir/$pkgname-$pkgver.patch"
 }
 
 build() {
-#	cd "$pkgname-$pkgver"
-#	./configure --prefix=/usr
+	cd "$pkgname-$pkgver"
 	make autojobs=true
 }
 
 check() {
-#	cd "$pkgname-$pkgver"
-#	make -k check
+	cd "$pkgname-$pkgver"
+	make test
 }
 
 package() {
 	cd "$pkgname-$pkgver"
-	make DESTDIR="$pkgdir/" install
+	make DESTDIR="$pkgdir" install
 }
