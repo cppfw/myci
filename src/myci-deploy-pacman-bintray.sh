@@ -70,6 +70,7 @@ echo "New pacman DB version = $newDbVer"
 
 #Download current pacman database
 dbFilename=pacman.db.tar.gz
+versionedDbFilename=pacman-$newDbVer.db.tar.gz
 
 res=$(curl -s -L --write-out "%{http_code}" https://dl.bintray.com/content/$username/$reponame/$repoPath/$dbFilename -o $dbFilename)
 
@@ -82,12 +83,15 @@ fi
 echo "Adding package to the database..."
 repo-add $dbFilename $packageFile
 
+ln -f -s $dbFilename $versionedDbFilename
+
 
 #create new versions of packages
 
 function createPackageVersionOnBintray {
-	local res=$(curl -s --write-out "%{http_code}" -o /dev/null -u$username:$MYCI_BINTRAY_API_KEY -H"Content-Type:application/json" -X POST -d"{\"name\":\"$2\",\"desc\":\"\"}" https://api.bintray.com/packages/$username/$reponame/$1/versions)
-	[ $res -ne 201 ] && source myci-warning.sh "creating version $2 on Bintray for package '$1' failed, HTTP code = $res"
+	local res=$(curl -o /dev/null -s --write-out "%{http_code}" -u$username:$MYCI_BINTRAY_API_KEY -H"Content-Type:application/json" -X POST -d"{\"name\":\"$2\",\"desc\":\"\"}" https://api.bintray.com/packages/$username/$reponame/$1/versions);
+	[ $res -ne 201 ] && myci-warning.sh "creating version $2 on Bintray for package '$1' failed, HTTP code = $res";
+	return 0;
 }
 
 #echo "package file = $packageFile"
@@ -106,111 +110,28 @@ createPackageVersionOnBintray pacman-db $newDbVer
 #Upload packages
 
 function uploadFileToPackageVersionOnBintray {
-	local res=$(curl -s -o /dev/null --write-out "%{http_code}" -u$username:$MYCI_BINTRAY_API_KEY -T $1 -H"X-Bintray-Package:$2" -H"X-Bintray-Version:$3" -H"X-Bintray-Override:1" https://api.bintray.com/content/$username/$reponame/$repoPath/)
-	[ $res -ne 201 ] && source myci-error.sh "uploading file '$1' to Bintray package '$2' version $3 failed, HTTP code = $res"
+	local res=$(curl -o /dev/null -s --write-out "%{http_code}" -u$username:$MYCI_BINTRAY_API_KEY -T $1 -H"X-Bintray-Package:$2" -H"X-Bintray-Version:$3" -H"X-Bintray-Override:1" -H"X-Bintray-Publish:1" https://api.bintray.com/content/$username/$reponame/$repoPath/);
+	[ $res -ne 201 ] && myci-error.sh "uploading file '$1' to Bintray package '$2' version $3 failed, HTTP code = $res";
+	return 0;
+}
+
+function deleteFileFromBintray {
+	local res=$(curl -o /dev/null -s --write-out "%{http_code}" -u$username:$MYCI_BINTRAY_API_KEY -X DELETE https://api.bintray.com/content/$username/$reponame/$repoPath/$1);
+	[ $res -ne 200 ] && myci-warning.sh "deleting file '$1' from Bintray failed, HTTP code = $res";
+	return 0;
 }
 
 echo "Uploading package file '$packageFilename' to Bintray..."
 uploadFileToPackageVersionOnBintray $packageFile $package $version
 
+echo "Uploading versioned pacman database to Bintray..."
+uploadFileToPackageVersionOnBintray $versionedDbFilename pacman-db $newDbVer
 
+echo "Deleting old pacman database..."
+deleteFileFromBintray $dbFilename
 
-exit 0
+echo "Uploading actual pacman database to Bintray..."
+uploadFileToPackageVersionOnBintray $dbFilename pacman-db $newDbVer
 
+echo "Done deploying '$package' version $version to Bintray."
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-#update version numbers
-version=$(myci-deb-version.sh debian/changelog)
-
-#echo "current package version is $version, applying it to cygport files..."
-#
-#myci-apply-version.sh -v $version $infiles
-#
-#echo "version $version applied to cygport files"
-
-
-
-#=== clone repo ===
-
-#Make sure MYCI_GIT_USERNAME is set
-[ -z "$MYCI_GIT_USERNAME" ] && source myci-error.sh "Error: MYCI_GIT_USERNAME is not set";
-
-#Make sure MYCI_GIT_ACCESS_TOKEN is set
-[ -z "$MYCI_GIT_ACCESS_TOKEN" ] && source myci-error.sh "Error: MYCI_GIT_ACCESS_TOKEN is not set";
-
-cutSecret="sed -e s/$MYCI_GIT_ACCESS_TOKEN/<secret>/"
-
-repodir=cygwin-repo
-
-#clean if needed
-rm -rf $repodir
-
-repo=https://$MYCI_GIT_USERNAME:$MYCI_GIT_ACCESS_TOKEN@github.com/$reponame.git
-
-git clone $repo $repodir 2>&1 | $cutSecret
-
-[ $? -ne 0 ] && source myci-error.sh "'git clone' failed";
-
-#--- repo cloned ---
-
-
-architecture=$(uname -m)
-if [[ "$architecture" == "i686" || "$architecture" == "i386" ]]; then architecture="x86"; fi
-
-
-#=== create directory tree if needed ===
-mkdir -p $repodir/$architecture/release
-#---
-
-#=== copy packages to repo and add them to git commit ===
-for fin in $infiles
-do
-	#note that sometimes arch is i686 instead of x86, but mksetupini script only accepts x86,
-	#so invoke $(uname -m) again here instead of using $architecture variable
-	dist=$(echo $fin | sed -n -e 's/\(.*\)\.cygport\.in$/\1/p')-$version-1.$(uname -m)/dist
-
-#	echo $dist
-	cp -r $dist/* $repodir/$architecture/release
-	[ $? -ne 0 ] && source myci-error.sh "could not copy packages to cygwin repo directory tree";
-
-	f=$(echo $fin | sed -n -e 's/\(.*\)\.cygport\.in$/\1/p' | sed -n -e 's/.*\///p')
-
-	if [ -z "$packages" ]; then packages="$f"; else packages="$packages, $f"; fi
-done 
-#---
-
-(
-cd $repodir
-
-	#run mksetupini
-	mksetupini --arch $architecture --inifile=$architecture/setup.ini --releasearea=. --disable-check=missing-depended-package,missing-required-package,curr-most-recent
-	[ $? -ne 0 ] && source myci-error.sh "'mksetupini' failed";
-
-	bzip2 <$architecture/setup.ini >$architecture/setup.bz2
-	xz -6e <$architecture/setup.ini >$architecture/setup.xz
-
-	git config user.email "myci@myci.org"
-	git config user.name "Prorab Prorabov"
-
-	git add .
-	git commit -a -m"version $version of $packages"
-	git push 2>&1 | $cutSecret
-
-cd ..
-)
-
-#clean
-echo "Removing cloned repo..."
-rm -rf $repodir

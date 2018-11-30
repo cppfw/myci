@@ -24,4 +24,3 @@ while [[ $# > 0 ]] ; do
 done
 
 echo -e "\t\\033[1;95mWARNING\\033[0m: $message"
-exit 1
