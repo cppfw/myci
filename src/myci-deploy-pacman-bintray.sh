@@ -79,26 +79,39 @@ if [ $res -ne 200 ]; then
 	rm $dbFilename
 fi
 
+echo "Adding package to the database..."
+repo-add $dbFilename $packageFile
 
-#create new version for package
 
-echo "package file = $packageFile"
+#create new versions of packages
+
+function createPackageVersionOnBintray {
+	local res=$(curl -s --write-out "%{http_code}" -o /dev/null -u$username:$MYCI_BINTRAY_API_KEY -H"Content-Type:application/json" -X POST -d"{\"name\":\"$2\",\"desc\":\"\"}" https://api.bintray.com/packages/$username/$reponame/$1/versions)
+	[ $res -ne 201 ] && source myci-warning.sh "creating version $2 on Bintray for package '$1' failed, HTTP code = $res"
+}
+
+#echo "package file = $packageFile"
 packageFilename=$(basename $packageFile)
-echo "package filename = $packageFilename"
+#echo "package filename = $packageFilename"
 package=$(echo "$packageFilename" | sed -n -e's/^\(.*\)-[0-9]\+\.[0-9]\+\.[0-9]\+-[0-9]\+-[^-]*\.pkg\.tar\.xz$/\1/p')
 version=$(echo "$packageFilename" | sed -n -e"s/^$package-\([0-9]\+\.[0-9]\+\.[0-9]\+\)-[0-9]\+-[^-]*\.pkg\.tar\.xz$/\1/p")
 
 echo "creating version $version for package '$package' on Bintray..."
-curl -f -u$username:$MYCI_BINTRAY_API_KEY -H"Content-Type:application/json" -X POST -d'{"name":"$version","desc":""}' https://api.bintray.com/packages/$username/$repo/$package/versions
+createPackageVersionOnBintray $package $version
+
+echo "creating version $newDbVer for pacman database on Bintray..."
+createPackageVersionOnBintray pacman-db $newDbVer
 
 
+#Upload packages
 
+function uploadFileToPackageVersionOnBintray {
+	local res=$(curl -s -o /dev/null --write-out "%{http_code}" -u$username:$MYCI_BINTRAY_API_KEY -T $1 -H"X-Bintray-Package:$2" -H"X-Bintray-Version:$3" -H"X-Bintray-Override:1" https://api.bintray.com/content/$username/$reponame/$repoPath/)
+	[ $res -ne 201 ] && source myci-error.sh "uploading file '$1' to Bintray package '$2' version $3 failed, HTTP code = $res"
+}
 
-repo-add $dbFilename $packageFile
-
-
-
-
+echo "Uploading package file '$packageFilename' to Bintray..."
+uploadFileToPackageVersionOnBintray $packageFile $package $version
 
 
 
