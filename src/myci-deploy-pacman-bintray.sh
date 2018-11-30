@@ -10,12 +10,12 @@ while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
 			echo "Usage:"
-			echo "	$(basename $0) -u <bintray-user-name> -r <bintray-repo-name> <package-filename>"
+			echo "	$(basename $0) -u <bintray-user-name> -r <bintray-repo-name> -p <repo-path> <package-filename>"
 			echo " "
 			echo "Environment variable MYCI_BINTRAY_API_KEY must be set to Bintray API key token, it will be stripped out from the script output."
 			echo " "
 			echo "Example:"
-			echo "	$(basename $0) -u igagis -r msys2 *.xz"
+			echo "	$(basename $0) -u igagis -r msys2 -p mingw/x86_64 *.xz"
 			exit 0
 			;;
 		-r)
@@ -28,8 +28,13 @@ while [[ $# > 0 ]] ; do
 			username=$1
 			shift
 			;;
+		-p)
+			shift
+			repoPath=$1
+			shift
+			;;
 		*)
-			infile="$1"
+			packageFile="$1"
 			shift
 			;;
 	esac
@@ -39,7 +44,9 @@ done
 
 [ -z "$reponame" ] && source myci-error.sh "repo name is not given";
 
-[ -z "$infile" ] && source myci-error.sh "package file is not given";
+[ -z "$repoPath" ] && source myci-error.sh "repo path is not given";
+
+[ -z "$packageFile" ] && source myci-error.sh "package file is not given";
 
 echo "Deploying pacman package to Bintray..."
 
@@ -52,10 +59,28 @@ echo "Latest pacman DB version = $latestDbVer"
 if [ -z "$latestDbVer" ]; then
         newDbVer=0;
 else
-	newDbVer=$((latestDbVer));
+	echo "bumping db version..."
+	newDbVer=$((latestDbVer+1));
 fi
 
 echo "New pacman DB version = $newDbVer"
+
+
+#Download current pacman database
+dbFilename=pacman.db.tar.gz
+
+res=$(curl -s -L --write-out "%{http_code}" https://dl.bintray.com/content/$username/$reponame/$repoPath/$dbFilename -o $dbFilename)
+
+#echo "http code = $res"
+
+if [ $res -ne 200 ]; then
+	rm $dbFilename
+fi
+
+
+
+
+
 
 exit 0
 
