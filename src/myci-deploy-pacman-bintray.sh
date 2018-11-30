@@ -40,6 +40,8 @@ while [[ $# > 0 ]] ; do
 	esac
 done
 
+[ -z "$MYCI_BINTRAY_API_KEY" ] && source myci-error.sh "MYCI_BINTRAY_API_KEY is not set";
+
 [ -z "$username" ] && source myci-error.sh "Bintray user name is not given";
 
 [ -z "$reponame" ] && source myci-error.sh "repo name is not given";
@@ -76,6 +78,24 @@ res=$(curl -s -L --write-out "%{http_code}" https://dl.bintray.com/content/$user
 if [ $res -ne 200 ]; then
 	rm $dbFilename
 fi
+
+
+#create new version for package
+
+echo "package file = $packageFile"
+packageFilename=$(basename $packageFile)
+echo "package filename = $packageFilename"
+package=$(echo "$packageFilename" | sed -n -e's/^\(.*\)-[0-9]\+\.[0-9]\+\.[0-9]\+-[0-9]\+-[^-]*\.pkg\.tar\.xz$/\1/p')
+version=$(echo "$packageFilename" | sed -n -e"s/^$package-\([0-9]\+\.[0-9]\+\.[0-9]\+\)-[0-9]\+-[^-]*\.pkg\.tar\.xz$/\1/p")
+
+echo "creating version $version for package '$package' on Bintray..."
+curl -f -u$username:$MYCI_BINTRAY_API_KEY -H"Content-Type:application/json" -X POST -d'{"name":"$version","desc":""}' https://api.bintray.com/packages/$username/$repo/$package/versions
+
+
+
+
+repo-add $dbFilename $packageFile
+
 
 
 
