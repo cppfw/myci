@@ -3,42 +3,75 @@
 #we want exit immediately if any command fails and we want error in piped commands to be preserved
 set -eo pipefail
 
-#Script for quick deployment to custom github-based cygwin repository.
+#Script for quick deployment of pacman package (Arch linux package manager system) to bintray repo
 
 
 while [[ $# > 0 ]] ; do
-    case $1 in
-        --help)
-            echo "Usage:"
-            echo "	$(basename $0) -r <repo-name> [<spec1.cygport.in> <spec2.cygport.in>...]"
-            echo " "
-            echo "Environment variable MYCI_GIT_ACCESS_TOKEN should be set to git access token, it will be stripped out from the script output."
-            echo " "
-            echo "Example:"
-            echo "	$(basename $0) -r igagis/cygwin-repo cygwin/*.cygport.in"
-            exit 0
-        ;;
-        -r)
+	case $1 in
+		--help)
+			echo "Usage:"
+			echo "	$(basename $0) -u <bintray-user-name> -r <bintray-repo-name> <package-filename>"
+			echo " "
+			echo "Environment variable MYCI_BINTRAY_API_KEY must be set to Bintray API key token, it will be stripped out from the script output."
+			echo " "
+			echo "Example:"
+			echo "	$(basename $0) -u igagis -r msys2 *.xz"
+			exit 0
+			;;
+		-r)
 			shift
 			reponame=$1
 			shift
 			;;
-		*)
-			infiles="$infiles $1"
+		-u)
+			shift
+			username=$1
 			shift
 			;;
-    esac
+		*)
+			infile="$1"
+			shift
+			;;
+	esac
 done
+
+[ -z "$username" ] && source myci-error.sh "Bintray user name is not given";
 
 [ -z "$reponame" ] && source myci-error.sh "repo name is not given";
 
-if [ -z "$infiles" ]; then
-	infiles=$(ls cygwin/*.cygport.in)
+[ -z "$infile" ] && source myci-error.sh "package file is not given";
+
+echo "Deploying pacman package to Bintray..."
+
+#Get latest version of pacman database package
+
+latestDbVer=$(curl -s https://api.bintray.com/packages/$username/$reponame/pacman-db/versions/_latest | sed -n -e 's/.*"name":"\([^"]*\)".*/\1/p')
+
+echo "Latest pacman DB version = $latestDbVer"
+
+if [ -z "$latestDbVer" ]; then
+        newDbVer=0;
+else
+	newDbVer=$((latestDbVer));
 fi
 
-[ -z "$infiles" ] && source myci-error.sh "no input files found";
+echo "New pacman DB version = $newDbVer"
 
-echo "Deploying to cygwin..."
+exit 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #update version numbers
 version=$(myci-deb-version.sh debian/changelog)
