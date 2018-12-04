@@ -69,7 +69,8 @@ echo "New pacman DB version = $newDbVer"
 
 
 #Download current pacman database
-dbFilename=pacman.db.tar.gz
+uncompressedDbFilename=pacman.db
+dbFilename=$uncompressedDbFilename.tar.gz
 versionedDbFilename=pacman-$newDbVer.db.tar.gz
 
 res=$(curl -s -L --write-out "%{http_code}" https://dl.bintray.com/content/$username/$reponame/$repoPath/$dbFilename -o $dbFilename)
@@ -129,9 +130,11 @@ uploadFileToPackageVersionOnBintray $versionedDbFilename pacman-db $newDbVer
 
 echo "Deleting old pacman database..."
 deleteFileFromBintray $dbFilename
+deleteFileFromBintray $uncompressedDbFilename
 
 echo "Uploading actual pacman database to Bintray..."
 uploadFileToPackageVersionOnBintray $dbFilename pacman-db $newDbVer
+uploadFileToPackageVersionOnBintray $uncompressedDbFilename pacman-db $newDbVer
 
 echo "Done deploying '$package' version $version to Bintray."
 
