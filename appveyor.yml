@@ -20,7 +20,7 @@ install:
 before_build:
 #  - cmd: xcopy /S C:\projects\build C:\cygwin64\home\appveyor\
 #  - cmd: xcopy /S C:\projects\build C:\cygwin\home\appveyor\
-$  - cmd: xcopy /S C:\projects\build C:\msys64\home\appveyor\
+#  - cmd: xcopy /S C:\projects\build C:\msys64\home\appveyor\
 
 build_script:
   - cmd: C:\msys64\msys2_shell.cmd -ming64 -c "(cd /c/projects/build && makepkg-mingw --skipinteg && ls)"
