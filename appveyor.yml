@@ -9,10 +9,8 @@ clone_folder: c:\projects\build
 
 environment:
   BASH: C:\msys64\usr\bin\env MSYSTEM=MINGW64 C:\msys64\usr\bin\bash
-#  MYCI_GIT_USERNAME: igagis
-#  MYCI_GIT_ACCESS_TOKEN:
-#    secure: mpW6B2ols1a2FkshjKjryBuvBt8A1TpU9WGn+/d6PIQiZlzA0Rpo1ETKpmy0bnvX
-#  DEPS: make,gcc-g++
+  MYCI_BINTRAY_API_KEY:
+    secure: t04W/09OyK0B8CxJHydCkay+Fm3i6KkBciVXjzk0u09v6F9wtDn/dsuqd5eMIj8s
 
 install:
 
@@ -20,7 +18,7 @@ before_build:
 
 build_script:
   - cmd: "%BASH% -lc \"cd /c/projects/build/ && src/myci-apply-version.sh -v `src/myci-deb-version.sh debian/changelog` msys2/PKGBUILD.in\""
-  - cmd: "%BASH% -lc \"cd /c/projects/build/msys2 && makepkg --skipinteg && ls\""
+  - cmd: "%BASH% -lc \"cd /c/projects/build/msys2 && makepkg --skipinteg\""
 
 test_script:
 
