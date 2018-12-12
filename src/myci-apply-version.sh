@@ -33,10 +33,10 @@ echo "Applying version $version to files..."
 for i in $infiles; do
 	echo "	$i"
 
-	outfile=$(echo $i | sed -b -e "s/\(.*\)\.in$/\1/" | sed -b -e "s/\$(version)/$version/g")
+	outfile=$(echo $i | sed -e "s/\(.*\)\.in$/\1/" | sed -e "s/\$(version)/$version/g")
 
 	if [ -z "$filenameonly" ]; then
-		sed -b -e "s/\$(version)/$version/g" $i > $outfile
+		sed -e "s/\$(version)/$version/g" $i > $outfile
 	else
 		cp $i $outfile
 	fi
