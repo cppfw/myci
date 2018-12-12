@@ -1,3 +1,9 @@
+myci (0.1.17) unstable; urgency=medium
+
+  * reverting binary flag for sed because it is not supported on macosx
+
+ -- Ivan Gagis <igagis@gmail.com>  Wed, 12 Dec 2018 18:29:54 +0200
+
 myci (0.1.16) unstable; urgency=medium
 
   * sed binary processing
