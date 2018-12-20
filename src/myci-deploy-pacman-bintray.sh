@@ -10,12 +10,12 @@ while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
 			echo "Usage:"
-			echo "	$(basename $0) -u <bintray-user-name> -r <bintray-repo-name> -p <repo-path> <package-filename>"
+			echo "	$(basename $0) -u <bintray-user-name> -r <bintray-repo-name> -p <repo-path> -d <database-name> <package-filename>"
 			echo " "
 			echo "Environment variable MYCI_BINTRAY_API_KEY must be set to Bintray API key token, it will be stripped out from the script output."
 			echo " "
 			echo "Example:"
-			echo "	$(basename $0) -u igagis -r msys2 -p mingw/x86_64 *.xz"
+			echo "	$(basename $0) -u igagis -r msys2 -p mingw/x86_64 -d igagis_mingw64 *.xz"
 			exit 0
 			;;
 		-r)
@@ -33,6 +33,11 @@ while [[ $# > 0 ]] ; do
 			repoPath=$1
 			shift
 			;;
+		-d)
+			shift
+			dbName=$1
+			shift
+			;;
 		*)
 			packageFile="$1"
 			shift
@@ -48,13 +53,15 @@ done
 
 [ -z "$repoPath" ] && source myci-error.sh "repo path is not given";
 
+[ -z "$dbName" ] && source myci-error.sh "database name is not given";
+
 [ -z "$packageFile" ] && source myci-error.sh "package file is not given";
 
 echo "Deploying pacman package to Bintray..."
 
 #Get latest version of pacman database package
 
-latestDbVer=$(curl -s https://api.bintray.com/packages/$username/$reponame/pacman-db/versions/_latest | sed -n -e 's/.*"name":"\([^"]*\)".*/\1/p')
+latestDbVer=$(curl -s https://api.bintray.com/packages/$username/$reponame/$dbName/versions/_latest | sed -n -e 's/.*"name":"\([^"]*\)".*/\1/p')
 
 echo "Latest pacman DB version = $latestDbVer"
 
@@ -69,9 +76,9 @@ echo "New pacman DB version = $newDbVer"
 
 
 #Download current pacman database
-uncompressedDbFilename=pacman.db
+uncompressedDbFilename=$dbName.db
 dbFilename=$uncompressedDbFilename.tar.gz
-versionedDbFilename=pacman-$newDbVer.db.tar.gz
+versionedDbFilename=$dbName-$newDbVer.db.tar.gz
 
 res=$(curl -s -L --write-out "%{http_code}" https://dl.bintray.com/content/$username/$reponame/$repoPath/$dbFilename -o $dbFilename)
 
@@ -105,7 +112,7 @@ echo "creating version $version for package '$package' on Bintray..."
 createPackageVersionOnBintray $package $version
 
 echo "creating version $newDbVer for pacman database on Bintray..."
-createPackageVersionOnBintray pacman-db $newDbVer
+createPackageVersionOnBintray $dbName $newDbVer
 
 
 #Upload packages
@@ -126,15 +133,15 @@ echo "Uploading package file '$packageFilename' to Bintray..."
 uploadFileToPackageVersionOnBintray $packageFile $package $version
 
 echo "Uploading versioned pacman database to Bintray..."
-uploadFileToPackageVersionOnBintray $versionedDbFilename pacman-db $newDbVer
+uploadFileToPackageVersionOnBintray $versionedDbFilename $dbName $newDbVer
 
 echo "Deleting old pacman database..."
 deleteFileFromBintray $dbFilename
 deleteFileFromBintray $uncompressedDbFilename
 
 echo "Uploading actual pacman database to Bintray..."
-uploadFileToPackageVersionOnBintray $dbFilename pacman-db $newDbVer
-uploadFileToPackageVersionOnBintray $uncompressedDbFilename pacman-db $newDbVer
+uploadFileToPackageVersionOnBintray $dbFilename $dbName $newDbVer
+uploadFileToPackageVersionOnBintray $uncompressedDbFilename $dbName $newDbVer
 
 echo "Done deploying '$package' version $version to Bintray."
 
