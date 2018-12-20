@@ -1,3 +1,9 @@
+myci (0.1.18) unstable; urgency=medium
+
+  * pacman database name setting
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 20 Dec 2018 18:42:43 +0200
+
 myci (0.1.17) unstable; urgency=medium
 
   * reverting binary flag for sed because it is not supported on macosx
