@@ -1,3 +1,9 @@
+myci (0.1.21) unstable; urgency=medium
+
+  * msys deployment path corrected
+
+ -- Ivan Gagis <igagis@gmail.com>  Fri, 21 Dec 2018 19:26:10 +0200
+
 myci (0.1.20) unstable; urgency=medium
 
   * deploying to msys repo instead of mingw
