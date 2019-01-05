@@ -138,10 +138,11 @@ uploadFileToPackageVersionOnBintray $versionedDbFilename $dbName $newDbVer
 echo "Deleting old pacman database..."
 deleteFileFromBintray $dbFilename
 deleteFileFromBintray $uncompressedDbFilename
+deleteFileFromBintray $dbName.files
 
 echo "Uploading actual pacman database to Bintray..."
 uploadFileToPackageVersionOnBintray $dbFilename $dbName $newDbVer
 uploadFileToPackageVersionOnBintray $uncompressedDbFilename $dbName $newDbVer
+uploadFileToPackageVersionOnBintray $dbName.files $dbName $newDbVer
 
 echo "Done deploying '$package' version $version to Bintray."
-

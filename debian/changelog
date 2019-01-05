@@ -1,3 +1,9 @@
+myci (0.1.22) unstable; urgency=medium
+
+  * pacman deployment: upload xxx.files file to bintray
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 06 Jan 2019 01:05:00 +0200
+
 myci (0.1.21) unstable; urgency=medium
 
   * msys deployment path corrected
