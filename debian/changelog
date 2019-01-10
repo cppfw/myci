@@ -1,3 +1,9 @@
+myci (0.1.26) unstable; urgency=medium
+
+  * colors updated
+
+ -- Ivan Gagis <igagis@gmail.com>  Fri, 11 Jan 2019 00:49:26 +0200
+
 myci (0.1.25) unstable; urgency=medium
 
   * colors updated
