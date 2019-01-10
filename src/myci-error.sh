@@ -33,5 +33,5 @@ while [[ $# > 0 ]] ; do
 	esac
 done
 
-echo -e "\t\\033[1;31mERROR\\033[0m: $message"
+echo -e "\t\\033[1;41mERROR\\033[0m: $message"
 exit 1
