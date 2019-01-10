@@ -28,4 +28,4 @@ done
 
 [ -z "$testName" ] && echo "Error: no test name supplied" && exit 1;
 
-echo -e "\\033[0;96mRunning test\\033[0m \\033[100m$testName\\033[0m"
+echo -e "\\033[1;96mRunning test\\033[0m \\033[96;100m $testName \\033[0m"
