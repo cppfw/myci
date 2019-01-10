@@ -16,7 +16,11 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
 		*)
-			testName="$testName $1"
+			if [ -z "$testName" ]; then
+				testName="$1"
+			else
+				testName="$testName $1"
+			fi
 			shift
 			;;
 	esac
@@ -24,4 +28,4 @@ done
 
 [ -z "$testName" ] && echo "Error: no test name supplied" && exit 1;
 
-echo -e "\\033[0;31mRunning test\\033[0m$testName..."
+echo -e "\\033[0;96mRunning test\\033[0m \\033[100m$testName\\033[0m"

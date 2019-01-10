@@ -35,12 +35,12 @@ if [ -z "$infiles" ]; then
 	infiles=$(ls cocoapods/*.podspec.in)
 fi
 
-echo "Deploying to cocoapods..."
+echo "Deploying to cocoapods"
 
 #update version numbers
 version=$(myci-deb-version.sh debian/changelog)
 
-echo "current package version is $version, applying it to podspecs..."
+echo "current package version is $version, applying it to podspecs"
 
 myci-apply-version.sh -v $version $infiles
 

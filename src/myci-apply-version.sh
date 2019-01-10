@@ -28,7 +28,7 @@ while [[ $# > 0 ]] ; do
 	esac
 done
 
-echo "Applying version $version to files..."
+echo "Applying version $version to files:"
 
 for i in $infiles; do
 	echo "	$i"

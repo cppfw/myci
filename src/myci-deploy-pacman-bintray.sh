@@ -57,7 +57,7 @@ done
 
 [ -z "$packageFile" ] && source myci-error.sh "package file is not given";
 
-echo "Deploying pacman package to Bintray..."
+echo "Deploying pacman package to Bintray"
 
 #Get latest version of pacman database package
 
@@ -68,7 +68,7 @@ echo "Latest pacman DB version = $latestDbVer"
 if [ -z "$latestDbVer" ]; then
         newDbVer=0;
 else
-	echo "bumping db version..."
+	echo "bumping db version"
 	newDbVer=$((latestDbVer+1));
 fi
 
@@ -88,7 +88,7 @@ if [ $res -ne 200 ]; then
 	rm $dbFilename
 fi
 
-echo "Adding package to the database..."
+echo "Adding package to the database"
 repo-add $dbFilename $packageFile
 
 ln -f -s $dbFilename $versionedDbFilename
@@ -108,10 +108,10 @@ packageFilename=$(basename $packageFile)
 package=$(echo "$packageFilename" | sed -n -e's/^\(.*\)-[0-9]\+\.[0-9]\+\.[0-9]\+-[0-9]\+-[^-]*\.pkg\.tar\.xz$/\1/p')
 version=$(echo "$packageFilename" | sed -n -e"s/^$package-\([0-9]\+\.[0-9]\+\.[0-9]\+\)-[0-9]\+-[^-]*\.pkg\.tar\.xz$/\1/p")
 
-echo "creating version $version for package '$package' on Bintray..."
+echo "creating version $version for package '$package' on Bintray"
 createPackageVersionOnBintray $package $version
 
-echo "creating version $newDbVer for pacman database on Bintray..."
+echo "creating version $newDbVer for pacman database on Bintray"
 createPackageVersionOnBintray $dbName $newDbVer
 
 
@@ -129,18 +129,18 @@ function deleteFileFromBintray {
 	return 0;
 }
 
-echo "Uploading package file '$packageFilename' to Bintray..."
+echo "Uploading package file '$packageFilename' to Bintray"
 uploadFileToPackageVersionOnBintray $packageFile $package $version
 
-echo "Uploading versioned pacman database to Bintray..."
+echo "Uploading versioned pacman database to Bintray"
 uploadFileToPackageVersionOnBintray $versionedDbFilename $dbName $newDbVer
 
-echo "Deleting old pacman database..."
+echo "Deleting old pacman database"
 deleteFileFromBintray $dbFilename
 deleteFileFromBintray $uncompressedDbFilename
 deleteFileFromBintray $dbName.files
 
-echo "Uploading actual pacman database to Bintray..."
+echo "Uploading actual pacman database to Bintray"
 uploadFileToPackageVersionOnBintray $dbFilename $dbName $newDbVer
 uploadFileToPackageVersionOnBintray $uncompressedDbFilename $dbName $newDbVer
 uploadFileToPackageVersionOnBintray $dbName.files $dbName $newDbVer

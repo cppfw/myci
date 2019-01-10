@@ -1,3 +1,9 @@
+myci (0.1.23) unstable; urgency=medium
+
+  * removed ... from output
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 10 Jan 2019 19:45:41 +0200
+
 myci (0.1.22) unstable; urgency=medium
 
   * pacman deployment: upload xxx.files file to bintray

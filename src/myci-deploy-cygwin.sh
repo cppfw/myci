@@ -38,12 +38,12 @@ fi
 
 [ -z "$infiles" ] && source myci-error.sh "no input files found";
 
-echo "Deploying to cygwin..."
+echo "Deploying to cygwin"
 
 #update version numbers
 version=$(myci-deb-version.sh debian/changelog)
 
-#echo "current package version is $version, applying it to cygport files..."
+#echo "current package version is $version, applying it to cygport files"
 #
 #myci-apply-version.sh -v $version $infiles
 #
@@ -97,7 +97,7 @@ do
 	f=$(echo $fin | sed -n -e 's/\(.*\)\.cygport\.in$/\1/p' | sed -n -e 's/.*\///p')
 
 	if [ -z "$packages" ]; then packages="$f"; else packages="$packages, $f"; fi
-done 
+done
 #---
 
 (
@@ -121,5 +121,5 @@ cd ..
 )
 
 #clean
-echo "Removing cloned repo..."
+echo "Removing cloned repo"
 rm -rf $repodir
