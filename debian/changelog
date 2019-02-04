@@ -1,3 +1,9 @@
+myci (0.1.29) unstable; urgency=medium
+
+  * replaced printf's to print line at once
+
+ -- Ivan Gagis <igagis@gmail.com>  Mon, 04 Feb 2019 15:51:08 +0200
+
 myci (0.1.28) unstable; urgency=medium
 
   * added test for terminal to print colors only in terminal
