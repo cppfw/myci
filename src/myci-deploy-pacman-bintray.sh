@@ -112,7 +112,7 @@ createVersionOnBintray $username $reponame $dbName $newDbVer
 
 #Upload packages
 
-function uploadFileToGeneralBintray {
+function uploadFileToGenericBintray {
 	local res=$(curl -o /dev/null -s --write-out "%{http_code}" -u$username:$MYCI_BINTRAY_API_KEY -T $1 -H"X-Bintray-Package:$2" -H"X-Bintray-Version:$3" -H"X-Bintray-Override:1" -H"X-Bintray-Publish:1" https://api.bintray.com/content/$username/$reponame/$repoPath/);
 	[ $res -ne 201 ] && myci-error.sh "uploading file '$1' to Bintray package '$2' version $3 failed, HTTP code = $res";
 	return 0;
@@ -125,10 +125,10 @@ function deleteFileFromBintray {
 }
 
 echo "Uploading package file '$packageFilename' to Bintray"
-uploadFileToGeneralBintray $packageFile $package $version
+uploadFileToGenericBintray $packageFile $package $version
 
 echo "Uploading versioned pacman database to Bintray"
-uploadFileToGeneralBintray $versionedDbFilename $dbName $newDbVer
+uploadFileToGenericBintray $versionedDbFilename $dbName $newDbVer
 
 echo "Deleting old pacman database"
 deleteFileFromBintray $dbFilename
@@ -136,8 +136,8 @@ deleteFileFromBintray $uncompressedDbFilename
 deleteFileFromBintray $dbName.files
 
 echo "Uploading actual pacman database to Bintray"
-uploadFileToGeneralBintray $dbFilename $dbName $newDbVer
-uploadFileToGeneralBintray $uncompressedDbFilename $dbName $newDbVer
-uploadFileToGeneralBintray $dbName.files $dbName $newDbVer
+uploadFileToGenericBintray $dbFilename $dbName $newDbVer
+uploadFileToGenericBintray $uncompressedDbFilename $dbName $newDbVer
+uploadFileToGenericBintray $dbName.files $dbName $newDbVer
 
 echo "Done deploying '$package' version $version to Bintray."
