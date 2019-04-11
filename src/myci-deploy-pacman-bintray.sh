@@ -5,6 +5,7 @@ set -eo pipefail
 
 #Script for quick deployment of pacman package (Arch linux package manager system) to bintray repo
 
+source myci-common.sh
 
 while [[ $# > 0 ]] ; do
 	case $1 in
@@ -96,12 +97,6 @@ ln -f -s $dbFilename $versionedDbFilename
 
 #create new versions of packages
 
-function createPackageVersionOnBintray {
-	local res=$(curl -o /dev/null -s --write-out "%{http_code}" -u$username:$MYCI_BINTRAY_API_KEY -H"Content-Type:application/json" -X POST -d"{\"name\":\"$2\",\"desc\":\"\"}" https://api.bintray.com/packages/$username/$reponame/$1/versions);
-	[ $res -ne 201 ] && myci-warning.sh "creating version $2 on Bintray for package '$1' failed, HTTP code = $res";
-	return 0;
-}
-
 #echo "package file = $packageFile"
 packageFilename=$(basename $packageFile)
 #echo "package filename = $packageFilename"
@@ -109,15 +104,15 @@ package=$(echo "$packageFilename" | sed -n -e's/^\(.*\)-[0-9]\+\.[0-9]\+\.[0-9]\
 version=$(echo "$packageFilename" | sed -n -e"s/^$package-\([0-9]\+\.[0-9]\+\.[0-9]\+\)-[0-9]\+-[^-]*\.pkg\.tar\.xz$/\1/p")
 
 echo "creating version $version for package '$package' on Bintray"
-createPackageVersionOnBintray $package $version
+createVersionOnBintray $username $reponame $package $version
 
 echo "creating version $newDbVer for pacman database on Bintray"
-createPackageVersionOnBintray $dbName $newDbVer
+createVersionOnBintray $username $reponame $dbName $newDbVer
 
 
 #Upload packages
 
-function uploadFileToPackageVersionOnBintray {
+function uploadFileToGeneralBintray {
 	local res=$(curl -o /dev/null -s --write-out "%{http_code}" -u$username:$MYCI_BINTRAY_API_KEY -T $1 -H"X-Bintray-Package:$2" -H"X-Bintray-Version:$3" -H"X-Bintray-Override:1" -H"X-Bintray-Publish:1" https://api.bintray.com/content/$username/$reponame/$repoPath/);
 	[ $res -ne 201 ] && myci-error.sh "uploading file '$1' to Bintray package '$2' version $3 failed, HTTP code = $res";
 	return 0;
@@ -130,10 +125,10 @@ function deleteFileFromBintray {
 }
 
 echo "Uploading package file '$packageFilename' to Bintray"
-uploadFileToPackageVersionOnBintray $packageFile $package $version
+uploadFileToGeneralBintray $packageFile $package $version
 
 echo "Uploading versioned pacman database to Bintray"
-uploadFileToPackageVersionOnBintray $versionedDbFilename $dbName $newDbVer
+uploadFileToGeneralBintray $versionedDbFilename $dbName $newDbVer
 
 echo "Deleting old pacman database"
 deleteFileFromBintray $dbFilename
@@ -141,8 +136,8 @@ deleteFileFromBintray $uncompressedDbFilename
 deleteFileFromBintray $dbName.files
 
 echo "Uploading actual pacman database to Bintray"
-uploadFileToPackageVersionOnBintray $dbFilename $dbName $newDbVer
-uploadFileToPackageVersionOnBintray $uncompressedDbFilename $dbName $newDbVer
-uploadFileToPackageVersionOnBintray $dbName.files $dbName $newDbVer
+uploadFileToGeneralBintray $dbFilename $dbName $newDbVer
+uploadFileToGeneralBintray $uncompressedDbFilename $dbName $newDbVer
+uploadFileToGeneralBintray $dbName.files $dbName $newDbVer
 
 echo "Done deploying '$package' version $version to Bintray."
