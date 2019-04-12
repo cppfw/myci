@@ -34,7 +34,7 @@ before_install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
     docker run --name ccc -v $(pwd):/build -it -d $DOCKER_IMAGE bash &&
     docker exec ccc apt update &&
-    docker exec ccc apt install -y devscripts &&
+    docker exec ccc apt install -y devscripts equivs &&
     if [ "PACKAGE_TYPE" == "deb" ]; then src/myci-deb-prepare.sh; fi;
   fi
 - if [ "$TRAVIS_JOB_NAME" == "macosx" ]; then
