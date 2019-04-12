@@ -60,12 +60,12 @@ before_install:
 
 install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
-    docker exec ccc bash -c "cd /build/$(basename $TRAVIS_BUILD_DIR) && dpkg-checkbuilddeps";
+    docker exec ccc bash -c "cd /build/$(basename $TRAVIS_BUILD_DIR) && ls && ls debian && dpkg-checkbuilddeps";
   fi
 
 script:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
-    docker exec ccc dpkg-buildpackage;
+    docker exec ccc dpkg-buildpackage -us -uc;
   fi
 - if [ "$TRAVIS_JOB_NAME" == "macosx" ]; then
     make test &&
