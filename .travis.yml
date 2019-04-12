@@ -87,8 +87,8 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
-    condition: $PACKAGE_TYPE = deb
-  script: src/myci-deploy-debian-bintray.sh -u igagis -r $OS -p $PACKAGE_NAME -c main -d $OS_REL $TRAVIS_BUILD_DIR/../*.deb
+    condition: $PACKAGE_TYPE = deb && -z "$TRAVIS_JOB_NAME"
+  script: PATH=$PATH:$TRAVIS_BUILD_DIR/src myci-deploy-debian-bintray.sh -u igagis -r $OS -p $PACKAGE_NAME -c main -d $OS_REL $TRAVIS_BUILD_DIR/../*.deb
 - provider: bintray
   skip_cleanup: true
   on:

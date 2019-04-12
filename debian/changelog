@@ -1,3 +1,9 @@
+myci (0.1.31) unstable; urgency=medium
+
+  * deployment fix
+
+ -- Ivan Gagis <igagis@gmail.com>  Fri, 12 Apr 2019 20:26:07 +0300
+
 myci (0.1.30) unstable; urgency=medium
 
   * deploy to different linuxes
