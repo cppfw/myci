@@ -26,6 +26,7 @@ env:
   - MYCI_GIT_USERNAME=igagis
   - USE_ANDROID_NDK_VERSION=15c
   - linuxDependencies="debhelper"
+  - PACKAGE_NAME=myci
   matrix:
   - OS_REL=xenial OS=ubuntu DOCKER_IMAGE=amd64/$OS:$OS_REL PACKAGE_TYPE=deb
   - OS_REL=bionic OS=ubuntu DOCKER_IMAGE=amd64/$OS:$OS_REL PACKAGE_TYPE=deb
@@ -35,9 +36,11 @@ env:
 before_install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
     docker run --name ccc -v $TRAVIS_BUILD_DIR/..:/build -w /build/$(basename $TRAVIS_BUILD_DIR) -it -d $DOCKER_IMAGE bash &&
-    docker exec ccc apt update &&
-    docker exec ccc apt install -y devscripts equivs &&
-    if [ "$PACKAGE_TYPE" == "deb" ]; then src/myci-deb-prepare.sh; fi;
+    if [ "$PACKAGE_TYPE" == "deb" ]; then
+      docker exec ccc apt update &&
+      docker exec ccc apt install -y devscripts equivs &&
+      src/myci-deb-prepare.sh;
+    fi;
   fi
 - if [ "$TRAVIS_JOB_NAME" == "macosx" ]; then
     rvm install ruby-2.3.3 &&
@@ -79,31 +82,13 @@ script:
   fi
 
 
-# before_deploy:
-#   - src/myci-apply-version.sh -v `src/myci-deb-version.sh debian/changelog` travis_bintray_*.json.in
-
-
 deploy:
-# - provider: bintray
-#   skip_cleanup: true
-#   on:
-#     tags: true
-#     condition: $TRAVIS_JOB_NAME = debian
-#   file: travis_bintray_deb.json
-#   user: igagis
-#   key:
-#     secure: "roU64Mzqk7Tis7hamJ8+lagxHsEkTXnJipoQ6gMd6lYZYF5bM1hDlrqG9oZRKFJXmv6ommof12ybC96JA/XXI8Hvu1P/vYer1emRUuNa1inDPHivt5qjeEiDCRJEki2e0nONqp0qVEz/GE7BWQse34Kxex7jW/wbsA0BgoWtszv18xpYkDE/IYPKAAYGHDf2hh28++RFbShFh28ig3g2gVghxfJB0BQeg+4RxkGyUmJI4cozYTJX/mmBw/hfswsDVSjazMW0fE7ZokwrtZ9/R0zJyRpVyGq4O5b1pfAKf3tRqYhFI+Hx4Pu0mB3TxBZ5JcqxITS/rniSI5CtD27AF1W/x9Wzx8jGQFsBP11Yr7Ws2QczT6YnuVax98/tKSJU/L2d29cRWmDJrTaOOg+DOe+PCGSUzhBGageQA/FjTl66myonh6zxLZb29F0sy0fNv2tnDMFS05HbMk/dlzB+aW0U91GlicZqx+xwlxKFTmetgUsasUCLt5n0+yEji6Ay64t52cET3D5+VFDoF2WF6saqKAuAdnfBEXQEJjRWHPz3kECvx4E49s0T7HBVSrkIdebhToVOm8baj00a76+P1d3GKZO8BCYB1AnNcY/74dPllaIz1lL05qzOPrzytfc6GcedSBMlDD/u7Ow82sE7wkl1S7Fh5xKkesILWuKuvSo="
-#   dry-run: false
-# - provider: bintray
-#   skip_cleanup: true
-#   on:
-#     tags: true
-#     condition: $TRAVIS_JOB_NAME = ubuntu
-#   file: travis_bintray_ubu.json
-#   user: igagis
-#   key:
-#     secure: "roU64Mzqk7Tis7hamJ8+lagxHsEkTXnJipoQ6gMd6lYZYF5bM1hDlrqG9oZRKFJXmv6ommof12ybC96JA/XXI8Hvu1P/vYer1emRUuNa1inDPHivt5qjeEiDCRJEki2e0nONqp0qVEz/GE7BWQse34Kxex7jW/wbsA0BgoWtszv18xpYkDE/IYPKAAYGHDf2hh28++RFbShFh28ig3g2gVghxfJB0BQeg+4RxkGyUmJI4cozYTJX/mmBw/hfswsDVSjazMW0fE7ZokwrtZ9/R0zJyRpVyGq4O5b1pfAKf3tRqYhFI+Hx4Pu0mB3TxBZ5JcqxITS/rniSI5CtD27AF1W/x9Wzx8jGQFsBP11Yr7Ws2QczT6YnuVax98/tKSJU/L2d29cRWmDJrTaOOg+DOe+PCGSUzhBGageQA/FjTl66myonh6zxLZb29F0sy0fNv2tnDMFS05HbMk/dlzB+aW0U91GlicZqx+xwlxKFTmetgUsasUCLt5n0+yEji6Ay64t52cET3D5+VFDoF2WF6saqKAuAdnfBEXQEJjRWHPz3kECvx4E49s0T7HBVSrkIdebhToVOm8baj00a76+P1d3GKZO8BCYB1AnNcY/74dPllaIz1lL05qzOPrzytfc6GcedSBMlDD/u7Ow82sE7wkl1S7Fh5xKkesILWuKuvSo="
-#   dry-run: false
+- provider: script
+  skip_cleanup: true
+  on:
+    tags: true
+    condition: $PACKAGE_TYPE = deb
+  script: src/myci-deploy-debian-bintray.sh -u igagis -r $OS -p $PACKAGE_NAME -c main -d $OS_REL $TRAVIS_BUILD_DIR/../*.deb
 - provider: bintray
   skip_cleanup: true
   on:
