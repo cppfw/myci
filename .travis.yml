@@ -9,12 +9,6 @@ os:
 - linux
 - osx
 
-env:
-  matrix:
-  - OS_REL=xenial OS=ubuntu DOCKER_IMAGE=amd64/$OS:$OS_REL PACKAGE_TYPE=deb
-  - OS_REL=bionic OS=ubuntu DOCKER_IMAGE=amd64/$OS:$OS_REL PACKAGE_TYPE=deb
-  - OS_REL=stretch OS=debian DOCKER_IMAGE=amd64/$OS:$OS_REL PACKAGE_TYPE=deb
-
 matrix:
   include:
   - os: osx
@@ -42,6 +36,10 @@ env:
   - MYCI_GIT_USERNAME=igagis
   - USE_ANDROID_NDK_VERSION=15c
   - linuxDependencies="debhelper"
+  matrix:
+  - OS_REL=xenial OS=ubuntu DOCKER_IMAGE=amd64/$OS:$OS_REL PACKAGE_TYPE=deb
+  - OS_REL=bionic OS=ubuntu DOCKER_IMAGE=amd64/$OS:$OS_REL PACKAGE_TYPE=deb
+  - OS_REL=stretch OS=debian DOCKER_IMAGE=amd64/$OS:$OS_REL PACKAGE_TYPE=deb
 
 
 before_install:
