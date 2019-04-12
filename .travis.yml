@@ -62,7 +62,7 @@ before_install:
 
 install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
-    docker exec ccc dpkg-checkbuilddeps;
+    docker exec ccc src/myci-deb-install-build-deps.sh;
   fi
 
 script:
