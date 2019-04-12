@@ -33,6 +33,7 @@ env:
 before_install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
     docker run --name ccc -v $TRAVIS_BUILD_DIR/..:/build -it -d $DOCKER_IMAGE bash &&
+    docker exec ccc bash -c "echo 'cd /build/$(basename $TRAVIS_BUILD_DIR)' >> ~/.bashrc" &&
     docker exec ccc apt update &&
     docker exec ccc apt install -y devscripts equivs &&
     if [ "$PACKAGE_TYPE" == "deb" ]; then src/myci-deb-prepare.sh; fi;
@@ -60,7 +61,7 @@ before_install:
 
 install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
-    docker exec ccc bash -c "cd /build/$(basename $TRAVIS_BUILD_DIR) && ls && ls debian && dpkg-checkbuilddeps";
+    docker exec ccc dpkg-checkbuilddeps;
   fi
 
 script:
