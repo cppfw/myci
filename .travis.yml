@@ -60,7 +60,7 @@ before_install:
 
 install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
-    docker exec ccc bash -c "cd /build/$(basename $TRAVIS_BUILD_DIR) && dpkg-checkdependencies";
+    docker exec ccc bash -c "cd /build/$(basename $TRAVIS_BUILD_DIR) && dpkg-checkbuilddeps";
   fi
 
 script:
