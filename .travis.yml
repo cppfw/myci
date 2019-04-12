@@ -32,7 +32,10 @@ env:
 
 before_install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
-    docker pull $DOCKER_IMAGE;
+    docker run --name ccc -v $(pwd):/build -it -d $DOCKER_IMAGE bash &&
+    docker exec ccc apt update &&
+    docker exec ccc apt install -y devscripts &&
+    if [ "PACKAGE_TYPE" == "deb" ]; then src/myci-deb-prepare.sh; fi;
   fi
 - if [ "$TRAVIS_JOB_NAME" == "macosx" ]; then
     rvm install ruby-2.3.3 &&
@@ -55,9 +58,14 @@ before_install:
     sudo rsync -av $TRAVIS_BUILD_DIR/ /srv/chroot/rasp-armhf/build/;
   fi
 
+install:
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
+    docker exec ccc bash -c "cd /build && mk-build-deps --install debian/control";
+  fi
+
 script:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
-    echo "blabla";
+    docker exec ccc dpkg-buildpackage;
   fi
 - if [ "$TRAVIS_JOB_NAME" == "macosx" ]; then
     make test &&
