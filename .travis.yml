@@ -5,21 +5,22 @@ services:
 
 language: cpp
 dist: xenial
-osx_image: xcode8.3
 os:
 - linux
 - osx
 
 env:
-- OS_REL=xenial OS=ubuntu DOCKER_IMAGE=amd64/$OS:$OS_REL PACKAGE_TYPE=deb
-- OS_REL=bionic OS=ubuntu DOCKER_IMAGE=amd64/$OS:$OS_REL PACKAGE_TYPE=deb
-- OS_REL=stretch OS=debian DOCKER_IMAGE=amd64/$OS:$OS_REL PACKAGE_TYPE=deb
+  matrix:
+  - OS_REL=xenial OS=ubuntu DOCKER_IMAGE=amd64/$OS:$OS_REL PACKAGE_TYPE=deb
+  - OS_REL=bionic OS=ubuntu DOCKER_IMAGE=amd64/$OS:$OS_REL PACKAGE_TYPE=deb
+  - OS_REL=stretch OS=debian DOCKER_IMAGE=amd64/$OS:$OS_REL PACKAGE_TYPE=deb
 
 matrix:
   include:
   - os: osx
     env: BUILD_NAME=macosx
     compiler: clang
+    osx_image: xcode8.3
   # - os: linux
   #   env: BUILD_NAME=debian
   #   compiler: gcc
