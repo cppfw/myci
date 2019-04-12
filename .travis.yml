@@ -1,11 +1,14 @@
 sudo: required
 
 services:
-  - docker
+- docker
 
 language: cpp
 dist: xenial
-os: linux
+osx_image: xcode8.3
+os:
+- linux
+- osx
 
 env:
   - OS_REL=xenial OS=ubuntu DOCKER_IMAGE=amd64/$OS:$OS_REL PACKAGE_TYPE=deb
@@ -14,26 +17,22 @@ env:
 
 matrix:
   include:
-    - os: osx
-      env: BUILD_NAME=macosx
-      compiler: clang
-      language: cpp
-      osx_image: xcode8.3
-    # - os: linux
-    #   env: BUILD_NAME=debian
-    #   compiler: gcc
-    #   language: cpp
-    #   dist: trusty
-    # - os: linux
-    #   env: BUILD_NAME=ubuntu
-    #   compiler: gcc
-    #   language: cpp
-    #   dist: trusty
-    - os: linux
-      env: BUILD_NAME=raspberry_pi
-      compiler: gcc
-      language: cpp
-      dist: trusty
+  - os: osx
+    env: BUILD_NAME=macosx
+    compiler: clang
+  # - os: linux
+  #   env: BUILD_NAME=debian
+  #   compiler: gcc
+  #   language: cpp
+  #   dist: trusty
+  # - os: linux
+  #   env: BUILD_NAME=ubuntu
+  #   compiler: gcc
+  #   language: cpp
+  #   dist: trusty
+  - os: linux
+    env: BUILD_NAME=raspberry_pi
+    compiler: gcc
 
 env:
   global:
@@ -46,7 +45,7 @@ env:
 
 before_install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$BUILD_NAME" ]; then
-    docker pull $DOCKER_IMAGE
+    docker pull $DOCKER_IMAGE;
   fi
 - if [ "$BUILD_NAME" == "macosx" ]; then
     rvm install ruby-2.3.3 &&
