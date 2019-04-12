@@ -35,7 +35,7 @@ before_install:
     docker run --name ccc -v $TRAVIS_BUILD_DIR/..:/build -it -d $DOCKER_IMAGE bash &&
     docker exec ccc apt update &&
     docker exec ccc apt install -y devscripts equivs &&
-    if [ "PACKAGE_TYPE" == "deb" ]; then src/myci-deb-prepare.sh; fi;
+    if [ "$PACKAGE_TYPE" == "deb" ]; then src/myci-deb-prepare.sh; fi;
   fi
 - if [ "$TRAVIS_JOB_NAME" == "macosx" ]; then
     rvm install ruby-2.3.3 &&
