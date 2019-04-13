@@ -28,7 +28,7 @@ env:
   - OS_REL=xenial OS=ubuntu DOCKER_IMAGE=$OS:$OS_REL PACKAGE_TYPE=deb
   - OS_REL=bionic OS=ubuntu DOCKER_IMAGE=$OS:$OS_REL PACKAGE_TYPE=deb
   - OS_REL=stretch OS=debian DOCKER_IMAGE=$OS:$OS_REL PACKAGE_TYPE=deb
-  - OS=raspbian OS_REL=stretch DOCKER_IMAGE=igagis/$OS:$OS_REL PACKAGE_TYPE=deb
+  - OS_REL=stretch OS=raspbian DOCKER_IMAGE=igagis/$OS:$OS_REL PACKAGE_TYPE=deb
 
 
 before_install:
@@ -36,6 +36,7 @@ before_install:
     docker run --name ccc -v $TRAVIS_BUILD_DIR/..:/build -w /build/$(basename $TRAVIS_BUILD_DIR) -it -d $DOCKER_IMAGE bash &&
     if [ "$PACKAGE_TYPE" == "deb" ]; then
       docker exec ccc apt update &&
+      docker exec ccc apt install -y devscripts equivs &&
       src/myci-deb-prepare.sh;
     fi;
   fi
