@@ -68,10 +68,6 @@ script:
     make test &&
     make install;
   fi
-- if [ "$TRAVIS_JOB_NAME" == "raspberry_pi" ]; then
-    sudo chroot /srv/chroot/rasp-armhf bash -c "cd /build && src/myci-deb-prepare.sh" &&
-    sudo chroot /srv/chroot/rasp-armhf bash -c "cd /build && dpkg-buildpackage -us -uc";
-  fi
 
 
 deploy:
