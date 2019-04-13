@@ -7,6 +7,12 @@ language: cpp
 dist: xenial
 os: linux
 
+addons:
+  apt:
+    update: true
+    packages:
+    - binfmt-support
+
 matrix:
   include:
   - name: macosx
