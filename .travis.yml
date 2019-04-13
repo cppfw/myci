@@ -13,9 +13,6 @@ matrix:
     os: osx
     compiler: clang
     osx_image: xcode8.3
-  - name: raspberry_pi
-    os: linux
-    compiler: gcc
 
 env:
   global:
@@ -31,6 +28,7 @@ env:
   - OS_REL=xenial OS=ubuntu DOCKER_IMAGE=$OS:$OS_REL PACKAGE_TYPE=deb
   - OS_REL=bionic OS=ubuntu DOCKER_IMAGE=$OS:$OS_REL PACKAGE_TYPE=deb
   - OS_REL=stretch OS=debian DOCKER_IMAGE=$OS:$OS_REL PACKAGE_TYPE=deb
+  - OS=raspbian OS_REL=stretch DOCKER_IMAGE=igagis/$OS:$OS_REL PACKAGE_TYPE=deb
 
 
 before_install:
@@ -38,7 +36,6 @@ before_install:
     docker run --name ccc -v $TRAVIS_BUILD_DIR/..:/build -w /build/$(basename $TRAVIS_BUILD_DIR) -it -d $DOCKER_IMAGE bash &&
     if [ "$PACKAGE_TYPE" == "deb" ]; then
       docker exec ccc apt update &&
-      docker exec ccc apt install -y devscripts equivs &&
       src/myci-deb-prepare.sh;
     fi;
   fi
@@ -49,18 +46,6 @@ before_install:
     brew update > /dev/null &&
     brew tap igagis/tap &&
     brew update > /dev/null;
-  fi
-- if [ "$TRAVIS_JOB_NAME" == "raspberry_pi" ]; then
-    echo "deb [arch=amd64] http://dl.bintray.com/igagis/deb unstable main" | sudo tee /etc/apt/sources.list.d/igagis.list > /dev/null &&
-    sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 379CE192D401AB61 &&
-    sudo apt-get update -qq &&
-    sudo apt-get install -qq sbuild;
-    sudo src/myci-make-raspberry-chroot.sh /srv/chroot/rasp-armhf &&
-    echo "deb http://dl.bintray.com/igagis/rasp unstable main" | sudo tee /srv/chroot/rasp-armhf/etc/apt/sources.list.d/igagis.list > /dev/null &&
-    sudo chroot /srv/chroot/rasp-armhf apt-get update &&
-    sudo chroot /srv/chroot/rasp-armhf apt-get install --allow-unauthenticated -qq -y $linuxDependencies g++ &&
-    sudo mkdir -p /srv/chroot/rasp-armhf/build &&
-    sudo rsync -av $TRAVIS_BUILD_DIR/ /srv/chroot/rasp-armhf/build/;
   fi
 
 install:
@@ -89,16 +74,6 @@ deploy:
     tags: true
     condition: $PACKAGE_TYPE = deb && -z "$TRAVIS_JOB_NAME"
   script: PATH=$PATH:$TRAVIS_BUILD_DIR/src myci-deploy-debian-bintray.sh -u igagis -r $OS -p $PACKAGE_NAME -c main -d $OS_REL $TRAVIS_BUILD_DIR/../*.deb
-- provider: bintray
-  skip_cleanup: true
-  on:
-    tags: true
-    condition: $TRAVIS_JOB_NAME = raspberry_pi
-  file: travis_bintray_rasp.json
-  user: igagis
-  key:
-    secure: "roU64Mzqk7Tis7hamJ8+lagxHsEkTXnJipoQ6gMd6lYZYF5bM1hDlrqG9oZRKFJXmv6ommof12ybC96JA/XXI8Hvu1P/vYer1emRUuNa1inDPHivt5qjeEiDCRJEki2e0nONqp0qVEz/GE7BWQse34Kxex7jW/wbsA0BgoWtszv18xpYkDE/IYPKAAYGHDf2hh28++RFbShFh28ig3g2gVghxfJB0BQeg+4RxkGyUmJI4cozYTJX/mmBw/hfswsDVSjazMW0fE7ZokwrtZ9/R0zJyRpVyGq4O5b1pfAKf3tRqYhFI+Hx4Pu0mB3TxBZ5JcqxITS/rniSI5CtD27AF1W/x9Wzx8jGQFsBP11Yr7Ws2QczT6YnuVax98/tKSJU/L2d29cRWmDJrTaOOg+DOe+PCGSUzhBGageQA/FjTl66myonh6zxLZb29F0sy0fNv2tnDMFS05HbMk/dlzB+aW0U91GlicZqx+xwlxKFTmetgUsasUCLt5n0+yEji6Ay64t52cET3D5+VFDoF2WF6saqKAuAdnfBEXQEJjRWHPz3kECvx4E49s0T7HBVSrkIdebhToVOm8baj00a76+P1d3GKZO8BCYB1AnNcY/74dPllaIz1lL05qzOPrzytfc6GcedSBMlDD/u7Ow82sE7wkl1S7Fh5xKkesILWuKuvSo="
-  dry-run: false
 - provider: script
   skip_cleanup: true
   script: src/myci-deploy-homebrew.sh -t igagis/tap
