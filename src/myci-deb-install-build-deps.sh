@@ -29,14 +29,21 @@ echo "Checking for missing build dependencies."
 
 builddeps=$(dpkg-checkbuilddeps 2>&1 || true)
 
-deps=$(echo $builddeps | sed -n -e 's/^dpkg-checkbuilddeps: error: Unmet build dependencies: //p' | sed -n -e 's/ ([^)]*)//pg')
+unmetDepsMsg="dpkg-checkbuilddeps: error: Unmet build dependencies: "
+
+[ ! -z "$builddeps" ] && [ -z "$(echo $builddeps | sed -n -e "s/^$unmetDepsMsg//p")" ] && myci-error.sh "Could not check for unmet build dependencies.\nError message: $builddeps";
+
+# Remove version restrictions from list of unmet dependencies
+deps=$(echo $builddeps | sed -n -e "s/^$unmetDepsMsg//p" | sed -e 's/ ([^)]*)//g')
 
 if [ -z "$deps" ]; then
     echo "All dependencies satisfied."
     exit 0;
 else
-    echo "Installing missing dependency packages: $deps."
+    echo "Installing missing dependency packages: $deps"
 fi
 
 apt install -y $deps
 
+# Finally, check again that all dependencies were installed successfully.
+dpkg-checkbuilddeps
