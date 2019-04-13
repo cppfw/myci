@@ -1,3 +1,9 @@
+myci (0.1.32) unstable; urgency=medium
+
+  * deploy to raspbian
+
+ -- Ivan Gagis <igagis@gmail.com>  Sat, 13 Apr 2019 05:05:42 +0300
+
 myci (0.1.31) unstable; urgency=medium
 
   * deployment fix
