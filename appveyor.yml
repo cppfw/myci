@@ -17,7 +17,7 @@ before_build:
 
 build_script:
   - C:\msys64\usr\bin\bash -lc "cd /c/build/ && src/myci-apply-version.sh -v `src/myci-deb-version.sh debian/changelog` msys2/PKGBUILD.in"
-  - ps: C:\msys64\usr\bin\bash -lc "cd /c/build/msys2 && makepkg --skipinteg"
+  - C:\msys64\usr\bin\bash -lc "cd /c/build/msys2 && makepkg --skipinteg"
 
 test_script:
 
