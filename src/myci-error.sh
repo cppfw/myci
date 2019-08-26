@@ -33,5 +33,5 @@ while [[ $# > 0 ]] ; do
 	esac
 done
 
-test -t 1 && printf "\t\\033[1;91mERROR\\033[0m: $message\n" || printf "\tERROR: $message\n"
+test -t 1 && printf "\t\e[1;91mERROR\e[0m: $message\n" || printf "\tERROR: $message\n"
 exit 1
