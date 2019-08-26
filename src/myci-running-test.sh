@@ -28,4 +28,4 @@ done
 
 [ -z "$testName" ] && echo "Error: no test name supplied" && exit 1;
 
-test -t 1 && printf "\e[0;32mRunning test\e[0m \e[1;33m$testName\e[0m\n" || printf "Running test $testName\n"
+test -t 1 && printf "\e[4mRunning test\e[0m \e[1;33m$testName\e[0m\n" || printf "Running test $testName\n"
