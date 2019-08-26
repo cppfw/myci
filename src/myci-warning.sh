@@ -23,4 +23,4 @@ while [[ $# > 0 ]] ; do
 	esac
 done
 
-test -t 1 && printf "\t\\033[1;95mWARNING\\033[0m: $message\n" || printf "\tWARNING: $message\n"
+test -t 1 && printf "\t\e[1;95mWARNING\e[0m: $message\n" || printf "\tWARNING: $message\n"
