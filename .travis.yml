@@ -62,7 +62,7 @@ install:
 
 script:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
-    docker exec ccc dpkg-buildpackage -us -uc;
+    docker exec -t ccc dpkg-buildpackage -us -uc;
   fi
 - if [ "$TRAVIS_JOB_NAME" == "macosx" ]; then
     make test &&
