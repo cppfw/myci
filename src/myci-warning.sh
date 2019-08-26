@@ -24,4 +24,3 @@ while [[ $# > 0 ]] ; do
 done
 
 test -t 1 && printf "\t\e[1;35mWARNING\e[0m: $message\n" || printf "\tWARNING: $message\n"
-printf "\t\e[1;35mMEDVED\e[0m\n"
