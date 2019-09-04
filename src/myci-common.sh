@@ -42,3 +42,22 @@ function uploadFileToDebianBintray {
 	return 0;
 }
 
+
+# Uploads a file to Bintray generic repo.
+# Usage:
+#     uploadFileToGenericBintray <file-to-upload> <user-name> <repo-name> <repo-path> <package-name> <version>
+function uploadFileToGenericBintray {
+	local res=$(curl -o /dev/null -s --write-out "%{http_code}" -u$username:$MYCI_BINTRAY_API_KEY -T $1 -H"X-Bintray-Package:$5" -H"X-Bintray-Version:$6" -H"X-Bintray-Override:1" -H"X-Bintray-Publish:1" https://api.bintray.com/content/$2/$3/$4/);
+	[ $res -ne 201 ] && myci-error.sh "uploading file '$1' to Bintray package '$5' version $6 failed, HTTP code = $res";
+	return 0;
+}
+
+
+# Delete file from Bintray.
+# Usage:
+#     deleteFileFromBintray <file-to-delete> <user-name> <repo-name> <repo-path>
+function deleteFileFromBintray {
+	local res=$(curl -o /dev/null -s --write-out "%{http_code}" -u$username:$MYCI_BINTRAY_API_KEY -X DELETE https://api.bintray.com/content/$2/$3/$4/$1);
+	[ $res -ne 200 ] && myci-warning.sh "deleting file '$1' from Bintray failed, HTTP code = $res";
+	return 0;
+}

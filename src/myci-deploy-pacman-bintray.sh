@@ -112,32 +112,20 @@ createVersionOnBintray $username $reponame $dbName $newDbVer
 
 #Upload packages
 
-function uploadFileToGenericBintray {
-	local res=$(curl -o /dev/null -s --write-out "%{http_code}" -u$username:$MYCI_BINTRAY_API_KEY -T $1 -H"X-Bintray-Package:$2" -H"X-Bintray-Version:$3" -H"X-Bintray-Override:1" -H"X-Bintray-Publish:1" https://api.bintray.com/content/$username/$reponame/$repoPath/);
-	[ $res -ne 201 ] && myci-error.sh "uploading file '$1' to Bintray package '$2' version $3 failed, HTTP code = $res";
-	return 0;
-}
-
-function deleteFileFromBintray {
-	local res=$(curl -o /dev/null -s --write-out "%{http_code}" -u$username:$MYCI_BINTRAY_API_KEY -X DELETE https://api.bintray.com/content/$username/$reponame/$repoPath/$1);
-	[ $res -ne 200 ] && myci-warning.sh "deleting file '$1' from Bintray failed, HTTP code = $res";
-	return 0;
-}
-
 echo "Uploading package file '$packageFilename' to Bintray"
-uploadFileToGenericBintray $packageFile $package $version
+uploadFileToGenericBintray $packageFile $username $reponame $repoPath $package $version
 
 echo "Uploading versioned pacman database to Bintray"
-uploadFileToGenericBintray $versionedDbFilename $dbName $newDbVer
+uploadFileToGenericBintray $versionedDbFilename $username $reponame $repoPath $dbName $newDbVer
 
 echo "Deleting old pacman database"
-deleteFileFromBintray $dbFilename
-deleteFileFromBintray $uncompressedDbFilename
-deleteFileFromBintray $dbName.files
+deleteFileFromBintray $dbFilename $username $reponame $repoPath
+deleteFileFromBintray $uncompressedDbFilename $username $reponame $repoPath
+deleteFileFromBintray $dbName.files $username $reponame $repoPath
 
 echo "Uploading actual pacman database to Bintray"
-uploadFileToGenericBintray $dbFilename $dbName $newDbVer
-uploadFileToGenericBintray $uncompressedDbFilename $dbName $newDbVer
-uploadFileToGenericBintray $dbName.files $dbName $newDbVer
+uploadFileToGenericBintray $dbFilename $username $reponame $repoPath $dbName $newDbVer
+uploadFileToGenericBintray $uncompressedDbFilename $username $reponame $repoPath $dbName $newDbVer
+uploadFileToGenericBintray $dbName.files $username $reponame $repoPath $dbName $newDbVer
 
 echo "Done deploying '$package' version $version to Bintray."
