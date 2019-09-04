@@ -58,7 +58,7 @@ done
 
 [ -z "$repoPath" ] && source myci-error.sh "repo path is not given";
 
-[ -z "$aarFile" ] && source myci-error.sh "AAR file is not given, use -a option";
+[ -z "$aarFile" ] && source myci-error.sh "AAR file is not given";
 
 # make POM filename from AAR filename.
 pomFile=${aarFile%.*}.pom
