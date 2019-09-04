@@ -1,3 +1,9 @@
+myci (0.1.38) unstable; urgency=medium
+
+  * fixed maven deployment script
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 05 Sep 2019 01:54:25 +0300
+
 myci (0.1.37) unstable; urgency=medium
 
   * added script for deploying to maven bintray repo

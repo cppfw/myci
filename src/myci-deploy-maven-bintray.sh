@@ -5,7 +5,7 @@ set -eo pipefail
 
 # Script for quick deployment of maven package (.aar and .pom files) to bintray Maven repo.
 
-source src/myci-common.sh
+source myci-common.sh
 
 while [[ $# > 0 ]] ; do
 	case $1 in
