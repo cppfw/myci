@@ -15,10 +15,12 @@ while [[ $# > 0 ]] ; do
 			echo "	$(basename $0) -u <bintray-user-name> -r <bintray-repo-name> -p <repo-path> <package-aar-filename>"
 			echo " "
 			echo "Environment variable MYCI_BINTRAY_API_KEY must be set to Bintray API key token, it will be stripped out from the script output."
-			echo "POM file should be named same as AAR file but with .pom suffix and should reside right next to .aar file."
+			echo "The AAR file should be named in form <package_name-X.Y.Z.aar>, where X, Y, Z are numbers."
+			echo "	Example: myawesomelib-1.3.14.aar"
+			echo "The POM file should be named same as AAR file but with .pom suffix and should reside right next to .aar file."
 			echo " "
 			echo "Example:"
-			echo "	$(basename $0) -u igagis -r android -p io/github/igagis libawesome.aar"
+			echo "	$(basename $0) -u igagis -r android -p io/github/igagis myawesomelib-1.3.14.aar"
 			exit 0
 			;;
 		-r)
@@ -74,7 +76,10 @@ echo "Deploying AAR package to Bintray"
 filename=$(basename $aarFile)
 
 package=$(package_from_package_version_filename $filename)
+[ -z "$package" ] && source myci-error.sh "Could not extract package name from filename $filename";
+
 version=$(version_from_package_version_filename $filename)
+[ -z "$version" ] && source myci-error.sh "Could not extract version from filename $filename";
 
 echo "package = $package"
 echo "version = $version"
