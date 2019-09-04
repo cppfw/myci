@@ -10,6 +10,7 @@ source myci-common.sh
 while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
+			echo "Script for deploying pacman packages to Bintray Generic repo."
 			echo "Usage:"
 			echo "	$(basename $0) -u <bintray-user-name> -r <bintray-repo-name> -p <repo-path> -d <database-name> <package-filename>"
 			echo " "

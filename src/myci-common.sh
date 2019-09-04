@@ -42,13 +42,13 @@ function uploadFileToDebianBintray {
 	return 0;
 }
 
-
 # Uploads a file to Bintray generic repo.
 # Usage:
 #     uploadFileToGenericBintray <file-to-upload> <user-name> <repo-name> <repo-path> <package-name> <version>
 function uploadFileToGenericBintray {
 	local res=$(curl -o /dev/null -s --write-out "%{http_code}" -u$2:$MYCI_BINTRAY_API_KEY -T $1 -H"X-Bintray-Package:$5" -H"X-Bintray-Version:$6" -H"X-Bintray-Override:1" -H"X-Bintray-Publish:1" https://api.bintray.com/content/$2/$3/$4/);
 	[ $res -ne 201 ] && myci-error.sh "uploading file '$1' to Bintray package '$5' version $6 failed, HTTP code = $res";
+    echo "File '$1' uploaded to Bintray package '$4' version '$5'."
 	return 0;
 }
 
@@ -60,4 +60,21 @@ function deleteFileFromBintray {
 	local res=$(curl -o /dev/null -s --write-out "%{http_code}" -u$2:$MYCI_BINTRAY_API_KEY -X DELETE https://api.bintray.com/content/$2/$3/$4/$1);
 	[ $res -ne 200 ] && myci-warning.sh "deleting file '$1' from Bintray failed, HTTP code = $res";
 	return 0;
+}
+
+
+# Get package name from filename of form "myfile-1.3.0.suffix".
+# Usage:
+#     package_from_package_version_filename <filename>
+function package_from_package_version_filename {
+    echo "$1" | sed -n -e's/^\(.*\)-[0-9]\+\.[0-9]\+\.[0-9]\+\..*/\1/p';
+    return 0;
+}
+
+# Get version from filename of form "myfile-1.3.0.suffix".
+# Usage:
+#     package_name_from_package_version_filename <filename>
+function version_from_package_version_filename {
+    echo "$1" | sed -n -e"s/^.*-\([0-9]\+\.[0-9]\+\.[0-9]\+\)\..*/\1/p";
+    return 0;
 }
