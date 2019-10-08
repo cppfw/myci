@@ -11,7 +11,7 @@ while [[ $# > 0 ]] ; do
     case $1 in
         --help)
             echo "Usage:"
-            echo "	$(basename $0) -r <repo-name> [<spec.podspec.in>]"
+            echo "	$(basename $0) -r <cocoapods-repo-name> [<spec.podspec.in>]"
             echo " "
             echo "Environment variable MYCI_GIT_ACCESS_TOKEN can be set to git access token, so that it will be stripped out from the script output."
             echo " "
