@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#we want exit immediately if any command fails and we want error in piped commands to be preserved
+# we want exit immediately if any command fails and we want error in piped commands to be preserved
 set -eo pipefail
 
-#Script for quick deployment of pacman package (Arch linux package manager system) to bintray repo
+# Script for quick deployment of pacman package (Arch linux package manager system) to bintray repo
 
 source myci-common.sh
 
