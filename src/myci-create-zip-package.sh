@@ -12,10 +12,11 @@ while [[ $# > 0 ]] ; do
 			echo "	$(basename $0) -h <headers-dir> [-f <source-filename>///<destination-directory-within-archive> ...] <output-package-filename>"
 			echo " "
 			echo "The script packs supplied headers (.hpp and .h) preserving directory structure into the 'include' directory withing archive."
-			echo "There can be any number of -f keys."
+			echo "There can be any number of -f keys. The '///<destination-directory-within-archive>' part of the -f key value can be omitted,"
+			echo "the file is then added to the root directory within the archive."
 			echo " "
 			echo "Example:"
-			echo "	$(basename $0) -h ./src -f xcode/build/libsomething.a///lib/ios/ libsomething.zip"
+			echo "	$(basename $0) -h ./src -f xcode/build/libsomething.a///lib/ios/ -f licenses/MyLICENSE.txt libsomething.zip"
 			exit 0
 			;;
 		-h)
