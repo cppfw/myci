@@ -9,30 +9,28 @@ while [[ $# > 0 ]] ; do
 		--help)
 			echo "Script for packing the library to ZIP package."
 			echo "Usage:"
-			echo "	$(basename $0) -h <headers-dir> [-a <static-lib>] <output-package-filename>"
+			echo "	$(basename $0) -h <headers-dir> [-f <source-filename>///<destination-directory-within-archive> ...] <output-package-filename>"
 			echo " "
-			echo "The script packs supplied headers (.hpp and .h) preserving directory structure."
-			echo "Static library file is added to the root of the archive."
+			echo "The script packs supplied headers (.hpp and .h) preserving directory structure into the 'include' directory withing archive."
+			echo "There can be any number of -f keys."
 			echo " "
 			echo "Example:"
-			echo "	$(basename $0) -h ./src -a xcode/build/libsomething.a libsomething.zip"
+			echo "	$(basename $0) -h ./src -f xcode/build/libsomething.a///lib/ios/ libsomething.zip"
 			exit 0
 			;;
 		-h)
 			shift
 			hdrdir=$1
-			shift
 			;;
-		-a)
+		-f)
 			shift
-			staticlib=$1
-			shift
+			files="$files $1"
 			;;
 		*)
 			outpkg="$1"
-			shift
 			;;
 	esac
+	[[ $# > 0 ]] && shift;
 done
 
 [ -z "$outpkg" ] && source myci-error.sh "output package filename is not given";
@@ -61,13 +59,14 @@ for header in $headers; do
 	cp $header $dstdir
 done
 
-# copy static lib
+# copy files
 
-if [ ! -z "$staticlib" ]; then
-	dstdir=$tmp_dir/lib
-	mkdir -p $dstdir
-	cp $staticlib $dstdir
-fi
+for f in $files; do
+	srcdst=(${f//\/\/\// })
+	srcdst[1]=$tmp_dir/${srcdst[1]}
+	mkdir -p ${srcdst[1]}
+	cp ${srcdst[0]} ${srcdst[1]}
+done
 
 # create zip package
 
