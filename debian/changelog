@@ -1,3 +1,9 @@
+myci (0.1.40) unstable; urgency=medium
+
+  * cocoapods deploy to bintray also
+
+ -- Ivan Gagis <igagis@gmail.com>  Wed, 09 Oct 2019 14:10:00 +0300
+
 myci (0.1.39) unstable; urgency=medium
 
   * added create ZIP package script
