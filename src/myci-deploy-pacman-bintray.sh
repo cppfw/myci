@@ -104,6 +104,9 @@ packageFilename=$(basename $packageFile)
 package=$(echo "$packageFilename" | sed -n -e's/^\(.*\)-[0-9]\+\.[0-9]\+\.[0-9]\+-[0-9]\+-[^-]*\.pkg\.tar\.xz$/\1/p')
 version=$(echo "$packageFilename" | sed -n -e"s/^$package-\([0-9]\+\.[0-9]\+\.[0-9]\+\)-[0-9]\+-[^-]*\.pkg\.tar\.xz$/\1/p")
 
+echo "creating package '$package' on Bintray"
+createPackageOnBintray $username $reponame $package
+
 echo "creating version $version for package '$package' on Bintray"
 createVersionOnBintray $username $reponame $package $version
 
