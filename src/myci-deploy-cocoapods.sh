@@ -98,7 +98,7 @@ if [ ! -z "$bintray_user" ]; then
 	echo "Uploading file '$zip_package_file' to Bintray"
 	uploadFileToGenericBintray $zip_package_file $bintray_user $bitray_repo $package/$version $package $version
 
-	echo "Done deploying '$package' package version $version to Bintray Maven repo."
+	echo "Done deploying '$package' package version $version to Bintray Generic repo."
 fi
 
 echo "Deploying to cocoapods"

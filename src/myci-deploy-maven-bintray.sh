@@ -12,7 +12,7 @@ while [[ $# > 0 ]] ; do
 		--help)
 			echo "Script for deploying AAR packages to Bintray Maven repo."
 			echo "Usage:"
-			echo "	$(basename $0) -u <bintray-user-name> -r <bintray-repo-name> -p <repo-path> <package-aar-filename>"
+			echo "	$(basename $0) -u <bintray-user-name> -r <bintray-repo-name> -d <repo-path> -p <package-name> -v <version> <package-aar-filename>"
 			echo " "
 			echo "Environment variable MYCI_BINTRAY_API_KEY must be set to Bintray API key token, it will be stripped out from the script output."
 			echo "The AAR file should be named in form <package_name-X.Y.Z.aar>, where X, Y, Z are numbers."
@@ -20,7 +20,7 @@ while [[ $# > 0 ]] ; do
 			echo "The POM file should be named same as AAR file but with .pom suffix and should reside right next to .aar file."
 			echo " "
 			echo "Example:"
-			echo "	$(basename $0) -u igagis -r android -p io/github/igagis myawesomelib-1.3.14.aar"
+			echo "	$(basename $0) -u igagis -r android -d io/github/igagis -p myawesomelib -v 1.3.14 myawesomelib-1.3.14.aar"
 			exit 0
 			;;
 		-r)
@@ -33,7 +33,7 @@ while [[ $# > 0 ]] ; do
 			username=$1
 			shift
 			;;
-		-p)
+		-d)
 			shift
 			repoPath=$1
 			shift
@@ -41,6 +41,16 @@ while [[ $# > 0 ]] ; do
 		-a)
 			shift
 			aarFile=$1
+			shift
+			;;
+		-v)
+			shift
+			version=$1
+			shift
+			;;
+		-p)
+			shift
+			package=$1
 			shift
 			;;
 		*)
@@ -62,6 +72,10 @@ done
 
 [ -z "$aarFile" ] && source myci-error.sh "AAR file is not given";
 
+[ -z "$version" ] && source myci-error.sh "version is not given";
+
+[ -z "$package" ] && source myci-error.sh "package is not given";
+
 # make POM filename from AAR filename.
 pomFile=${aarFile%.*}.pom
 
@@ -72,14 +86,6 @@ pomFile=${aarFile%.*}.pom
 
 
 echo "Deploying AAR package to Bintray"
-
-filename=$(basename $aarFile)
-
-package=$(package_from_package_version_filename $filename)
-[ -z "$package" ] && source myci-error.sh "Could not extract package name from filename $filename";
-
-version=$(version_from_package_version_filename $filename)
-[ -z "$version" ] && source myci-error.sh "Could not extract version from filename $filename";
 
 echo "package = $package"
 echo "version = $version"
