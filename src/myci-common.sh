@@ -52,7 +52,7 @@ function uploadFileToGenericBintray {
 	local res=$(curl -o /dev/null -s --write-out "%{http_code}" -u$2:$MYCI_BINTRAY_API_KEY -T $1 -H"X-Bintray-Package:$5" -H"X-Bintray-Version:$6" -H"X-Bintray-Override:1" -H"X-Bintray-Publish:1" https://api.bintray.com/content/$2/$3/$4/);
 	[ -z "$res" ] && source myci-error.sh "curl failed while uploading file to Generic repo on Bintray";
 	[ $res -ne 201 ] && myci-error.sh "uploading file '$1' to Bintray package '$5' version $6 failed, HTTP code = $res";
-    echo "File '$1' uploaded to Bintray package '$4' version '$5'."
+	echo "File '$1' uploaded to Bintray package '$5' version '$6'."
 	return 0;
 }
 
