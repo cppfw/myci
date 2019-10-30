@@ -19,7 +19,7 @@ while [[ $# > 0 ]] ; do
 			echo "Package name will be taken from podspec filename."
             echo " "
             echo "Example:"
-            echo "	$(basename $0) -r igagis cocoapods/*.podspec.in"
+            echo "	$(basename $0) -r igagis -v 1.0.0 -u igagis -b cocoapods -p mypackage-1.0.0.zip cocoapods/mypackage.podspec.in"
             exit 0
 			;;
         -r)
