@@ -66,7 +66,7 @@ for f in $files; do
 	srcdst=(${f//\/\/\// })
 	srcdst[1]=$tmp_dir/${srcdst[1]}
 	mkdir -p ${srcdst[1]}
-	cp ${srcdst[0]} ${srcdst[1]}
+	cp -r ${srcdst[0]} ${srcdst[1]}
 done
 
 # create zip package
