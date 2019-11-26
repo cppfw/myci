@@ -19,7 +19,7 @@ matrix:
   - name: macosx
     os: osx
     compiler: clang
-    osx_image: xcode8.3
+    osx_image: xcode11
 
 env:
   global:
@@ -28,12 +28,12 @@ env:
   # Encrypted MYCI_BINTRAY_API_KEY for publishing to bintray.
   - secure: "VmP0rHmcK90uGkq2Raq8cdTLaZx8EdAuCIr+XChioC822E8qp9wwxh91a31jJbUCm1t/c8Xy66ld3iakS1c0CUCkT1INBTO9MX7ppLVVxw904G/FC/aZ8ubHBLWjx5DUKMRyj/dDf43Ke0iukbezDUuu8BSdjfPzOzM6JA40to0B5cMrMQkWo1ELNZdhBPKlD9ViTiQzSRr0nOrJOCYuqcSjyEfhRujZgEYIF7UOHqP+fuwrymofZPEmctAWC1aDmJ2LFLic/+osVqSHNMs9U05NedVbZUTgEMnRT3GqZpOjSQzreseV/aUC3jHk9UJCLRLzQIce75PJL/raqJj4Tnp3clUIMVsXJgITAlgTme0jLjQhh0DxgdI+kORppFzkhqN0mZF4kngRqTXMsKZ2L7FEuox4K5TESjJUR0YRvVzi2iVdIJnQjuhoidv3hWLxVoO0Ofp6x788e/1AbBpVvqIQA1+DniYD6BPFgtZAMpKaNs4r2AraqKh2nm0pgYtAARg9EUiFVrhd4Dos9PgMy/kiSr/OB+9z9Y+JdqOW5Q2fY8JQ40r0uidN/E+xJaZSrxsxkY/6+Dhx32MGNIPje+6Obo4FllqF2zpN2cybouzpME8LPg1FZQjSMiSU+1UDweht9rhm9gK6oMrBvixijffdzKnYXQc/8+4C92KhBAE="
   - MYCI_GIT_USERNAME=igagis
-  - USE_ANDROID_NDK_VERSION=15c
   - PACKAGE_NAME=myci
   matrix:
   - OS_REL=xenial OS=ubuntu DOCKER_IMAGE=$OS:$OS_REL PACKAGE_TYPE=deb
   - OS_REL=bionic OS=ubuntu DOCKER_IMAGE=$OS:$OS_REL PACKAGE_TYPE=deb
   - OS_REL=stretch OS=debian DOCKER_IMAGE=$OS:$OS_REL PACKAGE_TYPE=deb
+  - OS_REL=buster OS=debian DOCKER_IMAGE=$OS:$OS_REL PACKAGE_TYPE=deb
   - OS_REL=stretch OS=raspbian DOCKER_IMAGE=igagis/$OS:$OS_REL PACKAGE_TYPE=deb
 
 
@@ -47,12 +47,7 @@ before_install:
     fi;
   fi
 - if [ "$TRAVIS_JOB_NAME" == "macosx" ]; then
-    rvm install ruby-2.3.3 &&
-    rvm use ruby-2.3.3 &&
 
-    brew update > /dev/null &&
-    brew tap igagis/tap &&
-    brew update > /dev/null;
   fi
 
 install:
