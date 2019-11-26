@@ -47,7 +47,7 @@ before_install:
     fi;
   fi
 - if [ "$TRAVIS_JOB_NAME" == "macosx" ]; then
-
+    echo "nothing to do for macosx before install";
   fi
 
 install:
