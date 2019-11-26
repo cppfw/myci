@@ -20,6 +20,8 @@ matrix:
     os: osx
     compiler: clang
     osx_image: xcode11
+  - name: msys2
+    os: windows
 
 env:
   global:
@@ -49,10 +51,19 @@ before_install:
 - if [ "$TRAVIS_JOB_NAME" == "macosx" ]; then
     echo "nothing to do for macosx before install";
   fi
+- if [ "$TRAVIS_JOB_NAME" == "msys2" ]; then
+    choco upgrade --no-progress -y msys2 &&
+    export shell="/c/tools/msys64/msys2_shell.cmd -defterm -no-start -full-path -here -c";
+  fi
 
 install:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
     docker exec -t ccc src/myci-deb-install-build-deps.sh;
+  fi
+
+before_script:
+- if [ "$TRAVIS_JOB_NAME" == "msys2" ]; then
+    $shell "cd $(pwd) && myci-apply-version.sh -v \$(myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in";
   fi
 
 script:
@@ -62,6 +73,9 @@ script:
 - if [ "$TRAVIS_JOB_NAME" == "macosx" ]; then
     make test &&
     make install;
+  fi
+- if [ "$TRAVIS_JOB_NAME" == "msys2" ]; then
+    $shell "cd $(pwd)/msys2 && makepkg --syncdeps --noconfirm --skipinteg";
   fi
 
 
