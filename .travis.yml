@@ -63,7 +63,7 @@ install:
 
 before_script:
 - if [ "$TRAVIS_JOB_NAME" == "msys2" ]; then
-    $shell "cd $(pwd) && myci-apply-version.sh -v \$(myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in";
+    $shell "cd $(pwd) && src/myci-apply-version.sh -v \$(src/myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in";
   fi
 
 script:
