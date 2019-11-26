@@ -7,6 +7,9 @@ language: cpp
 dist: xenial
 os: linux
 
+git:
+  autocrlf: false
+
 addons:
   apt:
     update: true
