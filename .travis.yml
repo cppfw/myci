@@ -71,16 +71,18 @@ before_script:
 
 script:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
-    docker exec -t ccc dpkg-buildpackage -us -uc;
+    docker exec -t ccc dpkg-buildpackage -us -uc &&
+    make install;
   fi
 - if [ "$TRAVIS_JOB_NAME" == "macosx" ]; then
     make test &&
     make install;
   fi
+# running MSYS2 script from deployment provider did not work for some reason, so we do it here if the commit is a tagged one.
 - if [ "$TRAVIS_JOB_NAME" == "msys2" ]; then
     $msys2 "(cd msys2 && makepkg --syncdeps --noconfirm --skipinteg)" &&
     $msys2 "make install" &&
-    if [ -z "$TRAVIS_TAG" ]; then
+    if [ ! -z "$TRAVIS_TAG" ]; then
       $msys2 "myci-deploy-pacman-bintray.sh -u igagis -r msys2 -p msys -d igagis_msys msys2/*.tar.xz";
     fi;
   fi
@@ -91,10 +93,10 @@ deploy:
   on:
     tags: true
     condition: $PACKAGE_TYPE = deb && -z "$TRAVIS_JOB_NAME"
-  script: PATH=$PATH:$TRAVIS_BUILD_DIR/src myci-deploy-debian-bintray.sh -u igagis -r $OS -p $PACKAGE_NAME -c main -d $OS_REL $TRAVIS_BUILD_DIR/../*.deb
+  script: myci-deploy-debian-bintray.sh -u igagis -r $OS -p $PACKAGE_NAME -c main -d $OS_REL $TRAVIS_BUILD_DIR/../*.deb
 - provider: script
   skip_cleanup: true
-  script: src/myci-deploy-homebrew.sh -t igagis/tap
+  script: myci-deploy-homebrew.sh -t igagis/tap
   on:
     tags: true
     condition: $TRAVIS_JOB_NAME = macosx
