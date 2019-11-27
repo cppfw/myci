@@ -56,7 +56,8 @@ before_install:
   fi
 - if [ "$TRAVIS_JOB_NAME" == "msys2" ]; then
     choco upgrade --no-progress -y msys2 &&
-    export msys2="/c/tools/msys64/msys2_shell.cmd -defterm -no-start -full-path -msys2 -here -c";
+    export msys2="/c/tools/msys64/msys2_shell.cmd -defterm -no-start -msys2 -here -c" &&
+    $msys2 "pacman -Sy --noconfirm msys2-devel";
   fi
 
 install:
