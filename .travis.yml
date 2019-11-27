@@ -56,7 +56,9 @@ before_install:
   fi
 - if [ "$TRAVIS_JOB_NAME" == "msys2" ]; then
     choco upgrade --no-progress -y msys2 &&
-    export shell="/c/tools/msys64/msys2_shell.cmd -defterm -no-start -full-path -msys -here -c";
+    sed -E -i -e "s/@echo off//g" /c/tools/msys64/msys2_shell.cmd &&
+    head -10  /c/tools/msys64/msys2_shell.cmd &&
+    export msys2="/c/tools/msys64/msys2_shell.cmd -defterm -no-start -full-path -msys2 -here -c";
   fi
 
 install:
@@ -66,7 +68,7 @@ install:
 
 before_script:
 - if [ "$TRAVIS_JOB_NAME" == "msys2" ]; then
-    $shell "src/myci-apply-version.sh -v \$(src/myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in";
+    $msys2 "src/myci-apply-version.sh -v \$(src/myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in";
   fi
 
 script:
@@ -78,7 +80,7 @@ script:
     make install;
   fi
 - if [ "$TRAVIS_JOB_NAME" == "msys2" ]; then
-    $shell "cd msys2 && makepkg --syncdeps --noconfirm --skipinteg";
+    $msys2 "cd msys2 && makepkg --syncdeps --noconfirm --skipinteg";
   fi
 
 
@@ -97,8 +99,7 @@ deploy:
     condition: $TRAVIS_JOB_NAME = macosx
 - provider: script
   skip_cleanup: true
-  script: /c/tools/msys64/msys2_shell.cmd  -c "echo 'Hello world!'"
-  # "src/myci-deploy-pacman-bintray.sh -u igagis -r msys2 -p msys -d igagis_msys msys2/*.tar.xz"
+  script: $msys2 "src/myci-deploy-pacman-bintray.sh -u igagis -r msys2 -p msys -d igagis_msys msys2/*.tar.xz"
   on:
     tags: false
     condition: $TRAVIS_JOB_NAME = msys2
