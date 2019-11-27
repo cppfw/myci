@@ -56,7 +56,7 @@ before_install:
   fi
 - if [ "$TRAVIS_JOB_NAME" == "msys2" ]; then
     choco upgrade --no-progress -y msys2 &&
-    export shell="/c/tools/msys64/msys2_shell.cmd -defterm -no-start -full-path -here -c";
+    export shell="/c/tools/msys64/msys2_shell.cmd -defterm -no-start -full-path -where $TRAVIS_BUILD_DIR -c";
   fi
 
 install:
@@ -97,7 +97,7 @@ deploy:
     condition: $TRAVIS_JOB_NAME = macosx
 - provider: script
   skip_cleanup: true
-  script: /c/tools/msys64/msys2_shell.cmd --help
+  script: $shell "uname -a"
   # "src/myci-deploy-pacman-bintray.sh -u igagis -r msys2 -p msys -d igagis_msys msys2/*.tar.xz"
   on:
     tags: false
