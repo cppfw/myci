@@ -66,7 +66,7 @@ install:
 
 before_script:
 - if [ "$TRAVIS_JOB_NAME" == "msys2" ]; then
-    $shell "cd $(pwd) && src/myci-apply-version.sh -v \$(src/myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in";
+    $shell "src/myci-apply-version.sh -v \$(src/myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in";
   fi
 
 script:
@@ -78,7 +78,7 @@ script:
     make install;
   fi
 - if [ "$TRAVIS_JOB_NAME" == "msys2" ]; then
-    $shell "cd $(pwd)/msys2 && makepkg --syncdeps --noconfirm --skipinteg";
+    $shell "cd msys2 && makepkg --syncdeps --noconfirm --skipinteg";
   fi
 
 
@@ -97,7 +97,7 @@ deploy:
     condition: $TRAVIS_JOB_NAME = macosx
 - provider: script
   skip_cleanup: true
-  script: $shell "cd $(pwd) && PATH=\"$PATH:src\" src/myci-deploy-pacman-bintray.sh -u igagis -r msys2 -p msys -d igagis_msys msys2/*.tar.xz"
+  script: $shell "src/myci-deploy-pacman-bintray.sh -u igagis -r msys2 -p msys -d igagis_msys msys2/*.tar.xz"
   on:
     tags: true
     condition: $TRAVIS_JOB_NAME = msys2
