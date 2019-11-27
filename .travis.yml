@@ -81,6 +81,10 @@ script:
     $msys2 "cd msys2 && makepkg --syncdeps --noconfirm --skipinteg";
   fi
 
+before_deploy:
+- if [ "$TRAVIS_JOB_NAME" == "msys2" ] && [ -z "$TRAVIS_TAG" ]; then
+    $msys2 "src/myci-deploy-pacman-bintray.sh -u igagis -r msys2 -p msys -d igagis_msys msys2/*.tar.xz";
+  fi
 
 deploy:
 - provider: script
@@ -95,10 +99,3 @@ deploy:
   on:
     tags: true
     condition: $TRAVIS_JOB_NAME = macosx
-- provider: script
-  skip_cleanup: true
-  script: sed -E -i -e "s/@echo off//g" /c/tools/msys64/msys2_shell.cmd && head -10 /c/tools/msys64/msys2_shell.cmd && /c/tools/msys64/msys2_shell.cmd --help
-  #  $msys2 "src/myci-deploy-pacman-bintray.sh -u igagis -r msys2 -p msys -d igagis_msys msys2/*.tar.xz"
-  on:
-    tags: false
-    condition: $TRAVIS_JOB_NAME = msys2
