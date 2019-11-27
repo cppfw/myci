@@ -71,12 +71,10 @@ before_script:
 
 script:
 - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
-    docker exec -t ccc dpkg-buildpackage -us -uc &&
-    sudo make install;
+    docker exec -t ccc dpkg-buildpackage -us -uc;
   fi
 - if [ "$TRAVIS_JOB_NAME" == "macosx" ]; then
-    make test &&
-    make install;
+    make test;
   fi
 # running MSYS2 script from deployment provider did not work for some reason, so we do it here if the commit is a tagged one.
 - if [ "$TRAVIS_JOB_NAME" == "msys2" ]; then
@@ -85,6 +83,14 @@ script:
     if [ ! -z "$TRAVIS_TAG" ]; then
       $msys2 "myci-deploy-pacman-bintray.sh -u igagis -r msys2 -p msys -d igagis_msys msys2/*.tar.xz";
     fi;
+  fi
+
+before_deploy:
+- if [ "$TRAVIS_OS_NAME" == "linux" ] && [ -z "$TRAVIS_JOB_NAME" ]; then
+    sudo make install;
+  fi
+- if [ "$TRAVIS_JOB_NAME" == "macosx" ]; then
+    make install;
   fi
 
 deploy:
