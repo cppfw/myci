@@ -1,3 +1,9 @@
+myci (0.1.55) unstable; urgency=medium
+
+  * do not restrict archive suffix of the pacman package filename
+
+ -- Ivan Gagis <igagis@gmail.com>  Mon, 20 Jan 2020 22:28:00 +0200
+
 myci (0.1.54) unstable; urgency=medium
 
   * deploy to msys2 from travis
