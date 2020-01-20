@@ -41,6 +41,7 @@ while [[ $# > 0 ]] ; do
 			shift
 			;;
 		*)
+			[ ! -z "$packageFile" ] && source myci-error.sh "more than one package file is given, expected only one"
 			packageFile="$1"
 			shift
 			;;
@@ -84,13 +85,12 @@ versionedDbFilename=$dbName-$newDbVer.db.tar.gz
 
 res=$(curl -s -L --write-out "%{http_code}" https://dl.bintray.com/content/$username/$reponame/$repoPath/$dbFilename -o $dbFilename)
 
-# echo "http code = $res"
-
 if [ $res -ne 200 ]; then
 	rm $dbFilename
+	source myci-error.sh "could not download current pacman database, HTTP response code was $res, expected 200"
 fi
 
-echo "Adding package to the database"
+echo "Adding package '$packageFile' to the database"
 repo-add $dbFilename $packageFile
 
 ln -f -s $dbFilename $versionedDbFilename
