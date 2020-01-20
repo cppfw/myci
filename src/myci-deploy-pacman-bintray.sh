@@ -61,7 +61,7 @@ done
 
 echo "Deploying pacman package to Bintray"
 
-#Get latest version of pacman database package
+# Get latest version of pacman database package
 
 latestDbVer=$(curl -s https://api.bintray.com/packages/$username/$reponame/$dbName/versions/_latest | sed -n -e 's/.*"name":"\([^"]*\)".*/\1/p')
 
@@ -77,14 +77,14 @@ fi
 echo "New pacman DB version = $newDbVer"
 
 
-#Download current pacman database
+# Download current pacman database
 uncompressedDbFilename=$dbName.db
 dbFilename=$uncompressedDbFilename.tar.gz
 versionedDbFilename=$dbName-$newDbVer.db.tar.gz
 
 res=$(curl -s -L --write-out "%{http_code}" https://dl.bintray.com/content/$username/$reponame/$repoPath/$dbFilename -o $dbFilename)
 
-#echo "http code = $res"
+# echo "http code = $res"
 
 if [ $res -ne 200 ]; then
 	rm $dbFilename
@@ -96,13 +96,13 @@ repo-add $dbFilename $packageFile
 ln -f -s $dbFilename $versionedDbFilename
 
 
-#create new versions of packages
+# create new versions of packages
 
 #echo "package file = $packageFile"
 packageFilename=$(basename $packageFile)
 #echo "package filename = $packageFilename"
-package=$(echo "$packageFilename" | sed -n -e's/^\(.*\)-[0-9]\+\.[0-9]\+\.[0-9]\+-[0-9]\+-[^-]*\.pkg\.tar\.xz$/\1/p')
-version=$(echo "$packageFilename" | sed -n -e"s/^$package-\([0-9]\+\.[0-9]\+\.[0-9]\+\)-[0-9]\+-[^-]*\.pkg\.tar\.xz$/\1/p")
+package=$(echo "$packageFilename" | sed -n -e's/^\(.*\)-[0-9]\+\.[0-9]\+\.[0-9]\+-[0-9]\+-[^-]*\.pkg\..*/\1/p')
+version=$(echo "$packageFilename" | sed -n -e"s/^$package-\([0-9]\+\.[0-9]\+\.[0-9]\+\)-[0-9]\+-[^-]*\.pkg\..*/\1/p")
 
 echo "creating package '$package' on Bintray"
 createPackageOnBintray $username $reponame $package
@@ -114,7 +114,7 @@ echo "creating version $newDbVer for pacman database on Bintray"
 createVersionOnBintray $username $reponame $dbName $newDbVer
 
 
-#Upload packages
+# Upload packages
 
 echo "Uploading package file '$packageFilename' to Bintray"
 uploadFileToGenericBintray $packageFile $username $reponame $repoPath $package $version
