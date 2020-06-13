@@ -1,3 +1,10 @@
+myci (0.1.59) unstable; urgency=medium
+
+  * allow specifying soname from command line to myci-deb-prepare.sh
+    script
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 14 Jun 2020 00:52:04 +0300
+
 myci (0.1.58) unstable; urgency=medium
 
   * deploy to ubuntu eoan
