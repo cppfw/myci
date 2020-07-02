@@ -1,3 +1,9 @@
+myci (0.1.60) unstable; urgency=medium
+
+  * build for raspbian buster
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 02 Jul 2020 23:28:47 +0300
+
 myci (0.1.59) unstable; urgency=medium
 
   * allow specifying soname from command line to myci-deb-prepare.sh
