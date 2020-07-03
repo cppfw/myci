@@ -12,7 +12,7 @@ Depends: sed
 Description: Helper CI scripts.
  Some helper CI scripts, mainly for deploying to different repositories.
 
-Package: myci$(soname)
+Package: myci_dummy
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
