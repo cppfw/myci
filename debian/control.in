@@ -11,3 +11,11 @@ Architecture: all
 Depends: sed
 Description: Helper CI scripts.
  Some helper CI scripts, mainly for deploying to different repositories.
+
+Package: myci$(soname)
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Dummy binary package.
+ This is the dummy binary package to be published on bintray.com to force it to create
+ armhf (or what ever architecture) repo index for new repos which have no any packages yet.
