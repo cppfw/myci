@@ -1,3 +1,9 @@
+myci (0.1.61) unstable; urgency=medium
+
+  * added dummy binary debian package generation
+
+ -- Ivan Gagis <igagis@gmail.com>  Fri, 03 Jul 2020 14:43:05 +0300
+
 myci (0.1.60) unstable; urgency=medium
 
   * build for raspbian buster
