@@ -1,3 +1,9 @@
+myci (0.1.62) unstable; urgency=medium
+
+  * fix debian packaging by adding myci.install file
+
+ -- Ivan Gagis <igagis@gmail.com>  Fri, 03 Jul 2020 15:26:13 +0300
+
 myci (0.1.61) unstable; urgency=medium
 
   * added dummy binary debian package generation
