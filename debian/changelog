@@ -1,3 +1,9 @@
+myci (0.1.63) unstable; urgency=medium
+
+  * list homebrew formulae dependencies script
+
+ -- Ivan Gagis <igagis@gmail.com>  Wed, 16 Sep 2020 17:55:28 +0300
+
 myci (0.1.62) unstable; urgency=medium
 
   * fix debian packaging by adding myci.install file
