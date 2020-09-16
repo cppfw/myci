@@ -34,7 +34,7 @@ fi
 
 for input_file in $input_files; do
     while read line; do
-        regexp="s/\\s*depends_on\\s*\"\([^\"]*\)\".*/\1/p"
+        regexp="s/[ \t]*depends_on[ \t]*\"\([^\"]*\)\".*/\1/p"
         # echo re = $regexp
         dep=$(echo $line | sed -n -e "$regexp")
         # echo line = $line dep = $dep
