@@ -1,3 +1,9 @@
+myci (0.1.64) unstable; urgency=medium
+
+  * homebrew: list deps script fix
+
+ -- Ivan Gagis <igagis@gmail.com>  Wed, 16 Sep 2020 22:34:28 +0300
+
 myci (0.1.63) unstable; urgency=medium
 
   * list homebrew formulae dependencies script
