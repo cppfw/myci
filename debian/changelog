@@ -1,3 +1,10 @@
+myci (0.1.65) unstable; urgency=medium
+
+  * create-zip-package script: allow placing header files to custom
+    subdirectory within include directory of the package
+
+ -- Ivan Gagis <igagis@gmail.com>  Tue, 13 Oct 2020 17:00:52 +0300
+
 myci (0.1.64) unstable; urgency=medium
 
   * homebrew: list deps script fix
