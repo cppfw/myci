@@ -50,9 +50,6 @@ if [ ! -z "$hdrdir_dst" ]; then
 	hdrdir_dst="${hdrdir_dst%/}/"
 fi
 
-echo "hdrdir=$hdrdir"
-echo "hdrdir_dst=$hdrdir_dst"
-
 echo "Creating ZIP package"
 
 # delete old archive if one exists
