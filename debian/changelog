@@ -1,3 +1,9 @@
+myci (0.1.67) unstable; urgency=medium
+
+  * brew install script
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 22 Oct 2020 22:16:06 +0300
+
 myci (0.1.66) unstable; urgency=medium
 
   * remove debug echoes
