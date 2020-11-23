@@ -1,11 +1,10 @@
 #!/bin/bash
 
-#we want exit immediately if any command fails and we want error in piped commands to be preserved
+# we want exit immediately if any command fails and we want error in piped commands to be preserved
 set -eo pipefail
 
-#Script for quick deployment to homebrew.
-#It assumes that homebrew recipes to deploy are in 'homebrew' directory.
-
+# Script for quick deployment to homebrew.
+# It assumes that homebrew recipes to deploy are in 'homebrew' directory.
 
 while [[ $# > 0 ]] ; do
 	case $1 in
@@ -40,8 +39,7 @@ if [ -z "$infiles" ]; then
 	infiles=$(ls homebrew/*.rb.in)
 fi
 
-
-#parse homebrew tap name
+# parse homebrew tap name
 tap=(${tapname//\// })
 
 username="${tap[0]}"
@@ -49,32 +47,28 @@ tapname="homebrew-${tap[1]}"
 
 echo "username: ${username}, tapname: ${tapname}"
 
-#update version numbers
+# update version numbers
 echo "getting version from Debian changelog"
 version=$(myci-deb-version.sh debian/changelog)
-#echo $version
+
+# echo $version
 myci-apply-version.sh -v $version $infiles
 
-#clean if needed
+# clean if needed
 rm -rf $tapname
 
 echo "Setting git credentials helper mode to store credentials for unlimited time"
 git config --global credential.helper store
 [ $? != 0 ] && echo "Error: 'git config --global credential.helper store' failed" && exit 1;
 
-
 echo "Cloning tap repo from github"
-#clone tap repo
 repo=https://$MYCI_GIT_USERNAME:$MYCI_GIT_ACCESS_TOKEN@github.com/$username/$tapname.git
 
-#Make sure MYCI_GIT_ACCESS_TOKEN is set
 [ -z "$MYCI_GIT_ACCESS_TOKEN" ] && echo "Error: MYCI_GIT_ACCESS_TOKEN is not set" && exit 1;
 
-#Make sure MYCI_GIT_USERNAME is set
 [ -z "$MYCI_GIT_USERNAME" ] && echo "Error: MYCI_GIT_USERNAME is not set" && exit 1;
 
 cutSecret="sed -e s/$MYCI_GIT_ACCESS_TOKEN/<secret>/"
-
 
 #echo "git clone $repo | $cutSecret"
 git clone $repo 2>&1 | $cutSecret
