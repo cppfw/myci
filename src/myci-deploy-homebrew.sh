@@ -57,24 +57,30 @@ myci-apply-version.sh -v $version $infiles
 # clean if needed
 rm -rf $tapname
 
-echo "Setting git credentials helper mode to store credentials for unlimited time"
-git config --global credential.helper store
-[ $? != 0 ] && echo "Error: 'git config --global credential.helper store' failed" && exit 1;
+[ -z "$MYCI_GIT_USERNAME" ] && myci-error.sh "Error: MYCI_GIT_USERNAME is not set";
+# TODO: remove usage of MYCI_GIT_ACCESS_TOKEN
+if [ -z "$MYCI_GIT_ACCESS_TOKEN" ]; then
+	[ -z "$MYCI_GIT_PASSWORD" ] && myci-error.sh "Error: MYCI_GIT_PASSWORD is not set";
+fi
 
 echo "Cloning tap repo from github"
-repo=https://$MYCI_GIT_USERNAME:$MYCI_GIT_ACCESS_TOKEN@github.com/$username/$tapname.git
+# TODO: remove usage of MYCI_GIT_ACCESS_TOKEN
+if [ ! -z "$MYCI_GIT_ACCESS_TOKEN" ]; then
+	echo "Setting git credentials helper mode to store credentials for unlimited time"
+	git config --global credential.helper store
+	[ $? != 0 ] && echo "Error: 'git config --global credential.helper store' failed" && exit 1;
 
-[ -z "$MYCI_GIT_ACCESS_TOKEN" ] && echo "Error: MYCI_GIT_ACCESS_TOKEN is not set" && exit 1;
+	repo=https://$MYCI_GIT_USERNAME:$MYCI_GIT_ACCESS_TOKEN@github.com/$username/$tapname.git
+	cutSecret="sed -e s/$MYCI_GIT_ACCESS_TOKEN/<secret>/"
+	#echo "git clone $repo | $cutSecret"
+	git clone $repo 2>&1 | $cutSecret
+else
+	GIT_ASKPASS=myci-git-askpass.sh git clone https://$MYCI_GIT_USERNAME@github.com/$username/$tapname.git
+fi
 
-[ -z "$MYCI_GIT_USERNAME" ] && echo "Error: MYCI_GIT_USERNAME is not set" && exit 1;
-
-cutSecret="sed -e s/$MYCI_GIT_ACCESS_TOKEN/<secret>/"
-
-#echo "git clone $repo | $cutSecret"
-git clone $repo 2>&1 | $cutSecret
 [ $? != 0 ] && echo "Error: 'git clone' failed" && exit 1;
 
-#echo "$infiles"
+#echo "infiles = $infiles"
 
 for fin in $infiles
 do
@@ -96,4 +102,9 @@ do
 	(cd $tapname && git add $specfilename && git commit -a -m"version $version of $specfilename")
 done
 
-(cd $tapname; git push 2>&1 | $cutSecret)
+# TODO: remove usage of MYCI_GIT_ACCESS_TOKEN
+if [ ! -z "$MYCI_GIT_ACCESS_TOKEN" ]; then
+	(cd $tapname; git push 2>&1 | $cutSecret)
+else
+	(cd $tapname; GIT_ASKPASS=myci-git-askpass.sh git push)
+fi
