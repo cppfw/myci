@@ -77,7 +77,6 @@ fi
 
 echo "New pacman DB version = $newDbVer"
 
-
 # Download current pacman database
 uncompressedDbFilename=$dbName.db
 dbFilename=$uncompressedDbFilename.tar.gz
@@ -95,7 +94,6 @@ repo-add $dbFilename $packageFile
 
 ln -f -s $dbFilename $versionedDbFilename
 
-
 # create new versions of packages
 
 #echo "package file = $packageFile"
@@ -112,7 +110,6 @@ createVersionOnBintray $username $reponame $package $version
 
 echo "creating version $newDbVer for pacman database on Bintray"
 createVersionOnBintray $username $reponame $dbName $newDbVer
-
 
 # Upload packages
 

@@ -54,7 +54,7 @@ while [[ $# > 0 ]] ; do
 	[[ $# > 0 ]] && shift;
 done
 
-[ -z "$MYCI_GIT_ACCESS_TOKEN" ] && source myci-error.sh "MYCI_GIT_ACCESS_TOKEN is not set";
+[ -z "$MYCI_GIT_PASSWORD" ] && source myci-error.sh "MYCI_GIT_PASSWORD is not set";
 
 [ -z "$reponame" ] && source myci-error.sh "cocoapods reponame is not given";
 
@@ -103,13 +103,22 @@ fi
 
 echo "Deploying to cocoapods"
 
-cutSecret="sed -e s/$MYCI_GIT_ACCESS_TOKEN/<secret>/"
+# TODO: remove usage of MYCI_GIT_ACCESS_TOKEN
+if [ ! -z "$MYCI_GIT_ACCESS_TOKEN" ]; then
+	cutSecret="sed -e s/$MYCI_GIT_ACCESS_TOKEN/<secret>/"
+fi
 
 echo "Cocoapods version = $(pod --version)"
 
 # Need to pass --use-libraries because before pushing the spec it will run 'pod lint'
 # on it. And 'pod lint' uses framework integration by default which will fail to copy
 # some header files to the right places.
-pod repo push $reponame $outpodspecfile --use-libraries --skip-import-validation --allow-warnings 2>&1 | $cutSecret
+
+# TODO: remove usage of MYCI_GIT_ACCESS_TOKEN
+if [ ! -z "$MYCI_GIT_ACCESS_TOKEN" ]; then
+	pod repo push $reponame $outpodspecfile --use-libraries --skip-import-validation --allow-warnings 2>&1 | $cutSecret
+else
+	GIT_ASKPASS=myci-git-askpass.sh pod repo push $reponame $outpodspecfile --use-libraries --skip-import-validation --allow-warnings
+fi
 
 echo "Deploying to cocoapods done!"

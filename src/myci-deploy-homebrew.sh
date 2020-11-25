@@ -57,10 +57,10 @@ myci-apply-version.sh -v $version $infiles
 # clean if needed
 rm -rf $tapname
 
-[ -z "$MYCI_GIT_USERNAME" ] && myci-error.sh "Error: MYCI_GIT_USERNAME is not set";
+[ -z "$MYCI_GIT_USERNAME" ] && source myci-error.sh "Error: MYCI_GIT_USERNAME is not set";
 # TODO: remove usage of MYCI_GIT_ACCESS_TOKEN
 if [ -z "$MYCI_GIT_ACCESS_TOKEN" ]; then
-	[ -z "$MYCI_GIT_PASSWORD" ] && myci-error.sh "Error: MYCI_GIT_PASSWORD is not set";
+	[ -z "$MYCI_GIT_PASSWORD" ] && source myci-error.sh "Error: MYCI_GIT_PASSWORD is not set";
 fi
 
 echo "Cloning tap repo from github"
