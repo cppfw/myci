@@ -1,3 +1,9 @@
+myci (0.1.69) unstable; urgency=medium
+
+  * homebrew: use GIT_ASKPASS
+
+ -- Ivan Gagis <igagis@gmail.com>  Wed, 25 Nov 2020 14:37:19 +0200
+
 myci (0.1.68) unstable; urgency=medium
 
   * add git askpass script
