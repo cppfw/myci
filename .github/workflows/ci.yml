@@ -59,17 +59,17 @@ jobs:
     runs-on: windows-latest
     defaults:
       run:
-        shell: bash
+        shell: msys2 {0}
     steps:
-    - name: switch git-bash shell to msys2 shell by adding msys2 path to PATH front
-      run: echo "C:\msys64\usr\bin" >> $GITHUB_PATH
-      shell: bash
-    - name: update msys2
-      run: pacman -Syu
+    - name: make msys2 to provide the default shell
+      uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        msystem: MSYS
+        install: >-
+          msys2-devel
     - name: git clone
       uses: actions/checkout@main
-    - name: install ci tools
-      run: pacman -Sy --noconfirm msys2-devel
     - name: test myci
       run: make test
     # install myci to use it for package building
