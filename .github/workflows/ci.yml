@@ -69,11 +69,13 @@ jobs:
     - name: install ci tools
       run: pacman -Sy --noconfirm msys2-devel
     - name: install myci
-      run: make install
+      run: make install PREFIX=/usr
     - name: prepare pacman package
       run: myci-apply-version.sh -v $(myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in
     - name: build
-      run: (cd msys2 && makepkg --syncdeps --noconfirm --skipinteg)
+      run: |
+        cd msys2
+        makepkg --syncdeps --noconfirm --skipinteg
     - name: deploy
       run: myci-deploy-pacman-bintray.sh --user cppfw --repo msys2 --path msys --database cppfw_msys msys2/$PACKAGE_NAME-*-any.pkg.*
       if: startsWith(github.ref, 'refs/tags/')
