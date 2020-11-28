@@ -10,15 +10,16 @@ while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
 			echo "Usage:"
-			echo "\t$(basename $0) -t <tap-name> <recipe-file-name.rb.in> ..."
+			echo "\t$(basename $0) -t/--tap <tap-name> <recipe-file-name.rb.in> ..."
 			echo " "
-			echo "GitHub username and access token should be in MYCI_GIT_USERNAME and MYCI_GIT_ACCESS_TOKEN environment variables."
+			echo "GitHub username and access token should be in MYCI_GIT_USERNAME and MYCI_GIT_PASSWORD environment variables."
 			echo " "
 			echo "Example:"
 			echo "\t$(basename $0) -t igagis/tap homebrew/*.rb.in"
 			exit 0
 			;;
 		-t)
+		--tap)
 			shift
 			tapname=$1
 			shift
@@ -58,25 +59,10 @@ myci-apply-version.sh -v $version $infiles
 rm -rf $tapname
 
 [ -z "$MYCI_GIT_USERNAME" ] && source myci-error.sh "Error: MYCI_GIT_USERNAME is not set";
-# TODO: remove usage of MYCI_GIT_ACCESS_TOKEN
-if [ -z "$MYCI_GIT_ACCESS_TOKEN" ]; then
-	[ -z "$MYCI_GIT_PASSWORD" ] && source myci-error.sh "Error: MYCI_GIT_PASSWORD is not set";
-fi
+[ -z "$MYCI_GIT_PASSWORD" ] && source myci-error.sh "Error: MYCI_GIT_PASSWORD is not set";
 
 echo "Cloning tap repo from github"
-# TODO: remove usage of MYCI_GIT_ACCESS_TOKEN
-if [ ! -z "$MYCI_GIT_ACCESS_TOKEN" ]; then
-	echo "Setting git credentials helper mode to store credentials for unlimited time"
-	git config --global credential.helper store
-	[ $? != 0 ] && echo "Error: 'git config --global credential.helper store' failed" && exit 1;
-
-	repo=https://$MYCI_GIT_USERNAME:$MYCI_GIT_ACCESS_TOKEN@github.com/$username/$tapname.git
-	cutSecret="sed -e s/$MYCI_GIT_ACCESS_TOKEN/<secret>/"
-	#echo "git clone $repo | $cutSecret"
-	git clone $repo 2>&1 | $cutSecret
-else
-	GIT_ASKPASS=myci-git-askpass.sh git clone https://$MYCI_GIT_USERNAME@github.com/$username/$tapname.git
-fi
+GIT_ASKPASS=myci-git-askpass.sh git clone https://$MYCI_GIT_USERNAME@github.com/$username/$tapname.git
 
 [ $? != 0 ] && echo "Error: 'git clone' failed" && exit 1;
 
@@ -102,9 +88,4 @@ do
 	(cd $tapname && git add $specfilename && git commit -a -m"version $version of $specfilename")
 done
 
-# TODO: remove usage of MYCI_GIT_ACCESS_TOKEN
-if [ ! -z "$MYCI_GIT_ACCESS_TOKEN" ]; then
-	(cd $tapname; git push 2>&1 | $cutSecret)
-else
-	(cd $tapname; GIT_ASKPASS=myci-git-askpass.sh git push)
-fi
+(cd $tapname; GIT_ASKPASS=myci-git-askpass.sh git push)

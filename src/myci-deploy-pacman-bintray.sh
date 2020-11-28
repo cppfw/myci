@@ -12,7 +12,7 @@ while [[ $# > 0 ]] ; do
 		--help)
 			echo "Script for deploying pacman packages to Bintray Generic repo."
 			echo "Usage:"
-			echo "	$(basename $0) -u <bintray-user-name> -r <bintray-repo-name> -p <repo-path> -d <database-name> <package-filename>"
+			echo "	$(basename $0) -u/--user <bintray-user-name> -r/--repo <bintray-repo-name> -p/--path <repo-path> -d/--database <database-name> <package-filename>"
 			echo " "
 			echo "Environment variable MYCI_BINTRAY_API_KEY must be set to Bintray API key token, it will be stripped out from the script output."
 			echo " "
@@ -21,21 +21,25 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
 		-r)
+		--repo)
 			shift
 			reponame=$1
 			shift
 			;;
 		-u)
+		--user)
 			shift
 			username=$1
 			shift
 			;;
 		-p)
+		--path)
 			shift
 			repoPath=$1
 			shift
 			;;
 		-d)
+		--database)
 			shift
 			dbName=$1
 			shift

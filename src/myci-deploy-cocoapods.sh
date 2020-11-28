@@ -14,7 +14,7 @@ while [[ $# > 0 ]] ; do
             echo "Usage:"
             echo "	$(basename $0) -r <cocoapods-repo-name> -v <version> [-u <bintray-user> -b <bintray-repo> -p <package-file>] <spec.podspec.in>"
             echo " "
-            echo "Environment variable MYCI_GIT_ACCESS_TOKEN can be set to git access token, so that it will be stripped out from the script output."
+            echo "Environment variable MYCI_GIT_PASSWORD can be set to git access token, so that it will be stripped out from the script output."
 			echo "When uploading binary package to bintray MYCI_BINTRAY_API_KEY must be set to Bintray API key token, it will be stripped out from the script output."
 			echo "Package name will be taken from podspec filename."
             echo " "
@@ -103,22 +103,12 @@ fi
 
 echo "Deploying to cocoapods"
 
-# TODO: remove usage of MYCI_GIT_ACCESS_TOKEN
-if [ ! -z "$MYCI_GIT_ACCESS_TOKEN" ]; then
-	cutSecret="sed -e s/$MYCI_GIT_ACCESS_TOKEN/<secret>/"
-fi
-
 echo "Cocoapods version = $(pod --version)"
 
 # Need to pass --use-libraries because before pushing the spec it will run 'pod lint'
 # on it. And 'pod lint' uses framework integration by default which will fail to copy
 # some header files to the right places.
 
-# TODO: remove usage of MYCI_GIT_ACCESS_TOKEN
-if [ ! -z "$MYCI_GIT_ACCESS_TOKEN" ]; then
-	pod repo push $reponame $outpodspecfile --use-libraries --skip-import-validation --allow-warnings 2>&1 | $cutSecret
-else
-	GIT_ASKPASS=myci-git-askpass.sh pod repo push $reponame $outpodspecfile --use-libraries --skip-import-validation --allow-warnings
-fi
+GIT_ASKPASS=myci-git-askpass.sh pod repo push $reponame $outpodspecfile --use-libraries --skip-import-validation --allow-warnings
 
 echo "Deploying to cocoapods done!"

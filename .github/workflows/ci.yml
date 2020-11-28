@@ -26,7 +26,9 @@ jobs:
       - name: git clone
         uses: actions/checkout@main
       - name: install ci tools
-        run: apt install --assume-yes devscripts equivs
+        run: |
+          apt update
+          apt install --assume-yes devscripts equivs
       - name: install myci
         run: make install
       - name: prepare debian package
@@ -36,7 +38,7 @@ jobs:
       - name: build
         run: autojobs=true dpkg-buildpackage --unsigned-source --unsigned-changes
       - name: deploy deb packages
-        run: myci-deploy-debian-bintray.sh -u cppfw -r ${{ matrix.os }} -p $PACKAGE_NAME -c main -d ${{ matrix.codename }} ../*.deb
+        run: myci-deploy-debian-bintray.sh --user cppfw --repo ${{ matrix.os }} --package $PACKAGE_NAME --component main --distro ${{ matrix.codename }} ../*.deb
         if: matrix.package_type == 'deb' && startsWith(github.ref, 'refs/tags/')
 ##### macosx #####
   macosx:
@@ -51,7 +53,7 @@ jobs:
     - name: test
       run: make test autojobs=true
     - name: deploy
-      run: myci-deploy-homebrew.sh -t cppfw/tap
+      run: myci-deploy-homebrew.sh --tap cppfw/tap
       if: startsWith(github.ref, 'refs/tags/')
 ##### msys2 #####
   msys2:
@@ -66,7 +68,7 @@ jobs:
     - name: git clone
       uses: actions/checkout@main
     - name: install ci tools
-      run: pacman -Sy --noconfirm myci msys2-devel
+      run: pacman -Sy --noconfirm msys2-devel
     - name: install myci
       run: make install
     - name: prepare pacman package
@@ -74,5 +76,5 @@ jobs:
     - name: build
       run: (cd msys2 && makepkg --syncdeps --noconfirm --skipinteg)
     - name: deploy
-      run: myci-deploy-pacman-bintray.sh -u cppfw -r msys2 -p msys -d cppfw_msys msys2/$PACKAGE_NAME-*-any.pkg.*
+      run: myci-deploy-pacman-bintray.sh --user cppfw --repo msys2 --path msys --database cppfw_msys msys2/$PACKAGE_NAME-*-any.pkg.*
       if: startsWith(github.ref, 'refs/tags/')

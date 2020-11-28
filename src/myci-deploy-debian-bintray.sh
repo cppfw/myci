@@ -11,7 +11,7 @@ while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
 			echo "Usage:"
-			echo "	$(basename $0) -u <bintray-user-name> -r <bintray-repo-name> -p <package-name> -c <deb_component> -d <deb_distribution> <package-filename> [<package-filename> ...]"
+			echo "	$(basename $0) -u/--user <bintray-user-name> -r/--repo <bintray-repo-name> -p/--package <package-name> -c/--component <deb_component> -d/--distro <deb_distribution> <package-filename> [<package-filename> ...]"
 			echo " "
 			echo "Environment variable MYCI_BINTRAY_API_KEY must be set to Bintray API key token, it will be stripped out from the script output."
 			echo " "
@@ -20,26 +20,31 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
 		-r)
+		--repo)
 			shift
 			reponame=$1
 			shift
 			;;
 		-u)
+		--user)
 			shift
 			username=$1
 			shift
 			;;
 		-p)
+		--package)
 			shift
 			packageName=$1
 			shift
 			;;
         -c)
+		--component)
             shift
             component=$1
             shift
             ;;
         -d)
+		--distro)
             shift
             distribution=$1
             shift
