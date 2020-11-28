@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#we want exit immediately if any command fails and we want error in piped commands to be preserved
+# we want exit immediately if any command fails and we want error in piped commands to be preserved
 set -eo pipefail
 
-#Script installing debian package build dependencies listed in debian/control
+# script installing debian package build dependencies listed in debian/control
 
 while [[ $# > 0 ]] ; do
 	case $1 in
@@ -33,7 +33,7 @@ unmetDepsMsg="dpkg-checkbuilddeps: error: Unmet build dependencies: "
 
 [ ! -z "$builddeps" ] && [ -z "$(echo $builddeps | sed -n -e "s/^$unmetDepsMsg//p")" ] && myci-error.sh "Could not check for unmet build dependencies.\nError message: $builddeps";
 
-# Remove version restrictions from list of unmet dependencies
+# remove version restrictions from list of unmet dependencies
 deps=$(echo $builddeps | sed -n -e "s/^$unmetDepsMsg//p" | sed -e 's/ ([^)]*)//g')
 
 if [ -z "$deps" ]; then
@@ -45,5 +45,5 @@ fi
 
 apt install -y $deps
 
-# Finally, check again that all dependencies were installed successfully.
+# finally, check again that all dependencies were installed successfully.
 dpkg-checkbuilddeps

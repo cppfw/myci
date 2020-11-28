@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#we want exit immediately if any command fails and we want error in piped commands to be preserved
+# we want exit immediately if any command fails and we want error in piped commands to be preserved
 set -eo pipefail
 
 while [[ $# > 0 ]] ; do
@@ -12,7 +12,7 @@ while [[ $# > 0 ]] ; do
 			echo -e "\t$(basename $0) <options> \"error message\""
 			echo ""
 			echo "Options:"
-			echo -e "\t-e <exit-code>"
+			echo -e "\t-e,--exit-code <exit-code>"
 			echo -e "\tExit code to pass to the 'exit' command. Default value is 1."
 			echo ""
 			echo "Examples:"
@@ -21,6 +21,8 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
 		-e)
+			;&
+		--exit-code)
 			shift
 			exitCode=$1
 			shift

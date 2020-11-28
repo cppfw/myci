@@ -12,7 +12,7 @@ while [[ $# > 0 ]] ; do
 		--help)
 			echo "Script for deploying AAR packages to Bintray Maven repo."
 			echo "Usage:"
-			echo "	$(basename $0) -u <bintray-user-name> -r <bintray-repo-name> -d <repo-path> -p <package-name> -v <version> <package-aar-filename>"
+			echo "	$(basename $0) -u/--user <bintray-user-name> -r/--repo <bintray-repo-name> -d/--path <repo-path> -p/--package <package-name> -v/--version <version> <package-aar-filename>"
 			echo " "
 			echo "Environment variable MYCI_BINTRAY_API_KEY must be set to Bintray API key token, it will be stripped out from the script output."
 			echo "The AAR file should be named in form <package_name-X.Y.Z.aar>, where X, Y, Z are numbers."
@@ -24,31 +24,43 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
 		-r)
+			;&
+		--repo)
 			shift
 			reponame=$1
 			shift
 			;;
 		-u)
+			;&
+		--user)
 			shift
 			username=$1
 			shift
 			;;
 		-d)
+			;&
+		--path)
 			shift
 			repoPath=$1
 			shift
 			;;
 		-a)
+			;&
+		--aar)
 			shift
 			aarFile=$1
 			shift
 			;;
 		-v)
+			;&
+		--version)
 			shift
 			version=$1
 			shift
 			;;
 		-p)
+			;&
+		--package)
 			shift
 			package=$1
 			shift

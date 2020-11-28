@@ -9,7 +9,7 @@ while [[ $# > 0 ]] ; do
 		--help)
 			echo "Script for packing the library to ZIP package."
 			echo "Usage:"
-			echo "	$(basename $0) -h <headers-dir>[///<headers-dest-subdir>] [-f <source-filename>[///<destination-directory-within-archive>] ...] <output-package-filename>"
+			echo "	$(basename $0) -h/--headers-dir <headers-dir>[///<headers-dest-subdir>] [-f/--file <source-filename>[///<destination-directory-within-archive>] ...] <output-package-filename>"
 			echo " "
 			echo "The script packs supplied headers (.hpp and .h) preserving directory structure into the 'include' directory withing archive."
 			echo "There can be any number of -f keys. The '///<destination-directory-within-archive>' part of the -f key value can be omitted,"
@@ -21,10 +21,14 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
 		-h)
+			;&
+		--headers-dir)
 			shift
 			hdrdir=$1
 			;;
 		-f)
+			;&
+		--file)
 			shift
 			files="$files $1"
 			;;

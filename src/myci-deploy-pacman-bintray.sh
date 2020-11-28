@@ -21,24 +21,28 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
 		-r)
+			;&
 		--repo)
 			shift
 			reponame=$1
 			shift
 			;;
 		-u)
+			;&
 		--user)
 			shift
 			username=$1
 			shift
 			;;
 		-p)
+			;&
 		--path)
 			shift
 			repoPath=$1
 			shift
 			;;
 		-d)
+			;&
 		--database)
 			shift
 			dbName=$1

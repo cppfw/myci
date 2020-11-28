@@ -19,6 +19,7 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
 		-t)
+			;&
 		--tap)
 			shift
 			tapname=$1

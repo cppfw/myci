@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#we want exit immediately if any command fails and we want error in piped commands to be preserved
+# we want exit immediately if any command fails and we want error in piped commands to be preserved
 set -eo pipefail
 
 while [[ $# > 0 ]] ; do
@@ -8,11 +8,13 @@ while [[ $# > 0 ]] ; do
 		--help)
 			echo "Prorab apply version utility."
 			echo "Usage:"
-			echo "	myci-apply-version.sh -v <version> <list-of-input-files> [--filename-only]"
+			echo "	myci-apply-version.sh -v/--version <version> <list-of-input-files> [--filename-only]"
 			echo "Input files are files with '.in' extension"
 			exit
 			;;
 		-v)
+			;&
+		--version)
 			shift
 			version=$1
 			shift
@@ -36,7 +38,7 @@ for i in $infiles; do
 	outfile=$(echo $i | sed -e "s/\(.*\)\.in$/\1/" | sed -e "s/\$(version)/$version/g")
 
 	if [ -z "$filenameonly" ]; then
-		sed -e "s/\$(version)/$version/g" $i > $outfile
+		sed --binary -e "s/\$(version)/$version/g" $i > $outfile
 	else
 		cp $i $outfile
 	fi
