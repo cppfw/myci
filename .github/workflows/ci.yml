@@ -1,0 +1,78 @@
+name: ci
+on: [push, pull_request]
+env:
+  PACKAGE_NAME: ${{ github.event.repository.name }}
+  MYCI_BINTRAY_API_KEY: ${{ secrets.MYCI_BINTRAY_API_KEY }}
+  MYCI_GIT_USERNAME: igagis
+  MYCI_GIT_PASSWORD: ${{ secrets.MYCI_GIT_ACCESS_TOKEN }}
+jobs:
+##### linux #####
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: debian, codename: stretch, image_owner: , package_type: deb}
+          - {os: debian, codename: buster, image_owner: , package_type: deb}
+          - {os: ubuntu, codename: xenial, image_owner: , package_type: deb}
+          - {os: ubuntu, codename: bionic, image_owner: , package_type: deb}
+          - {os: ubuntu, codename: eoan, image_owner: , package_type: deb}
+          # - {os: raspbian, codename: stretch, image_owner: igagis/, package_type: deb}
+          # - {os: raspbian, codename: buster, image_owner: igagis/, package_type: deb}
+    container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
+    name: linux - ${{ matrix.os }}:${{ matrix.codename }}
+    steps:
+      - name: git clone
+        uses: actions/checkout@main
+      - name: install ci tools
+        run: apt install --assume-yes devscripts equivs
+      - name: install myci
+        run: make install
+      - name: prepare debian package
+        run: myci-deb-prepare.sh
+      - name: install deps
+        run: myci-deb-install-build-deps.sh
+      - name: build
+        run: autojobs=true dpkg-buildpackage --unsigned-source --unsigned-changes
+      - name: deploy deb packages
+        run: myci-deploy-debian-bintray.sh -u cppfw -r ${{ matrix.os }} -p $PACKAGE_NAME -c main -d ${{ matrix.codename }} ../*.deb
+        if: matrix.package_type == 'deb' && startsWith(github.ref, 'refs/tags/')
+##### macosx #####
+  macosx:
+    runs-on: macos-latest
+    steps:
+    - name: git clone
+      uses: actions/checkout@main
+    - name: install myci
+      run: make install
+    - name: build
+      run: make autojobs=true
+    - name: test
+      run: make test autojobs=true
+    - name: deploy
+      run: myci-deploy-homebrew.sh -t cppfw/tap
+      if: startsWith(github.ref, 'refs/tags/')
+##### msys2 #####
+  msys2:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: switch git-bash shell to msys2 shell by adding msys2 path to PATH front
+      run: echo "C:\msys64\usr\bin" >> $GITHUB_PATH
+      shell: bash
+    - name: git clone
+      uses: actions/checkout@main
+    - name: install ci tools
+      run: pacman -Sy --noconfirm myci msys2-devel
+    - name: install myci
+      run: make install
+    - name: prepare pacman package
+      run: myci-apply-version.sh -v $(myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in
+    - name: build
+      run: (cd msys2 && makepkg --syncdeps --noconfirm --skipinteg)
+    - name: deploy
+      run: myci-deploy-pacman-bintray.sh -u cppfw -r msys2 -p msys -d cppfw_msys msys2/$PACKAGE_NAME-*-any.pkg.*
+      if: startsWith(github.ref, 'refs/tags/')

@@ -1,2 +1,0 @@
-# myci
-My CI scripts
