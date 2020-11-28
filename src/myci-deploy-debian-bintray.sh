@@ -20,45 +20,50 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
 		-r)
-			;&
+			shift
+			reponame=$1
+			;;
 		--repo)
 			shift
 			reponame=$1
-			shift
 			;;
 		-u)
-			;&
+			shift
+			username=$1
+			;;
 		--user)
 			shift
 			username=$1
-			shift
 			;;
 		-p)
-			;&
+			shift
+			packageName=$1
+			;;
 		--package)
 			shift
 			packageName=$1
-			shift
 			;;
         -c)
-			;&
+			shift
+            component=$1
+            ;;
 		--component)
             shift
             component=$1
-            shift
             ;;
         -d)
-			;&
+			shift
+            distribution=$1
+            ;;
 		--distro)
             shift
             distribution=$1
-            shift
             ;;
 		*)
 			packageFiles="$packageFiles $1"
-			shift
 			;;
 	esac
+	[[ $# > 0 ]] && shift;
 done
 
 [ -z "$MYCI_BINTRAY_API_KEY" ] && source myci-error.sh "MYCI_BINTRAY_API_KEY is not set";

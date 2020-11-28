@@ -19,13 +19,17 @@ while [[ $# > 0 ]] ; do
             exit 0
 			;;
         -s)
-			;&
+			shift
+			soname=$1
+			;;
 		--soname)
 			shift
 			soname=$1
 			;;
 		-d)
-			;&
+			shift
+			debianization=$1
+			;;
 		--debian-dir)
 			shift
 			debianization=$1

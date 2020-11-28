@@ -13,21 +13,21 @@ while [[ $# > 0 ]] ; do
 			exit
 			;;
 		-v)
-			;&
+			shift
+			version=$1
+			;;
 		--version)
 			shift
 			version=$1
-			shift
 			;;
 		--filename-only)
 			filenameonly="true"
-			shift
 			;;
 		*)
 			infiles="$infiles $1"
-			shift
 			;;
 	esac
+	[[ $# > 0 ]] && shift;
 done
 
 echo "Applying version $version to files:"

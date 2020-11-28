@@ -19,17 +19,18 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
 		-t)
-			;&
+			shift
+			tapname=$1
+			;;
 		--tap)
 			shift
 			tapname=$1
-			shift
 			;;
 		*)
 			infiles="$infiles $1"
-			shift
 			;;
 	esac
+	[[ $# > 0 ]] && shift;
 done
 
 echo "Deploying to homebrew repo"

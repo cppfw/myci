@@ -23,31 +23,41 @@ while [[ $# > 0 ]] ; do
             exit 0
 			;;
         -r)
-			;&
+			shift
+			reponame=$1
+			;;
 		--repo)
 			shift
 			reponame=$1
 			;;
 		-v)
-			;&
+			shift
+			version=$1
+			;;
 		--version)
 			shift
 			version=$1
 			;;
 		-u)
-			;&
+			shift
+			bintray_user=$1
+			;;
 		--bintray-user)
 			shift
 			bintray_user=$1
 			;;
 		-b)
-			;&
+			shift
+			bintray_repo=$1
+			;;
 		--bintray-repo)
 			shift
 			bintray_repo=$1
 			;;
 		-p)
-			;&
+			shift
+			zip_package_file=$1
+			;;
 		--package-file)
 			shift
 			zip_package_file=$1

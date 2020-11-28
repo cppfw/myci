@@ -21,13 +21,17 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
 		-h)
-			;&
+			shift
+			hdrdir=$1
+			;;
 		--headers-dir)
 			shift
 			hdrdir=$1
 			;;
 		-f)
-			;&
+			shift
+			files="$files $1"
+			;;
 		--file)
 			shift
 			files="$files $1"

@@ -24,54 +24,59 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
 		-r)
-			;&
+			shift
+			reponame=$1
+			;;
 		--repo)
 			shift
 			reponame=$1
-			shift
 			;;
 		-u)
-			;&
+			shift
+			username=$1
+			;;
 		--user)
 			shift
 			username=$1
-			shift
 			;;
 		-d)
-			;&
+			shift
+			repoPath=$1
+			;;
 		--path)
 			shift
 			repoPath=$1
-			shift
 			;;
 		-a)
-			;&
+			shift
+			aarFile=$1
+			;;
 		--aar)
 			shift
 			aarFile=$1
-			shift
 			;;
 		-v)
-			;&
+			shift
+			version=$1
+			;;
 		--version)
 			shift
 			version=$1
-			shift
 			;;
 		-p)
-			;&
+			shift
+			package=$1
+			;;
 		--package)
 			shift
 			package=$1
-			shift
 			;;
 		*)
 			[ ! -z "$aarFile" ] && source myci-error.sh "more than one file is given, expecting only one";
 			aarFile=$1
-			shift
 			;;
-
 	esac
+	[[ $# > 0 ]] && shift;
 done
 
 [ -z "$MYCI_BINTRAY_API_KEY" ] && source myci-error.sh "MYCI_BINTRAY_API_KEY is not set";

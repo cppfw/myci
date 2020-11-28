@@ -20,9 +20,9 @@ while [[ $# > 0 ]] ; do
 		*)
 			echo "Error: no arguments expected"
             exit 1
-			shift
 			;;
 	esac
+	[[ $# > 0 ]] && shift;
 done
 
 echo "Checking for missing build dependencies."

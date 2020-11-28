@@ -19,9 +19,9 @@ while [[ $# > 0 ]] ; do
 			;;
 		*)
 			inputs="$inputs $1"
-			shift
 			;;
 	esac
+	[[ $# > 0 ]] && shift;
 done
 
 [ -z "$inputs" ] && echo "Error: no packages to install specified" && exit 1;

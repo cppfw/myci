@@ -21,18 +21,19 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
 		-e)
-			;&
+			shift
+			exitCode=$1
+			;;
 		--exit-code)
 			shift
 			exitCode=$1
-			shift
 			;;
 		*)
 			[ ! -z "$message" ] && echo "only one message is allowed" && exit 1;
 			message="$1"
-			shift
 			;;
 	esac
+	[[ $# > 0 ]] && shift;
 done
 
 test -t 1 && printf "\t\e[1;31mERROR\e[0m: $message\n" || printf "\tERROR: $message\n"

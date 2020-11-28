@@ -21,39 +21,43 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
 		-r)
-			;&
+			shift
+			reponame=$1
+			;;
 		--repo)
 			shift
 			reponame=$1
-			shift
 			;;
 		-u)
-			;&
+			shift
+			username=$1
+			;;
 		--user)
 			shift
 			username=$1
-			shift
 			;;
 		-p)
-			;&
+			shift
+			repoPath=$1
+			;;
 		--path)
 			shift
 			repoPath=$1
-			shift
 			;;
 		-d)
-			;&
+			shift
+			dbName=$1
+			;;
 		--database)
 			shift
 			dbName=$1
-			shift
 			;;
 		*)
 			[ ! -z "$packageFile" ] && source myci-error.sh "more than one package file is given, expected only one"
 			packageFile="$1"
-			shift
 			;;
 	esac
+	[[ $# > 0 ]] && shift;
 done
 
 [ -z "$MYCI_BINTRAY_API_KEY" ] && source myci-error.sh "MYCI_BINTRAY_API_KEY is not set";

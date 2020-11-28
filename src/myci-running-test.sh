@@ -21,9 +21,9 @@ while [[ $# > 0 ]] ; do
 			else
 				testName="$testName $1"
 			fi
-			shift
 			;;
 	esac
+	[[ $# > 0 ]] && shift;
 done
 
 [ -z "$testName" ] && echo "Error: no test name supplied" && exit 1;

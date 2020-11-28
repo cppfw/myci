@@ -21,9 +21,9 @@ while [[ $# > 0 ]] ; do
 			;;
 		*)
 			input_files="$input_files $1"
-			shift
 			;;
 	esac
+	[[ $# > 0 ]] && shift;
 done
 
 if [ -z "$input_files" ]; then
