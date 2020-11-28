@@ -64,6 +64,8 @@ jobs:
     - name: switch git-bash shell to msys2 shell by adding msys2 path to PATH front
       run: echo "C:\msys64\usr\bin" >> $GITHUB_PATH
       shell: bash
+    - name: update msys2
+      run: pacman -Syu
     - name: git clone
       uses: actions/checkout@main
     - name: install ci tools
@@ -74,9 +76,7 @@ jobs:
     - name: install myci
       run: make install PREFIX=/usr
     - name: prepare pacman package
-      run: |
-        myci-apply-version.sh -v $(myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in
-        hexdump -C msys2/PKGBUILD
+      run: myci-apply-version.sh -v $(myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in
     - name: build
       run: |
         cd msys2
