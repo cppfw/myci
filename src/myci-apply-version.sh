@@ -38,7 +38,7 @@ for i in $infiles; do
 	outfile=$(echo $i | sed -e "s/\(.*\)\.in$/\1/" | sed -e "s/\$(version)/$version/g")
 
 	if [ -z "$filenameonly" ]; then
-		sed --binary -e "s/\$(version)/$version/g" $i > $outfile
+		sed -b -e "s/\$(version)/$version/g" $i > $outfile
 	else
 		cp $i $outfile
 	fi
