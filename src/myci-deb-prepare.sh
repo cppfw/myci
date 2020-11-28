@@ -65,6 +65,6 @@ done
 
 echo "applying soname to $debianization/control.in"
 
-sed --binary -e "s/\$(soname)/$soname/g" $debianization/control.in > $debianization/control
+sed -e "s/\$(soname)/$soname/g" $debianization/control.in > $debianization/control
 
 echo "Debian package prepared for building!"
