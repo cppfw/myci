@@ -68,6 +68,8 @@ jobs:
       uses: actions/checkout@main
     - name: install ci tools
       run: pacman -Sy --noconfirm msys2-devel
+    - name: test myci
+      run: make test
     - name: install myci
       run: make install PREFIX=/usr
     - name: prepare pacman package
