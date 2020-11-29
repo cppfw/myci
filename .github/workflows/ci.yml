@@ -76,7 +76,13 @@ jobs:
     - name: install myci
       run: make install PREFIX=/usr
     - name: prepare pacman package
-      run: myci-apply-version.sh -v $(myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in
+      run: |
+        myci-apply-version.sh -v $(myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in
+        echo "test.smp = "
+        hexdump -C tests/apply-version/test.smp
+        echo "test-\$\(version\).txt.in = "
+        hexdump -C tests/apply-version/test-\$\(version\).txt.in
+        make test
     - name: build
       run: |
         cd msys2
