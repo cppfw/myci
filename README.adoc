@@ -1,3 +1,5 @@
 = myci
 
+image:https://github.com/cppfw/myci/workflows/ci/badge.svg[ci status]
+
 CI scripts
