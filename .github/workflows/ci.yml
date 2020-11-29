@@ -61,9 +61,6 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-    # do git clone before switching to msys2 to avoid git converting the line endings to CR-LF
-    - name: git clone
-      uses: actions/checkout@main
     - name: make msys2 to provide the default shell
       uses: msys2/setup-msys2@v2
       with:
@@ -72,6 +69,11 @@ jobs:
         install: >-
           msys2-devel
           make
+    - run: |
+        git config --system core.autocrlf false
+        git config --system core.eol lf
+    - name: git clone
+      uses: actions/checkout@main
     # install myci to use it for package building
     - name: install myci
       run: make install PREFIX=/usr
