@@ -69,22 +69,13 @@ jobs:
         install: >-
           msys2-devel
           make
-    - run: |
-        git config --system core.autocrlf false
-        git config --system core.eol lf
     - name: git clone
       uses: actions/checkout@main
     # install myci to use it for package building
     - name: install myci
       run: make install PREFIX=/usr
     - name: prepare pacman package
-      run: |
-        myci-apply-version.sh -v $(myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in
-        echo "test.smp = "
-        hexdump -C tests/apply-version/test.smp
-        echo "test-\$\(version\).txt.in = "
-        hexdump -C tests/apply-version/test-\$\(version\).txt.in
-        make test
+      run: myci-apply-version.sh -v $(myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in
     - name: build
       run: |
         cd msys2
