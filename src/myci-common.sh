@@ -2,7 +2,7 @@
 
 # Creates a version for given package on Bintray
 # Usage:
-#     createVersionOnBintray <user-name> <repo-name> <package-name> <version-name>
+#     createVersionOnBintray <repo-owner> <repo-name> <package-name> <version-name>
 function createVersionOnBintray {
 	local res=$(curl -o bintray.log -s --write-out "%{http_code}" -u$MYCI_BINTRAY_USERNAME:$MYCI_BINTRAY_API_KEY -H"Content-Type:application/json" -X POST -d"{\"name\":\"$4\",\"desc\":\"\"}" https://api.bintray.com/packages/$1/$2/$3/versions);
     [ -z "$res" ] && source myci-error.sh "curl failed while creating version on Bintray";
@@ -17,7 +17,7 @@ function createVersionOnBintray {
 
 # Creates a package on Bintray.
 # Usage:
-#     createPackageOnBintray <user-name> <repo-name> <package-name>
+#     createPackageOnBintray <repo-owner> <repo-name> <package-name>
 function createPackageOnBintray {
 	local res=$(curl -o bintray.log -s --write-out "%{http_code}" -u$MYCI_BINTRAY_USERNAME:$MYCI_BINTRAY_API_KEY -H"Content-Type:application/json" -X POST -d"{\"name\":\"$3\",\"desc\":\"\", \"licenses\":[\"MIT\"], \"vcs_url\":\"http://github.com\"}" https://api.bintray.com/packages/$1/$2);
     [ -z "$res" ] && source myci-error.sh "curl failed while creating package on Bintray";
@@ -32,7 +32,7 @@ function createPackageOnBintray {
 
 # Uploads a file to Bintray debian repo.
 # Usage:
-#     uploadFileToDebianBintray <file-to-upload> <user-name> <repo-name> <package-name> <version-name> <distribution> <component> <arch>
+#     uploadFileToDebianBintray <file-to-upload> <repo-owner> <repo-name> <package-name> <version-name> <distribution> <component> <arch>
 function uploadFileToDebianBintray {
 	local res=$(curl -o bintray.log -s --write-out "%{http_code}" -u$MYCI_BINTRAY_USERNAME:$MYCI_BINTRAY_API_KEY -T $1 -H"X-Bintray-Package:$4" -H"X-Bintray-Version:$5" -H"X-Bintray-Debian-Distribution:$6" -H"X-Bintray-Debian-Component:$7" -H"X-Bintray-Debian-Architecture:$8" -H"X-Bintray-Override:1" -H"X-Bintray-Publish:1" https://api.bintray.com/content/$2/$3/dists/$6/$7/binary-$8/);
     [ -z "$res" ] && source myci-error.sh "curl failed while uploading to Debian repo on Bintray";
@@ -44,7 +44,7 @@ function uploadFileToDebianBintray {
 
 # Uploads a file to Bintray generic repo.
 # Usage:
-#     uploadFileToGenericBintray <file-to-upload> <user-name> <repo-name> <repo-path> <package-name> <version>
+#     uploadFileToGenericBintray <file-to-upload> <repo-owner> <repo-name> <repo-path> <package-name> <version>
 function uploadFileToGenericBintray {
 	local res=$(curl -o /dev/null -s --write-out "%{http_code}" -u$MYCI_BINTRAY_USERNAME:$MYCI_BINTRAY_API_KEY -T $1 -H"X-Bintray-Package:$5" -H"X-Bintray-Version:$6" -H"X-Bintray-Override:1" -H"X-Bintray-Publish:1" https://api.bintray.com/content/$2/$3/$4/);
 	[ -z "$res" ] && source myci-error.sh "curl failed while uploading file to Generic repo on Bintray";
@@ -55,7 +55,7 @@ function uploadFileToGenericBintray {
 
 # Delete file from Bintray.
 # Usage:
-#     deleteFileFromBintray <file-to-delete> <user-name> <repo-name> <repo-path>
+#     deleteFileFromBintray <file-to-delete> <repo-owner> <repo-name> <repo-path>
 function deleteFileFromBintray {
 	local res=$(curl -o /dev/null -s --write-out "%{http_code}" -u$MYCI_BINTRAY_USERNAME:$MYCI_BINTRAY_API_KEY -X DELETE https://api.bintray.com/content/$2/$3/$4/$1);
     [ -z "$res" ] && source myci-error.sh "curl failed while deleting file from Bintray";

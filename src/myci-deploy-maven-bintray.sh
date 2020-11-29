@@ -12,7 +12,7 @@ while [[ $# > 0 ]] ; do
 		--help)
 			echo "Script for deploying AAR packages to Bintray Maven repo."
 			echo "Usage:"
-			echo "	$(basename $0) -u/--user <bintray-user-name> -r/--repo <bintray-repo-name> -d/--path <repo-path> -p/--package <package-name> -v/--version <version> <package-aar-filename>"
+			echo "	$(basename $0) -o/--owner <bintray-repo-owner> -r/--repo <bintray-repo-name> -d/--path <repo-path> -p/--package <package-name> -v/--version <version> <package-aar-filename>"
 			echo " "
 			echo "Environment variable MYCI_BINTRAY_USERNAME must be set to Bintray username."
 			echo "Environment variable MYCI_BINTRAY_API_KEY must be set to Bintray API key."
@@ -21,7 +21,7 @@ while [[ $# > 0 ]] ; do
 			echo "The POM file should be named same as AAR file but with .pom suffix and should reside right next to .aar file."
 			echo " "
 			echo "Example:"
-			echo "	$(basename $0) -u igagis -r android -d io/github/igagis -p myawesomelib -v 1.3.14 myawesomelib-1.3.14.aar"
+			echo "	$(basename $0) -o igagis -r android -d io/github/igagis -p myawesomelib -v 1.3.14 myawesomelib-1.3.14.aar"
 			exit 0
 			;;
 		-r)
@@ -32,13 +32,13 @@ while [[ $# > 0 ]] ; do
 			shift
 			reponame=$1
 			;;
-		-u)
+		-o)
 			shift
-			username=$1
+			owner=$1
 			;;
-		--user)
+		--owner)
 			shift
-			username=$1
+			owner=$1
 			;;
 		-d)
 			shift
@@ -80,9 +80,10 @@ while [[ $# > 0 ]] ; do
 	[[ $# > 0 ]] && shift;
 done
 
+[ -z "$MYCI_BINTRAY_USERNAME" ] && source myci-error.sh "MYCI_BINTRAY_USERNAME is not set";
 [ -z "$MYCI_BINTRAY_API_KEY" ] && source myci-error.sh "MYCI_BINTRAY_API_KEY is not set";
 
-[ -z "$username" ] && source myci-error.sh "Bintray user name is not given";
+[ -z "$owner" ] && source myci-error.sh "Bintray repo owner is not given";
 
 [ -z "$reponame" ] && source myci-error.sh "repo name is not given";
 
@@ -109,14 +110,14 @@ echo "package = $package"
 echo "version = $version"
 
 echo "Creating package '$package' on Bintray"
-createPackageOnBintray $username $reponame $package
+createPackageOnBintray $owner $reponame $package
 
 echo "Creating version $version of the '$package' on Bintray"
-createVersionOnBintray $username $reponame $package $version
+createVersionOnBintray $owner $reponame $package $version
 
 echo "Uploading file '$aarFile' to Bintray"
-uploadFileToGenericBintray $aarFile $username $reponame $repoPath/$package/$version $package $version
+uploadFileToGenericBintray $aarFile $owner $reponame $repoPath/$package/$version $package $version
 echo "Uploading file '$pomFile' to Bintray"
-uploadFileToGenericBintray $pomFile $username $reponame $repoPath/$package/$version $package $version
+uploadFileToGenericBintray $pomFile $owner $reponame $repoPath/$package/$version $package $version
 
 echo "Done deploying '$package' package version $version to Bintray Maven repo."

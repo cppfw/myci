@@ -11,13 +11,13 @@ while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
 			echo "Usage:"
-			echo "	$(basename $0) -u/--user <bintray-user-name> -r/--repo <bintray-repo-name> -p/--package <package-name> -c/--component <deb_component> -d/--distro <deb_distribution> <package-filename> [<package-filename> ...]"
+			echo "	$(basename $0) -o/--owner <bintray-repo-owner> -r/--repo <bintray-repo-name> -p/--package <package-name> -c/--component <deb_component> -d/--distro <deb_distribution> <package-filename> [<package-filename> ...]"
 			echo " "
 			echo "Environment variable MYCI_BINTRAY_USERNAME must be set to Bintray username."
 			echo "Environment variable MYCI_BINTRAY_API_KEY must be set to Bintray API key."
 			echo " "
 			echo "Example:"
-			echo "	$(basename $0) -u igagis -r deb-stretch -p myci -c main -d unstable ../myci_0.1.29_all.deb"
+			echo "	$(basename $0) -o igagis -r deb-stretch -p myci -c main -d unstable ../myci_0.1.29_all.deb"
 			exit 0
 			;;
 		-r)
@@ -28,13 +28,13 @@ while [[ $# > 0 ]] ; do
 			shift
 			reponame=$1
 			;;
-		-u)
+		-o)
 			shift
-			username=$1
+			owner=$1
 			;;
-		--user)
+		--owner)
 			shift
-			username=$1
+			owner=$1
 			;;
 		-p)
 			shift
@@ -67,9 +67,10 @@ while [[ $# > 0 ]] ; do
 	[[ $# > 0 ]] && shift;
 done
 
+[ -z "$MYCI_BINTRAY_USERNAME" ] && source myci-error.sh "MYCI_BINTRAY_USERNAME is not set";
 [ -z "$MYCI_BINTRAY_API_KEY" ] && source myci-error.sh "MYCI_BINTRAY_API_KEY is not set";
 
-[ -z "$username" ] && source myci-error.sh "Bintray user name is not given";
+[ -z "$owner" ] && source myci-error.sh "Bintray repo owner is not given";
 
 [ -z "$reponame" ] && source myci-error.sh "repo name is not given";
 
@@ -83,7 +84,7 @@ done
 
 
 # Create package on bintray if it does not exist.
-createPackageOnBintray $username $reponame $packageName
+createPackageOnBintray $owner $reponame $packageName
 
 # For each package file create a version and upload the file to Bintray
 for f in $packageFiles; do
@@ -91,8 +92,8 @@ for f in $packageFiles; do
     architecture=$(echo "$f" | sed -n -e"s/.*_\([^_]*\).deb$/\1/p")
 #    echo $versionName
 #    echo $architecture
-    createVersionOnBintray $username $reponame $packageName $versionName
-    uploadFileToDebianBintray $f $username $reponame $packageName $versionName $distribution $component $architecture
+    createVersionOnBintray $owner $reponame $packageName $versionName
+    uploadFileToDebianBintray $f $owner $reponame $packageName $versionName $distribution $component $architecture
 done
 
 

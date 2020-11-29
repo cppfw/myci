@@ -12,14 +12,14 @@ while [[ $# > 0 ]] ; do
     case $1 in
         --help)
             echo "Usage:"
-            echo "	$(basename $0) -r/--repo <cocoapods-repo-name> -v/--version <version> [-u/--bintray-user <bintray-user> -b/--bintray-repo <bintray-repo> -p/--package-file <package-file>] <spec.podspec.in>"
+            echo "	$(basename $0) -r/--repo <cocoapods-repo-name> -v/--version <version> [-o/--bintray-owner <bintray-repo-owner> -b/--bintray-repo <bintray-repo> -p/--package-file <package-file>] <spec.podspec.in>"
             echo " "
             echo "Environment variable MYCI_GIT_PASSWORD can be set to git access token, so that it will be stripped out from the script output."
-			echo "When uploading binary package to bintray MYCI_BINTRAY_API_KEY must be set to Bintray API key token, it will be stripped out from the script output."
+			echo "When uploading binary package to bintray MYCI_BINTRAY_API_KEY must be set to Bintray API key token and MYCI_BINTRAY_USERNAME muste be set to bintray user name."
 			echo "Package name will be taken from podspec filename."
             echo " "
             echo "Example:"
-            echo "	$(basename $0) -r igagis -v 1.0.0 -u igagis -b cocoapods -p mypackage-1.0.0.zip cocoapods/mypackage.podspec.in"
+            echo "	$(basename $0) -r igagis -v 1.0.0 -o igagis -b cocoapods -p mypackage-1.0.0.zip cocoapods/mypackage.podspec.in"
             exit 0
 			;;
         -r)
@@ -38,13 +38,13 @@ while [[ $# > 0 ]] ; do
 			shift
 			version=$1
 			;;
-		-u)
+		-o)
 			shift
-			bintray_user=$1
+			bintray_owner=$1
 			;;
-		--bintray-user)
+		--bintray-owner)
 			shift
-			bintray_user=$1
+			bintray_owner=$1
 			;;
 		-b)
 			shift
@@ -92,10 +92,11 @@ if [ -z "$version" ]; then
 	echo "	Using $version extracted from debian/changelog."
 fi
 
-if [ ! -z "$bintray_user" ] || [ ! -z "$bintray_repo" ] || [ ! -z "$zip_package_file" ]; then
+if [ ! -z "$bintray_owner" ] || [ ! -z "$bintray_repo" ] || [ ! -z "$zip_package_file" ]; then
 	echo "Will also upload package to Bintray"
+	[ -z "$MYCI_BINTRAY_USERNAME" ] && source myci-error.sh "MYCI_BINTRAY_USERNAME is not set";
 	[ -z "$MYCI_BINTRAY_API_KEY" ] && source myci-error.sh "MYCI_BINTRAY_API_KEY is not set";
-	[ -z "$bintray_user" ] && source myci-error.sh "Bintray user name is not given";
+	[ -z "$bintray_owner" ] && source myci-error.sh "Bintray repo owner is not given";
 	[ -z "$bintray_repo" ] && source myci-error.sh "Bintray repo name is not given";
 	[ -z "$zip_package_file" ] && source myci-error.sh "package file for uploading to Bintray is not given";
 fi
@@ -106,17 +107,17 @@ outpodspecfile=$(echo $podspecfile | sed -n -e 's/\(.*\)\.in$/\1/p')
 
 package=$(echo $(basename $podspecfile) | sed -n -e 's/\(.*\)\.podspec.in$/\1/p')
 
-if [ ! -z "$bintray_user" ]; then
+if [ ! -z "$bintray_owner" ]; then
 	echo "Uploading package to Bintray"
 
 	echo "Creating package '$package' on Bintray"
-	createPackageOnBintray $bintray_user $bintray_repo $package
+	createPackageOnBintray $bintray_owner $bintray_repo $package
 
 	echo "Creating version $version of the '$package' on Bintray"
-	createVersionOnBintray $bintray_user $bintray_repo $package $version
+	createVersionOnBintray $bintray_owner $bintray_repo $package $version
 
 	echo "Uploading file '$zip_package_file' to Bintray"
-	uploadFileToGenericBintray $zip_package_file $bintray_user $bintray_repo $package/$version $package $version
+	uploadFileToGenericBintray $zip_package_file $bintray_owner $bintray_repo $package/$version $package $version
 
 	echo "Done deploying '$package' package version $version to Bintray Generic repo."
 fi
