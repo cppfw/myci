@@ -1,3 +1,9 @@
+myci (0.1.71) unstable; urgency=medium
+
+  * github actions CI
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 29 Nov 2020 02:47:17 +0200
+
 myci (0.1.70) unstable; urgency=medium
 
   * cocoapods: use GIT_ASKPASS
