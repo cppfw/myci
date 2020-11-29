@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # Creates a version for given package on Bintray
 # Usage:
 #     createVersionOnBintray <user-name> <repo-name> <package-name> <version-name>
@@ -16,7 +15,6 @@ function createVersionOnBintray {
 	return 0;
 }
 
-
 # Creates a package on Bintray.
 # Usage:
 #     createPackageOnBintray <user-name> <repo-name> <package-name>
@@ -31,7 +29,6 @@ function createPackageOnBintray {
     fi
 	return 0;
 }
-
 
 # Uploads a file to Bintray debian repo.
 # Usage:
@@ -56,7 +53,6 @@ function uploadFileToGenericBintray {
 	return 0;
 }
 
-
 # Delete file from Bintray.
 # Usage:
 #     deleteFileFromBintray <file-to-delete> <user-name> <repo-name> <repo-path>
@@ -66,7 +62,6 @@ function deleteFileFromBintray {
 	[ $res -ne 200 ] && myci-warning.sh "deleting file '$1' from Bintray failed, HTTP code = $res";
 	return 0;
 }
-
 
 # Get package name from filename of form "myfile-1.3.0.suffix".
 # Usage:
