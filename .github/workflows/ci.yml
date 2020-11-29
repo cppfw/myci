@@ -71,8 +71,6 @@ jobs:
           make
     - name: git clone
       uses: actions/checkout@main
-    - name: test myci
-      run: make test
     # install myci to use it for package building
     - name: install myci
       run: make install PREFIX=/usr
