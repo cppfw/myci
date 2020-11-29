@@ -68,6 +68,7 @@ jobs:
         msystem: MSYS
         install: >-
           msys2-devel
+          make
     - name: git clone
       uses: actions/checkout@main
     - name: test myci
