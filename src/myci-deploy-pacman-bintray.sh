@@ -77,7 +77,7 @@ echo "Deploying pacman package to Bintray"
 
 # Get latest version of pacman database package
 
-latestDbVer=$(curl -s https://api.bintray.com/packages/$username/$reponame/$dbName/versions/_latest | sed -n -e 's/.*"name":"\([^"]*\)".*/\1/p')
+latestDbVer=$(curl --silent https://api.bintray.com/packages/$username/$reponame/$dbName/versions/_latest | sed -n -e 's/.*"name":"\([^"]*\)".*/\1/p')
 
 echo "Latest pacman DB version = $latestDbVer"
 
@@ -95,9 +95,12 @@ uncompressedDbFilename=$dbName.db
 dbFilename=$uncompressedDbFilename.tar.gz
 versionedDbFilename=$dbName-$newDbVer.db.tar.gz
 
-res=$(curl -s -L --write-out "%{http_code}" https://dl.bintray.com/content/$username/$reponame/$repoPath/$dbFilename -o $dbFilename)
+res=$(curl --silent --location --write-out "%{http_code}" https://dl.bintray.com/content/$username/$reponame/$repoPath/$dbFilename -o $dbFilename)
 
-if [ $res -ne 200 ]; then
+if [ $res -eq 404 ]; then
+	echo "no database found on bintray, creating new database package '$dbName' on Bintray"
+	createPackageOnBintray $username $reponame $dbName
+elif [ $res -ne 200 ]; then
 	rm $dbFilename
 	source myci-error.sh "could not download current pacman database, HTTP response code was $res, expected 200"
 fi
