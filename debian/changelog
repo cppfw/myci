@@ -1,3 +1,9 @@
+myci (0.1.77) unstable; urgency=medium
+
+  * add informative loggging
+
+ -- Ivan Gagis <igagis@gmail.com>  Mon, 30 Nov 2020 17:53:34 +0200
+
 myci (0.1.76) unstable; urgency=medium
 
   * homebrew do not error if package is already published
