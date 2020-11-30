@@ -91,7 +91,7 @@ do
 	cd $tapname
 	git add $specfilename
 	if [ ! -z "$(git diff-index HEAD --)" ]; then
-		git commit -a -m"version $version of $specfilename")
+		git commit -a -m"version $version of $specfilename"
 	fi
 	cd ..
 done
