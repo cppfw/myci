@@ -92,6 +92,8 @@ do
 	git add $specfilename
 	if [ ! -z "$(git diff-index HEAD --)" ]; then
 		git commit -a -m"version $version of $specfilename"
+	else
+		echo "nothing to commit, $specfilename of version $version already exists"
 	fi
 	cd ..
 done
