@@ -87,7 +87,9 @@ do
 	mv $f.out $f
 	cp $f $tapname
 	specfilename=$(echo $f | sed -n -e 's/^homebrew\/\(.*\)$/\1/p')
-	(cd $tapname && git add $specfilename && git commit -a -m"version $version of $specfilename")
+
+	# do the commit only if there is something to commit, so check that with 'git diff-index'
+	(cd $tapname && git add $specfilename && [ ! -z "$(git diff-index HEAD --)" ] && git commit -a -m"version $version of $specfilename")
 done
 
 (cd $tapname; GIT_ASKPASS=myci-git-askpass.sh git push)
