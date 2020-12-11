@@ -27,6 +27,9 @@ jobs:
         uses: actions/checkout@main
       - name: install ci tools
         run: |
+          # configure timezone to avoid 'tzdata' package to require user interaction during installation
+          TZ=Europe/Helsinki ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
           apt update
           apt install --assume-yes devscripts equivs
       - name: install myci
