@@ -17,9 +17,9 @@ jobs:
           - {os: debian, codename: buster, image_owner: , package_type: deb}
           - {os: ubuntu, codename: bionic, image_owner: , package_type: deb}
           - {os: ubuntu, codename: focal, image_owner: , package_type: deb}
-          # - {os: raspbian, codename: stretch, image_owner: igagis/, package_type: deb}
-          # - {os: raspbian, codename: buster, image_owner: igagis/, package_type: deb}
-    runs-on: ubuntu-latest
+          - {os: raspbian, codename: stretch, image_owner: igagis/, package_type: deb, labels: [arm]}
+          - {os: raspbian, codename: buster, image_owner: igagis/, package_type: deb, labels: [arm]}
+    runs-on: ${{ (matrix.labels == '' && 'ubuntu-latest') || matrix.labels }}
     container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     name: linux - ${{ matrix.os }}:${{ matrix.codename }}
     steps:
