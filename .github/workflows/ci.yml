@@ -23,6 +23,8 @@ jobs:
     container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     name: linux - ${{ matrix.os }}:${{ matrix.codename }}
     steps:
+      - name: install nodejs for actions/checkout
+        run: apt update && apt install --assume-yes nodejs
       - name: git clone
         uses: actions/checkout@v2
       - name: install ci tools
