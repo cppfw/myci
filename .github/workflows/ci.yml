@@ -21,12 +21,10 @@ jobs:
           - {os: raspbian, codename: buster, image_owner: igagis/, package_type: deb, labels: [arm,docker]}
     runs-on: ${{ (matrix.labels == '' && 'ubuntu-latest') || matrix.labels }}
     container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
-    name: linux - ${{ matrix.os }}:${{ matrix.codename }}
+    name: linux - ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     steps:
-      - name: install nodejs for actions/checkout
-        run: apt update && apt install --assume-yes nodejs
       - name: git clone
-        uses: actions/checkout@v2
+        uses: actions/checkout@v1
       - name: install ci tools
         run: |
           # configure timezone to avoid 'tzdata' package to require user interaction during installation
