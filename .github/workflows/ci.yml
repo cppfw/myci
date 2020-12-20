@@ -24,7 +24,7 @@ jobs:
     name: linux - ${{ matrix.os }}:${{ matrix.codename }}
     steps:
       - name: git clone
-        uses: actions/checkout@main
+        uses: actions/checkout@v2
       - name: install ci tools
         run: |
           # configure timezone to avoid 'tzdata' package to require user interaction during installation
