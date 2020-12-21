@@ -20,11 +20,12 @@ jobs:
           - {os: raspbian, codename: stretch, image_owner: igagis/, package_type: deb, labels: [arm,docker]}
           - {os: raspbian, codename: buster, image_owner: igagis/, package_type: deb, labels: [arm,docker]}
     runs-on: ${{ (matrix.labels == '' && 'ubuntu-latest') || matrix.labels }}
-    container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
+    container:
+      image: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     name: linux - ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     steps:
       - name: git clone
-        uses: actions/checkout@v1
+        uses: actions/checkout@v1.2.0
       - name: install ci tools
         run: |
           # configure timezone to avoid 'tzdata' package to require user interaction during installation
