@@ -20,13 +20,13 @@ jobs:
           - {os: raspbian, codename: stretch, image_owner: igagis/, package_type: deb, labels: [arm,docker]}
           - {os: raspbian, codename: buster, image_owner: igagis/, package_type: deb, labels: [arm,docker]}
     runs-on: ${{ (matrix.labels == '' && 'ubuntu-latest') || matrix.labels }}
-    container:
-      image: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
-      options: --workdir /home/build/repo
+    container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     name: linux - ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     steps:
-      - name: pwd
-        run: pwd
+      - name: install nodejs
+        run: |
+          apt update
+          apt install --assume-yes nodejs
       - name: git clone
         uses: actions/checkout@v1.2.0
       - name: install ci tools
