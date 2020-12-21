@@ -22,7 +22,7 @@ jobs:
     runs-on: ${{ (matrix.labels == '' && 'ubuntu-latest') || matrix.labels }}
     container:
       image: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
-      options: --workdir=/home/build/repo
+      options: --workdir /home/build/repo
     name: linux - ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     steps:
       - name: pwd
