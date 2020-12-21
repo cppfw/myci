@@ -25,6 +25,8 @@ jobs:
       options: --workdir=/home/build/repo
     name: linux - ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     steps:
+      - name: pwd
+        run: pwd
       - name: git clone
         uses: actions/checkout@v1.2.0
       - name: install ci tools
