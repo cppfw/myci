@@ -23,6 +23,8 @@ jobs:
     container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     name: linux - ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     steps:
+      - name: stuff
+        run: sh -c "cat /etc/*release | grep ^ID"
       - name: git clone
         uses: actions/checkout@v2
       - name: install ci tools
