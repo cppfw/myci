@@ -28,7 +28,7 @@ jobs:
           apt update
           apt install --assume-yes nodejs
       - name: git clone
-        uses: actions/checkout@v1.2.0
+        uses: actions/checkout@v2
       - name: install ci tools
         run: |
           # configure timezone to avoid 'tzdata' package to require user interaction during installation
