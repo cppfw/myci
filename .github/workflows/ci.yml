@@ -34,6 +34,9 @@ jobs:
           apt install --assume-yes devscripts equivs
       - name: install myci
         run: make install
+      - name: set PACKAGE_VERSION
+        uses: myci-actions/export-env-var@master
+        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
       - name: prepare debian package
         run: myci-deb-prepare.sh
       - name: install deps
@@ -41,7 +44,7 @@ jobs:
       - name: build
         run: autojobs=true dpkg-buildpackage --unsigned-source --unsigned-changes
       - name: deploy deb packages
-        run: myci-deploy-debian-bintray.sh --owner cppfw --repo ${{ matrix.os }} --distro ${{ matrix.codename }} --component main --package $PACKAGE_NAME ../*.deb
+        run: myci-deploy-debian-bintray.sh --owner cppfw --repo ${{ matrix.os }} --distro ${{ matrix.codename }} --component main --package $PACKAGE_NAME ../lib${PACKAGE_NAME}*_${PACKAGE_VERSION}_*.deb
         if: matrix.package_type == 'deb' && startsWith(github.ref, 'refs/tags/')
 ##### macosx #####
   macosx:
