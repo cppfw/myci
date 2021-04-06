@@ -138,7 +138,7 @@ function http_delete_file {
 	local res=$(curl -o /dev/null -s --write-out "%{http_code}" \
 			--user $creds \
 			--request DELETE \
-			$url
+			$url \
 		);
 
     [ -z "$res" ] && source myci-error.sh "curl failed while deleting file '$url'";
