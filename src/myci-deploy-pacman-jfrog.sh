@@ -120,6 +120,7 @@ fi
 echo "add package '$package_file' to the database"
 repo-add $db_filename $package_file
 
+echo "db ver db = $db_filename $versioned_db_filename"
 ln -f -s $db_filename $versioned_db_filename
 
 package_filename=$(basename $package_file)
