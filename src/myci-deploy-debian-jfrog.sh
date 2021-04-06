@@ -105,7 +105,7 @@ function upload_to_debian_jfrog {
 # for each package file upload it to JFrog artifactory
 for f in $package_files; do
     architecture=$(echo "$f" | sed -n -e"s/.*_\([^_]*\)\.deb$/\1/p")
-	# echo arch=$architecture
-	upload_to_debian_jfrog $f $domain $reponame $distribution $component $arch
+	# echo architecture=$architecture
+	upload_to_debian_jfrog $f $domain $reponame $distribution $component $architecture
 done
 
