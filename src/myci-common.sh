@@ -78,3 +78,70 @@ function version_from_package_version_filename {
     echo "$1" | sed -n -e"s/^.*-\([0-9]\+\.[0-9]\+\.[0-9]\+\)\..*/\1/p";
     return 0;
 }
+
+# Download file from remote server via HTTP.
+# Usage:
+#     http_download_file <username>:<password> <url> <destination-local-filename>
+# Return:
+#     http status code in func_result global variable
+function http_download_file {
+	local creds=$1
+	local url=$2
+	local out_filename=$3
+
+	local res=$(curl --user $creds --silent --location --write-out "%{http_code}" $url -o $out_filename)
+
+	func_result=$res
+
+	if [ $res -ne 200 ]; then
+		echo "failed: could not download file from $url, HTTP response code: $res"
+	fi
+
+	return 0
+}
+
+# Upload file to remote server via HTTP.
+# Usage:
+#     upload_file <username>:<password> <destination-url> <local-filename>
+function http_upload_file {
+	local credentials=$1
+	local url=$2
+	local file=$3
+
+	local md5=$(md5sum $file | awk -F" " {'print $1'})
+	local sha1=$(sha1sum $file | awk -F" " {'print $1'})
+
+	local res=$(curl -o curl.log -s --write-out "%{http_code}" \
+			--user $credentials \
+			--request PUT \
+			--upload-file $file \
+			--header "X-Checksum-Md5:$md5" \
+			--header "X-Checksum-Sha1:$sha1" \
+			$url \
+		);
+
+    [ -z "$res" ] && source myci-error.sh "curl failed while uploading file using PUT method";
+    echo '' >> curl.log # to add a newline to the log
+	# HTTP status code 201 = created
+	[ $res -ne 201 ] && cat curl.log && myci-error.sh "uploading file '$file' failed, HTTP code = $res";
+    echo "file '$file' uploaded"
+	return 0;
+}
+
+# Delete file from remote server via HTTP.
+# Usage:
+#     http_delete_file <username>:<password> <file-url-to-delete>
+function http_delete_file {
+	local creds=$1
+	local utl=$2
+
+	local res=$(curl -o /dev/null -s --write-out "%{http_code}" \
+			--user $creds \
+			--request DELETE \
+			$url
+		);
+
+    [ -z "$res" ] && source myci-error.sh "curl failed while deleting file '$url'";
+	[ $res -ne 200 ] && myci-warning.sh "deleting file '$1', HTTP code = $res";
+	return 0;
+}

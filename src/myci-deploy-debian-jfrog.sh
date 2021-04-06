@@ -5,7 +5,7 @@ set -eo pipefail
 
 # script for quick deployment of debian package to jfrog artifactory debian repo
 
-# source myci-common.sh
+source myci-common.sh
 
 while [[ $# > 0 ]] ; do
 	case $1 in
@@ -83,22 +83,11 @@ function upload_to_debian_jfrog {
 	local comp=$5
 	local arch=$6
 
-	local md5=$(md5sum $file | awk -F" " {'print $1'})
-	local sha1=$(sha1sum $file | awk -F" " {'print $1'})
+	local creds="$MYCI_JFROG_USERNAME:$MYCI_JFROG_PASSWORD"
+	local url="https://$domain.jfrog.io/artifactory/$repo/pool/$(basename $file);deb.distribution=$distro;deb.component=$comp;deb.architecture=$arch"
 
-	local res=$(curl --output jfrog.log --silent --write-out "%{http_code}" \
-			--user $MYCI_JFROG_USERNAME:$MYCI_JFROG_PASSWORD \
-			--upload-file $file \
-			--request PUT \
-			--header "X-Checksum-Md5:$md5" \
-			--header "X-Checksum-Sha1:$sha1" \
-			"https://$domain.jfrog.io/artifactory/$repo/pool/$(basename $file);deb.distribution=$distro;deb.component=$comp;deb.architecture=$arch" \
-		);
+	http_upload_file $creds $url $file
 
-    [ -z "$res" ] && source myci-error.sh "curl failed while uploading to Debian repo on JFrog";
-    echo '' >> jfrog.log # to add a newline to the log
-	[ $res -ne 201 ] && cat jfrog.log && myci-error.sh "uploading file '$file' to JFrog failed, HTTP code = $res";
-    echo "File '$file' uploaded to JFrog."
 	return 0;
 }
 
