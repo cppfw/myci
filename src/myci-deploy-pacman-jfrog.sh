@@ -106,12 +106,13 @@ echo "new pacman DB version = $new_db_ver"
 # Download current pacman database
 uncompressed_db_filename=$db_name.db
 db_filename=$uncompressed_db_filename.tar.gz
-versioned_db_filename=$db_dame-$new_db_ver.db.tar.gz
+versioned_db_filename=$db_name-$new_db_ver.db.tar.gz
 
 http_download_file $creds $url/$db_filename $db_filename
 
 if [ $func_result -eq 404 ]; then
 	echo "no database found in the repo, perhaps clean repo"
+	rm $db_filename # delete the file as it probrably contains the http response payload
 elif [ $func_result -ne 200 ]; then
 	rm $db_filename
 	source myci-error.sh "could not download current pacman database"
