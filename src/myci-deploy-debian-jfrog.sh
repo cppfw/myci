@@ -11,7 +11,7 @@ while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
 			echo "Usage:"
-			echo "	$(basename $0) -o/--domain <repo-domain> -r/--repo <repo-name> -c/--component <deb_component> -d/--distro <deb_distribution> <package-filename> [<package-filename> ...]"
+			echo "	$(basename $0) -o/--domain <repo-domain> -r/--repo <repo-name> -d/--distro <deb_distribution> -c/--component <deb_component> <package-filename> [<package-filename> ...]"
 			echo " "
 			echo "Environment variable MYCI_JFROG_USERNAME must be set to JFrog username."
 			echo "Environment variable MYCI_JFROG_PASSWORD must be set to JFrog password."
