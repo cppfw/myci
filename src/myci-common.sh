@@ -133,7 +133,7 @@ function http_upload_file {
 #     http_delete_file <username>:<password> <file-url-to-delete>
 function http_delete_file {
 	local creds=$1
-	local utl=$2
+	local url=$2
 
 	local res=$(curl -o /dev/null -s --write-out "%{http_code}" \
 			--user $creds \
@@ -142,6 +142,6 @@ function http_delete_file {
 		);
 
     [ -z "$res" ] && source myci-error.sh "curl failed while deleting file '$url'";
-	[ $res -ne 200 ] && myci-warning.sh "deleting file '$1', HTTP code = $res";
+	[ $res -ne 200 ] && myci-warning.sh "deleting file '$url' failed, HTTP code = $res";
 	return 0;
 }
