@@ -101,6 +101,8 @@ else
 	new_db_ver=$((latest_db_ver+1));
 fi
 
+echo $new_db_ver > $db_name.version
+
 echo "new pacman DB version = $new_db_ver"
 
 # Download current pacman database
@@ -121,7 +123,6 @@ fi
 echo "add package '$package_file' to the database"
 repo-add $db_filename $package_file
 
-echo "db ver db = $db_filename $versioned_db_filename"
 ln -f -s $db_filename $versioned_db_filename
 
 package_filename=$(basename $package_file)
@@ -141,8 +142,10 @@ echo "delete old pacman database from JFrog artifactory"
 http_delete_file $creds $url/$db_filename
 http_delete_file $creds $url/$uncompressed_db_filename
 http_delete_file $creds $url/$db_name.files
+http_delete_file $creds $url/$db_name.version
 
 echo "upload actual pacman database to JFrog artifactory"
+http_upload_file $creds $url/$db_name.version $db_name.version
 http_upload_file $creds $url/$db_filename $db_filename
 http_upload_file $creds $url/$uncompressed_db_filename $uncompressed_db_filename
 http_upload_file $creds $url/$db_name.files $db_name.files
