@@ -84,7 +84,7 @@ function upload_to_debian_jfrog {
 	local arch=$6
 
 	local creds="$MYCI_JFROG_USERNAME:$MYCI_JFROG_PASSWORD"
-	local url="https://$domain.jfrog.io/artifactory/$repo/pool/$(basename $file);deb.distribution=$distro;deb.component=$comp;deb.architecture=$arch"
+	local url="https://$domain.jfrog.io/artifactory/$repo/dists/$distro/$comp/binary-$arch/$(basename $file);deb.distribution=$distro;deb.component=$comp;deb.architecture=$arch"
 
 	http_upload_file $creds $url $file
 
