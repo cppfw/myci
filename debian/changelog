@@ -1,3 +1,9 @@
+myci (0.1.85) unstable; urgency=medium
+
+  * add deploy to maven jfrog script
+
+ -- Ivan Gagis <igagis@gmail.com>  Wed, 07 Apr 2021 21:42:40 +0300
+
 myci (0.1.84) unstable; urgency=medium
 
   * deploy to pacman jfrog
