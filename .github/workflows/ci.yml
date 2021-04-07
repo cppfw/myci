@@ -51,7 +51,7 @@ jobs:
     runs-on: macos-latest
     steps:
     - name: git clone
-      uses: actions/checkout@main
+      uses: actions/checkout@v2
     - name: install myci
       run: make install
     - name: build
@@ -77,7 +77,7 @@ jobs:
           msys2-devel
           make
     - name: git clone
-      uses: actions/checkout@main
+      uses: actions/checkout@v2
     # install myci to use it for package building
     - name: install myci
       run: make install
