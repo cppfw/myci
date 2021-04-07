@@ -111,7 +111,7 @@ package=$(echo $(basename $podspecfile) | sed -n -e 's/\(.*\)\.podspec.in$/\1/p'
 if [ ! -z "$domain" ]; then
 	echo "upload file '$zip_package_file' to JFrog artifactory"
 	url="https://$domain.jfrog.io/artifactory/$jfrog_repo"
-	http_upload_file "$MYCI_JFROG_USERNAME:$MYCI_JFROG_PASSWORD" $url $zip_package_file
+	http_upload_file "$MYCI_JFROG_USERNAME:$MYCI_JFROG_PASSWORD" $url/$(basename $zip_package_file) $zip_package_file
 
 	echo "done deploying '$package' package version $version to JFrog artifactory generic repo"
 fi
