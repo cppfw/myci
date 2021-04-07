@@ -12,7 +12,7 @@ while [[ $# > 0 ]] ; do
 		--help)
 			echo "Script for deploying AAR packages to JFrog artifactory maven repo."
 			echo "Usage:"
-			echo "	$(basename $0) -d/--domain <bintray-repo-owner> -r/--repo <bintray-repo-name> -v/--version <version> <package-aar-filename>"
+			echo "	$(basename $0) -d/--domain <jfrog-repo-owner> -r/--repo <jfrog-repo-name> -v/--version <version> <package-aar-filename>"
 			echo " "
 			echo "Environment variable MYCI_JFROG_USERNAME must be set to JFrog username."
 			echo "Environment variable MYCI_JFROG_PASSWORD must be set to JFrog password."
