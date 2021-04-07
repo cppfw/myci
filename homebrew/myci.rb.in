@@ -4,11 +4,13 @@ class Myci < Formula
   url "https://github.com/cppfw/myci/archive/$(version).tar.gz"
   sha256 "$(sha256)"
 
+  depends_on "md5sha1sum"
+
   def install
     ENV['PATH'] += ':/usr/local/bin'
     system "make", "install", "PREFIX=#{prefix}"
   end
-  
+
   test do
     system "make", "test"
   end
