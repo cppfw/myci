@@ -12,25 +12,26 @@ while [[ $# > 0 ]] ; do
 		--help)
 			echo "Script for deploying AAR packages to JFrog artifactory maven repo."
 			echo "Usage:"
-			echo "	$(basename $0) -d/--domain <jfrog-repo-owner> -r/--repo <jfrog-repo-name> -v/--version <version> <package-aar-filename>"
+			echo "	$(basename $0) -d/--domain <jfrog-repo-owner> -r/--repo <jfrog-repo-name> -p/--path <repo-path> <package-aar-filename>"
 			echo " "
 			echo "Environment variable MYCI_JFROG_USERNAME must be set to JFrog username."
 			echo "Environment variable MYCI_JFROG_PASSWORD must be set to JFrog password."
 			echo "The AAR file should be named in form <package_name-X.Y.Z.aar>, where X, Y, Z are numbers."
 			echo "	Example: myawesomelib-1.3.14.aar"
 			echo "The POM file should be named same as AAR file but with .pom suffix and should reside right next to .aar file."
+			echo "The repo-path must always be in a form <java-package-path>/<version>, see example below."
 			echo " "
 			echo "Example:"
-			echo "	$(basename $0) -d cppfw -r android -p io/github/igagis -v 1.3.14 myawesomelib-1.3.14.aar"
+			echo "	$(basename $0) -d cppfw -r android -p io/github/cppfw/myawesomelib/1.3.14 myawesomelib-1.3.14.aar"
 			exit 0
 			;;
 		-r)
 			shift
-			repo_name=$1
+			repo=$1
 			;;
 		--repo)
 			shift
-			repo_name=$1
+			repo=$1
 			;;
 		-d)
 			shift
@@ -48,13 +49,13 @@ while [[ $# > 0 ]] ; do
 			shift
 			aar_file=$1
 			;;
-		-v)
+		-p)
 			shift
-			version=$1
+			path=$1
 			;;
-		--version)
+		--path)
 			shift
-			version=$1
+			path=$1
 			;;
 		*)
 			[ ! -z "$aar_file" ] && source myci-error.sh "more than one file is given, expecting only one";
@@ -67,13 +68,13 @@ done
 [ -z "$MYCI_JFROG_USERNAME" ] && source myci-error.sh "MYCI_JFROG_USERNAME is not set";
 [ -z "$MYCI_JFROG_PASSWORD" ] && source myci-error.sh "MYCI_JFROG_PASSWORD is not set";
 
-[ -z "$domain" ] && source myci-error.sh "JFrog artifactory domain is not given";
+[ -z "$domain" ] && source myci-error.sh "JFrog artifactory domain (--domain) is not given";
 
-[ -z "$repo_name" ] && source myci-error.sh "repo name is not given";
+[ -z "$repo" ] && source myci-error.sh "repo name (--repo) is not given";
 
 [ -z "$aar_file" ] && source myci-error.sh "AAR file is not given";
 
-[ -z "$version" ] && source myci-error.sh "version is not given";
+[ -z "$path" ] && source myci-error.sh "repo path (--path) is not given";
 
 # make POM filename from AAR filename.
 pom_file=${aar_file%.*}.pom
@@ -85,12 +86,9 @@ pom_file=${aar_file%.*}.pom
 
 echo "deploy AAR package to JFrog artifactory"
 
-# echo "package = $package"
-echo "version = $version"
-
 creds="$MYCI_JFROG_USERNAME:$MYCI_JFROG_PASSWORD"
 
-url="https://$domain.jfrog.io/artifactory/$repo_name"
+url="https://$domain.jfrog.io/artifactory/$repo/$path"
 
 echo "upload file '$aar_file' to JFrog artifactory"
 http_upload_file $creds $url/$(basename $aar_file) $aar_file
