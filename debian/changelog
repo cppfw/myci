@@ -1,3 +1,9 @@
+myci (0.1.91) unstable; urgency=medium
+
+  * add makefile utils
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 18 Apr 2021 20:40:38 +0300
+
 myci (0.1.90) unstable; urgency=medium
 
   * add makefile utils

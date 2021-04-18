@@ -10,3 +10,5 @@ endif
 install:
 	@install -d $(DESTDIR)$(PREFIX)/bin
 	@install src/*.sh $(DESTDIR)$(PREFIX)/bin
+	@install -d $(DESTDIR)$(PREFIX)/include
+	@install src/*.mk $(DESTDIR)$(PREFIX)/include
