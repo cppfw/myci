@@ -1,5 +1,9 @@
 name: ci
-on: [push, pull_request]
+on:
+  push:
+    tags-ignore:
+      - latest
+  pull_request:
 env:
   PACKAGE_NAME: ${{ github.event.repository.name }}
   MYCI_JFROG_USERNAME: ivan.gagis@gmail.com
