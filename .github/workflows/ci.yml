@@ -1,12 +1,8 @@
 name: ci
 on:
   push:
-    tags-ignore:
-      # do not build 'latest' tag
+    branches-ignore:
       - latest
-    branches:
-      # all branches
-      - '**'
   pull_request:
 env:
   PACKAGE_NAME: ${{ github.event.repository.name }}
