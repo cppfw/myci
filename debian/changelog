@@ -1,3 +1,9 @@
+myci (0.1.93) unstable; urgency=medium
+
+  * deprecate myci-try-include
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 27 Jun 2021 02:08:49 +0300
+
 myci (0.1.92) unstable; urgency=medium
 
   * add makefile utils
