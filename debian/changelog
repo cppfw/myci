@@ -1,3 +1,9 @@
+myci (0.1.94) unstable; urgency=medium
+
+  * do not build tag latest
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 27 Jun 2021 02:26:37 +0300
+
 myci (0.1.93) unstable; urgency=medium
 
   * deprecate myci-try-include
