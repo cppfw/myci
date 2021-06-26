@@ -64,11 +64,9 @@ rm -rf $tapname
 [ -z "$MYCI_GIT_PASSWORD" ] && source myci-error.sh "Error: MYCI_GIT_PASSWORD is not set";
 
 echo "Cloning tap repo from github"
-GIT_ASKPASS=myci-git-askpass.sh git clone https://$MYCI_GIT_USERNAME@github.com/$username/$tapname.git
+GIT_ASKPASS=myci-git-askpass.sh git clone https://$MYCI_GIT_USERNAME@github.com/$username/$tapname.git || source myci-error.sh "'git clone' failed";
 
-[ $? != 0 ] && echo "Error: 'git clone' failed" && exit 1;
-
-#echo "infiles = $infiles"
+# echo "infiles = $infiles"
 
 for fin in $infiles
 do
