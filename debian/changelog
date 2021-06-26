@@ -1,3 +1,9 @@
+myci (0.1.96) unstable; urgency=medium
+
+  * do not build latest branch
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 27 Jun 2021 02:45:02 +0300
+
 myci (0.1.95) unstable; urgency=medium
 
   * build all branches
