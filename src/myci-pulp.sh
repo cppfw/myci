@@ -65,20 +65,35 @@ done
 
 credentials=$MYCI_PULP_USERNAME:$MYCI_PULP_PASSWORD
 
-pulp_api_url=https://$domain/pulp/api/v3/
+pulp_url=https://$domain
+
+pulp_api_url=$pulp_url/pulp/api/v3/
 
 function check_type_argument {
     [ -z "$repo_type" ] && source myci-error.sh "--type argument is not given";
     return 0;
 }
 
-function list_repos {
-    curl \
+function get_repos {
+    local tmpfile=$(mktemp)
+    trap "rm -f $tmpfile" 0 2 3 9 15
+    # this api request is same for all repo types
+    local res=$(curl \
             --location \
+            --silent \
+            --output $tmpfile \
+            --write-out "%{http_code}" \
             $trusted \
             --user $credentials \
             --request GET \
-            ${pulp_api_url}repositories/$repo_path
+            ${pulp_api_url}repositories/$repo_path \
+        );
+    [ $res -ne 200 ] && myci-error.sh "getting repos failed, HTTP code = $res, answer = $(cat $tmpfile)";
+    cat $tmpfile
+}
+
+function list_repos {
+    echo $(get_repos) | jq; # '.results[].name'
 }
 
 function create_deb_repo {
