@@ -20,19 +20,24 @@ while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
 			echo "Usage:"
-			echo "	$(basename $0) [--help] [--domain <pulp-domain>] [--trusted] [--type <repo-type>] <command> [<command-options> ...]"
+			echo "	$(basename $0) [--help] [<options>] <command> [<command-options>] [...]"
 			echo " "
 			echo "Environment variable MYCI_PULP_USERNAME must be set to Pulp username."
 			echo "Environment variable MYCI_PULP_PASSWORD must be set to Pulp password."
             echo "If --domain argument is not given, then environment variable MYCI_PULP_DOMAIN must be set to Pulp domain."
             echo " "
             echo "options:"
+            echo "  --help    Show this help text and do nothing."
+            echo "  --domain <pulp-domain>    Specify pulp server domain name. This overrides MYCI_PULP_DOMAIN env var value."
             echo "  --trusted  Allow self-signed certificate."
-            echo "  --type     Repository type: deb, maven, file."
+            echo "  --type <repo-type>    Repository type: deb, maven, file."
             echo " "
-            echo "create-repo:"
-            echo "  --name     Repository name."
+            echo "commands:"
+            echo "  repo    Operations on repositories."
 			echo " "
+            echo "command-options:"
+            echo "  --help    Show help text on specific command and do nothing."
+            echo " "
 			echo "Example:"
 			echo "	$(basename $0) -o cppfw -r debian -d buster -c main ../myci_0.1.29_all.deb"
 			exit 0
@@ -50,7 +55,11 @@ while [[ $# > 0 ]] ; do
             set_repo_path;
             ;;
 		*)
-            command=$1
+            if [ "$1" == "repo" ] || [ "$1" == "list-repos" ]; then
+                command=$1
+            else
+                source myci-error.sh "unknown command or argument: $1"
+            fi
 			;;
 	esac
 	[[ $# > 0 ]] && shift;
@@ -87,9 +96,13 @@ function get_repos {
             --user $credentials \
             --request GET \
             ${pulp_api_url}repositories/$repo_path \
+            2>&1 \
         );
-    [ $res -ne 200 ] && myci-error.sh "getting repos failed, HTTP code = $res, answer = $(cat $tmpfile)";
     cat $tmpfile
+    if [ $res -ne 200 ]; then
+        
+        myci-error.sh "getting repos failed, HTTP code = $res"
+    fi
 }
 
 function list_repos {
@@ -126,32 +139,38 @@ function delete_deb_repo {
     echo TODO:
 }
 
+function handle_repo_command {
+    check_type_argument;
+    
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            --name)
+                shift
+                repo_name=$1;
+                ;;
+            *)
+                [ -z "$subcommand" ] || source myci-error.sh "more than one subcommand given: $1";
+
+                if [ "$1" == "list" ] || [ "$1" == "create" ]; then
+                    subcommand=$1
+                else
+                    source myci-error.sh "unknown arguemnt to repo command: $1";
+                fi
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    # TODO:
+}
+
 case $command in
+    repo)
+        handle_repo_sommand;
+        ;;
     list-repos)
         check_type_argument;
         list_repos $@
-        ;;
-    create-repo)
-        check_type_argument;
-        case $repo_type in
-            deb)
-                create_deb_repo $@;
-                ;;
-            *)
-                source myci-error.sh "unknown --type argument value"
-                ;;
-        esac
-        ;;
-    delete-repo)
-        check_type_argument;
-        case $repo_type in
-            deb)
-                delete_deb_repo $@;
-                ;;
-            *)
-                source myci-error.sh "unknown --type argument value"
-                ;;
-        esac
         ;;
     *)
         source myci-error.sh "unknown command: $command";
