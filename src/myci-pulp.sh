@@ -87,26 +87,26 @@ function get_repos {
     local tmpfile=$(mktemp)
     trap "rm -f $tmpfile" 0 2 3 9 15
     # this api request is same for all repo types
-    local res=$(curl \
+    local res=($(curl \
             --location \
             --silent \
             --output $tmpfile \
-            --write-out "%{http_code}" \
+            --write-out "%{http_code} %{ssl_verify_result}" \
             $trusted \
             --user $credentials \
             --request GET \
             ${pulp_api_url}repositories/$repo_path \
-            2>&1 \
-        );
-    cat $tmpfile
-    if [ $res -ne 200 ]; then
-        
-        myci-error.sh "getting repos failed, HTTP code = $res"
+        ));
+    func_res=$(cat $tmpfile)
+    [ ! -z "$trusted" ] || [ ${res[1]} -eq 0 ] || source myci-error.sh "SSL verification failed, ssl_verify_result = ${res[1]}, func_res = $func_res";
+    if [ ${res[0]} -ne 200 ]; then
+        source myci-error.sh "getting repos failed, HTTP code = ${res[0]}, func_res = $func_res"
     fi
 }
 
 function list_repos {
-    echo $(get_repos) | jq; # '.results[].name'
+    get_repos
+    echo $func_res | jq; # '.results[].name'
 }
 
 function create_deb_repo {
