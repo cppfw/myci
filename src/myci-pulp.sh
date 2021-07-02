@@ -20,15 +20,26 @@ function set_repo_path {
 }
 
 declare -A commands=( \
-        [repo]=handle_repo_command \
-        [task]=handle_task_command \
+        [repo]=1 \
+        [task]=1 \
+    )
+
+declare -A repo_subcommands=( \
+        [list]=1 \
+        [list-full]=1 \
+        [create]=1 \
+        [delete]=1 \
+    )
+
+declare -A task_subcommands=( \
+        [list]=1 \
     )
 
 while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
 			echo "Usage:"
-			echo "	$(basename $0) [--help] [<options>] <command> [<command-options>] [...]"
+			echo "	$(basename $0) [--help] [<options>] <command> <subcommand> [<command-options>] [...]"
 			echo " "
 			echo "Environment variable MYCI_PULP_USERNAME must be set to Pulp username."
 			echo "Environment variable MYCI_PULP_PASSWORD must be set to Pulp password."
@@ -48,7 +59,7 @@ while [[ $# > 0 ]] ; do
             echo "  --help    Show help text on specific command and do nothing."
             echo " "
 			echo "Example:"
-			echo "	$(basename $0) -o cppfw -r debian -d buster -c main ../myci_0.1.29_all.deb"
+			echo "	TODO: $(basename $0) -o cppfw -r debian -d buster -c main ../myci_0.1.29_all.deb"
 			exit 0
 			;;
         --trusted)
@@ -73,6 +84,11 @@ while [[ $# > 0 ]] ; do
 
     if [ ! -z "$command" ]; then break; fi
 done
+
+subcommand=$1
+[ ! -z "$subcommand" ] || source myci-error.sh "subcommand is not given"
+eval "subcommand_valid=\${${command}_subcommands[$subcommand]}"
+[ ! -z "$subcommand_valid" ] || source myci-error.sh "unknown subcommand: $subcommand"
 
 [ -z "$MYCI_PULP_USERNAME" ] && source myci-error.sh "MYCI_PULP_USERNAME is not set";
 [ -z "$MYCI_PULP_PASSWORD" ] && source myci-error.sh "MYCI_PULP_PASSWORD is not set";
@@ -219,9 +235,9 @@ function handle_repo_command {
                 name=$1
                 ;;
             *)
-                [ -z "$subcommand" ] || source myci-error.sh "more than one subcommand given: $1";
+                # [ -z "$subcommand" ] || source myci-error.sh "more than one subcommand given: $1";
 
-                subcommand=$1
+                # subcommand=$1
                 ;;
         esac
         [[ $# > 0 ]] && shift;
@@ -251,13 +267,19 @@ function list_tasks {
     echo $func_res | jq
 }
 
+function get_task {
+    local task_href=$1
+
+    make_curl_req GET ${pulp_url}$task_href 200
+}
+
 function handle_task_command {
     while [[ $# > 0 ]] ; do
         case $1 in
             *)
-                [ -z "$subcommand" ] || source myci-error.sh "more than one subcommand given: $1";
+                # [ -z "$subcommand" ] || source myci-error.sh "more than one subcommand given: $1";
 
-                subcommand=$1
+                # subcommand=$1
                 ;;
         esac
         [[ $# > 0 ]] && shift;
@@ -273,4 +295,4 @@ function handle_task_command {
     esac
 }
 
-${commands[$command]} $@
+handle_${command}_command $@
