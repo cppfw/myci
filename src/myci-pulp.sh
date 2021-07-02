@@ -178,28 +178,24 @@ function delete_deb_repo {
     echo TODO:
 }
 
+function check_subcommand {
+    [ ! -z "$subcommand" ] || source myci-error.sh "subcommand expected right after command";
+}
+
 function handle_repo_command {
     check_type_argument;
     
     while [[ $# > 0 ]] ; do
         case $1 in
             --name)
+                check_subcommand
                 shift
                 name=$1
                 ;;
             *)
                 [ -z "$subcommand" ] || source myci-error.sh "more than one subcommand given: $1";
 
-                if \
-                        [ "$1" == "list" ] \
-                        || [ "$1" == "list-full" ] \
-                        || [ "$1" == "create" ] \
-                    ;
-                then
-                    subcommand=$1
-                else
-                    source myci-error.sh "unknown argument to repo command: $1"
-                fi
+                subcommand=$1
                 ;;
         esac
         [[ $# > 0 ]] && shift;
@@ -216,7 +212,7 @@ function handle_repo_command {
             create_${repo_type}_repo
             ;;
         *)
-            source myci-error.sh "ASSERT(false): unexpected subcommand in handle_repo_command: $subcommand"
+            source myci-error.sh "unknown argument to repo command: $subcommand"
             ;;
     esac
 }
