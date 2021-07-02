@@ -24,6 +24,7 @@ declare -A commands=( \
         [repo]=1 \
         [task]=1 \
         [package]=1 \
+        [orphans]=1 \
     )
 
 declare -A repo_subcommands=( \
@@ -39,6 +40,10 @@ declare -A task_subcommands=( \
 declare -A package_subcommands=( \
         [list]=1 \
         [upload]=1 \
+        [delete]=1 \
+    )
+
+declare -A orphans_subcommands=( \
         [delete]=1 \
     )
 
@@ -481,7 +486,7 @@ function handle_deb_package_upload_command {
     wait_task_finish $task_href
 
     local package_href=$(echo $func_res | jq -r '.created_resources[0]')
-    echo "package_href = $package_href"
+    # echo "package_href = $package_href"
     [ ! -a "$package_href" ] || source myci-error.sh "ASSERT(false): handle_deb_package_upload_command: package_href is empty"
 
     # add package to the repo
@@ -492,13 +497,21 @@ function handle_deb_package_upload_command {
             202 \
             json \
             "{\"add_content_units\":[\"${pulp_url}$package_href\"]}"
-    echo $func_res
+    # echo $func_res
     
     local task_href=$(echo $func_res | jq -r '.task')
-    echo "task_href = $task_href"
+    # echo "task_href = $task_href"
     wait_task_finish $task_href
 
     echo "package '$(basename $file_name)' uploaded to '$repo_name' repository"
+}
+
+function handle_orphans_delete_command {
+    make_curl_req DELETE ${pulp_api_url}orphans/ 202
+    local task_href=$(echo $func_res | jq -r '.task')
+    # echo "task_href = $task_href"
+    wait_task_finish $task_href
+    echo "orphaned content deleted"
 }
 
 handle_${command}_${subcommand}_command $@
