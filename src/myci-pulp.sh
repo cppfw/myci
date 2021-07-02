@@ -43,7 +43,7 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
         --trusted)
-            trusted=-k;
+            trusted=--insecure;
             ;;
 		--domain)
 			shift
@@ -83,56 +83,100 @@ function check_type_argument {
     return 0;
 }
 
-function get_repos {
+function check_name_argument {
+    [ -z "$name" ] && source myci-error.sh "--name argument is not given";
+    return 0;
+}
+
+function make_curl_req {
+    local method=$1
+    local url=$2
+    local expected_http_code=$3
+
+    local data_arg=
+    
+    case $method in
+        POST)
+            local content_type=$4
+            local data=$5
+            case $content_type in
+                json)
+                    data_arg="--data"
+                    local content_type_header="Content-Type: application/json"
+                    ;;
+                *)
+                    source myci-error.sh "unknown content type: $content_type"
+            esac
+            ;;
+    esac
+
+    # echo "content_type_header = $content_type_header"
+    # echo "data_arg = $data_arg"
+
     local tmpfile=$(mktemp)
     trap "rm -f $tmpfile" 0 2 3 9 15
-    # this api request is same for all repo types
-    local res=($(curl \
-            --location \
-            --silent \
-            --output $tmpfile \
+    
+    local curl_cmd=(curl --location --silent $trusted --output $tmpfile \
             --write-out "%{http_code} %{ssl_verify_result}" \
-            $trusted \
             --user $credentials \
-            --request GET \
-            ${pulp_api_url}repositories/$repo_path \
-        ));
-    func_res=$(cat $tmpfile)
-    [ ! -z "$trusted" ] || [ ${res[1]} -eq 0 ] || source myci-error.sh "SSL verification failed, ssl_verify_result = ${res[1]}, func_res = $func_res";
-    if [ ${res[0]} -ne 200 ]; then
-        source myci-error.sh "getting repos failed, HTTP code = ${res[0]}, func_res = $func_res"
+            --request $method \
+            $url)
+    
+    if [ ! -z "$data_arg" ]; then
+        curl_cmd+=(--header "$content_type_header")
+        curl_cmd+=($data_arg "$data")
     fi
+
+    # echo "curl_cmd ="; printf '%s\n' "${curl_cmd[@]}"
+
+    local curl_res=($("${curl_cmd[@]}" || true));
+    func_res=$(cat $tmpfile)
+
+    # echo "curl_res[0] = ${curl_res[0]}"
+
+    if [ -z "$trusted" ] && [ ${curl_res[1]} -ne 0 ]; then
+        source myci-error.sh "SSL verification failed, ssl_verify_result = ${curl_res[1]}, func_res = $func_res";
+    fi
+
+    if [ ${curl_res[0]} -ne $expected_http_code ]; then
+        source myci-error.sh "request failed, HTTP code = ${curl_res[0]} (expected $expected_http_code), func_res = $func_res"
+    fi
+}
+
+function get_repos {
+    make_curl_req GET ${pulp_api_url}repositories/$repo_path 200
 }
 
 function list_repos {
     get_repos
-    echo $func_res | jq; # '.results[].name'
+    echo $func_res | jq # '.results[].name'
 }
 
 function create_deb_repo {
-    while [[ $# > 0 ]] ; do
-        case $1 in
-            --name)
-                shift
-                local repo_name=$1;
-                ;;
-            *)
-                source myci-error.sh "unknown arguemnt to create-repo command: $1";
-                ;;
-        esac
-        [[ $# > 0 ]] && shift;
-    done
+    check_name_argument;
 
-    [ -z "$repo_name" ] && source myci-error.sh "--name argument is not given";
+    make_curl_req \
+            POST \
+            ${pulp_api_url}repositories/$repo_path \
+            201 \
+            json \
+            "{\"pulp_labels\":{},\"name\":\"$name\",\"description\":\"debian repo\",\"retained_versions\":2,\"remote\":null}"
 
-    curl \
-            --location \
-            $trusted \
-            --user $credentials \
-            --data "{ \"pulp_labels\":{}, \"name\":\"$repo_name\", \"description\":\"debian repo\", \"retained_versions\": 2, \"remote\":null}" \
-            --header "Content-Type: application/json" \
-            --request POST \
-            ${pulp_api_url}repositories/$repo_path
+    # local tmpfile=$(mktemp)
+    # trap "rm -f $tmpfile" 0 2 3 9 15
+
+    # local res=($(curl \
+    #         --location \
+    #         --silent \
+    #         --output $tmpfile \
+    #         --write-out "%{http_code} %{ssl_verify_result}" \
+    #         $trusted \
+    #         --user $credentials \
+    #         --data "{ \"pulp_labels\":{}, \"name\":\"$name\", \"description\":\"debian repo\", \"retained_versions\": 2, \"remote\":null}" \
+    #         --header "Content-Type: application/json" \
+    #         --request POST \
+    #         ${pulp_api_url}repositories/$repo_path \
+    #     ));
 }
 
 function delete_deb_repo {
@@ -146,7 +190,7 @@ function handle_repo_command {
         case $1 in
             --name)
                 shift
-                repo_name=$1;
+                name=$1;
                 ;;
             *)
                 [ -z "$subcommand" ] || source myci-error.sh "more than one subcommand given: $1";
@@ -154,23 +198,29 @@ function handle_repo_command {
                 if [ "$1" == "list" ] || [ "$1" == "create" ]; then
                     subcommand=$1
                 else
-                    source myci-error.sh "unknown arguemnt to repo command: $1";
+                    source myci-error.sh "unknown argument to repo command: $1";
                 fi
                 ;;
         esac
         [[ $# > 0 ]] && shift;
     done
 
-    # TODO:
+    case $subcommand in
+        list)
+            list_repos;
+            ;;
+        create)
+            create_deb_repo;
+            ;;
+        *)
+            source myci-error.sh "ASSERT(false): unexpected subcommand in handle_repo_command: $subcommand"
+            ;;
+    esac
 }
 
 case $command in
     repo)
-        handle_repo_sommand;
-        ;;
-    list-repos)
-        check_type_argument;
-        list_repos $@
+        handle_repo_command $@;
         ;;
     *)
         source myci-error.sh "unknown command: $command";
