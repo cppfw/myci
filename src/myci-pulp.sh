@@ -343,7 +343,7 @@ function wait_task_finish {
             echo "task completed"
             ;;
         failed)
-            echo "task failed: $(echo $func_res | jq -r '.error.description')"
+            source myci-error.sh "task failed: $(echo $func_res | jq -r '.error.description')"
             ;;
         *)
             source myci-error.sh "ASSERT(false): unknown task state encountered: $state"
@@ -361,6 +361,30 @@ function handle_task_list_command {
 function handle_package_list_command {
     check_type_argument
     handle_${repo_type}_${command}_${subcommand}_command $@
+}
+
+function get_deb_package {
+    local file_name=$1
+
+    local pkg=($(echo $file_name | sed -E -e 's/^([^_]*)_([^_]*)_([^_]*).deb$/\1 \2 \3/g'))
+
+    [[ ${#pkg[@]} == 3 ]] || source myci-error.sh "malformed debian package name format: $file_name"
+
+    make_curl_req GET "${pulp_api_url}${package_url_path}?package=${pkg[0]}&version=${pkg[1]}&architecture=${pkg[2]}" 200
+
+    local num_found=$(echo $func_res | jq -r '.count')
+
+    case $num_found in
+        0)
+            func_res=
+            ;;
+        1)
+            func_res=$(echo $func_res | jq -r '.results[0]')
+            ;;
+        *)
+            source myci-error.sh "ASSERT(false) more than one package found"
+            ;;
+    esac
 }
 
 function handle_deb_package_list_command {
@@ -435,9 +459,14 @@ function handle_deb_package_upload_command {
     [ ! -z "$file_name" ] || source myci-error.sh "missing required argument: --file"
     [ ! -z "$repo_name" ] || source myci-error.sh "missing required argument: --repo"
 
+    get_deb_package $(basename $file_name)
+    # echo $func_res
+
     get_repo_href $repo_name
     local repo_href=$func_res
     # echo "repo_href = $repo_href"
+
+    # get_repo_latest_version_href $repo_name
 
     [ ! -z "$repo_href" ] || source myci-error.sh "repository '$repo_name' not found"
 
@@ -452,10 +481,9 @@ function handle_deb_package_upload_command {
     echo "task_href = $task_href"
     wait_task_finish $task_href
 
-    # get_task $task_href
-    # echo $func_res | jq
-
-    echo "package '$(basename $file_name)' uploaded to '$repo_name' repository"
+    if [ "$func_res" == "completed" ]; then
+        echo "package '$(basename $file_name)' uploaded to '$repo_name' repository"
+    fi
 }
 
 handle_${command}_${subcommand}_command $@
