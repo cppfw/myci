@@ -39,6 +39,7 @@ declare -A task_subcommands=( \
 declare -A package_subcommands=( \
         [list]=1 \
         [upload]=1 \
+        [delete]=1 \
     )
 
 while [[ $# > 0 ]] ; do
@@ -349,8 +350,6 @@ function wait_task_finish {
             source myci-error.sh "ASSERT(false): unknown task state encountered: $state"
             ;;
     esac
-
-    func_res=$state
 }
 
 function handle_task_list_command {
@@ -413,14 +412,14 @@ function handle_deb_package_list_command {
     # TODO: debug
     if [ ! -z "$repo_name" ]; then
         get_repo_latest_version_href $repo_name
-        args=$args&repository_version=$func_res
+        args="$args&repository_version=$func_res"
     fi
 
     if [ ! -z "$args" ]; then
         args="?$args"
     fi
 
-    make_curl_req GET ${pulp_api_url}${package_url_path}${args} 200
+    make_curl_req GET "${pulp_api_url}${package_url_path}${args}" 200
     echo $func_res | jq
 }
 
@@ -475,15 +474,33 @@ function handle_deb_package_upload_command {
             ${pulp_api_url}$package_url_path \
             202 \
             form \
-            "file=@$file_name;repository=$pulp_url$repo_href"
+            "file=@$file_name"
+            # "file=@$file_name;repository=$pulp_url$repo_href"
 
+    local task_href=$(echo $func_res | jq -r '.task')
+    # echo "task_href = $task_href"
+    wait_task_finish $task_href
+
+    local package_href=$(echo $func_res | jq -r '.created_resources[0]')
+    echo "package_href = $package_href"
+    [ ! -a "$package_href" ] || source myci-error.sh "ASSERT(false): handle_deb_package_upload_command: package_href is empty"
+
+    # add package to the repo
+
+    make_curl_req \
+            POST \
+            ${pupl_url}${repo_href}modify/ \
+            202 \
+            json \
+            "{ \
+              \"add_content_units\":[\"${pupl_url}$package_href\"], \
+            }"
+    
     local task_href=$(echo $func_res | jq -r '.task')
     echo "task_href = $task_href"
     wait_task_finish $task_href
 
-    if [ "$func_res" == "completed" ]; then
-        echo "package '$(basename $file_name)' uploaded to '$repo_name' repository"
-    fi
+    echo "package '$(basename $file_name)' uploaded to '$repo_name' repository"
 }
 
 handle_${command}_${subcommand}_command $@
