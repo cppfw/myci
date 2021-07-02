@@ -16,6 +16,11 @@ function set_repo_path {
     esac
 }
 
+declare -A commands=( \
+        [repo]=handle_repo_command \
+        [task]=handle_task_command \
+    )
+
 while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
@@ -56,6 +61,8 @@ while [[ $# > 0 ]] ; do
             ;;
 		*)
             command=$1
+            # echo "command handler = ${commands[$command]}"
+            [ ! -z "${commands[$command]}" ] || source myci-error.sh "unknown command: $command"
 			;;
 	esac
 	[[ $# > 0 ]] && shift;
@@ -262,14 +269,4 @@ function handle_task_command {
     esac
 }
 
-case $command in
-    repo)
-        handle_repo_command $@
-        ;;
-    task)
-        handle_task_command $@
-        ;;
-    *)
-        source myci-error.sh "unknown command: $command";
-        ;;
-esac
+${commands[$command]} $@
