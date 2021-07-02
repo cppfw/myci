@@ -27,7 +27,6 @@ declare -A commands=( \
 
 declare -A repo_subcommands=( \
         [list]=1 \
-        [list-full]=1 \
         [create]=1 \
         [delete]=1 \
     )
@@ -93,6 +92,7 @@ while [[ $# > 0 ]] ; do
 done
 
 subcommand=$1
+shift
 [ ! -z "$subcommand" ] || source myci-error.sh "subcommand is not given"
 eval "subcommand_valid=\${${command}_subcommands[$subcommand]}"
 [ ! -z "$subcommand_valid" ] || source myci-error.sh "unknown subcommand: $subcommand"
@@ -179,16 +179,30 @@ function get_repos {
     make_curl_req GET ${pulp_api_url}repositories/$repo_path 200
 }
 
-function list_repos {
-    get_repos
-    echo $func_res | jq -r '.results[].name'
-}
+function handle_repo_list_command {
+    local jq_cmd=(jq -r '.results[].name')
 
-function list_repos_full {
-    get_repos
-    echo $func_res | jq
-}
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            --help)
+                echo "options:"
+                echo "  --help  Show this help text and do nothing."
+                echo "  --full  Show full info."
+                exit 0
+                ;;
+            --full)
+                jq_cmd=(jq)
+                ;;
+            *)
+                source myci-error.sh "unknown command line argument: $1"
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
 
+    get_repos
+    echo $func_res | "${jq_cmd[@]}"
+}
 
 function get_repo_href {
     local repo_name=$1
@@ -280,26 +294,13 @@ function get_task {
     make_curl_req GET ${pulp_url}$task_href 200
 }
 
-function handle_task_command {
-    while [[ $# > 0 ]] ; do
-        case $1 in
-            *)
-                # [ -z "$subcommand" ] || source myci-error.sh "more than one subcommand given: $1";
-
-                # subcommand=$1
-                ;;
-        esac
-        [[ $# > 0 ]] && shift;
-    done
-
-    case $subcommand in
-        list)
-            list_tasks
-            ;;
-        *)
-            source myci-error.sh "unknown subcommand: $subcommand"
-            ;;
-    esac
+function handle_task_list_command {
+    make_curl_req GET ${pulp_api_url}tasks/ 200
+    echo $func_res | jq
 }
 
-handle_${command}_command $@
+function handle_package_list_command {
+    echo TODO
+}
+
+handle_${command}_${subcommand}_command $@
