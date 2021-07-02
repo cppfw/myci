@@ -149,7 +149,7 @@ function get_repos {
 
 function list_repos {
     get_repos
-    echo $func_res | jq '.results[].name'
+    echo $func_res | jq -r '.results[].name'
 }
 
 function list_repos_full {
@@ -157,8 +157,15 @@ function list_repos_full {
     echo $func_res | jq
 }
 
+
+function get_repo_href {
+    local repo_name=$1
+    make_curl_req GET ${pulp_api_url}repositories/$repo_path?name=$repo_name 200
+    func_res=$(echo $func_res | jq -r '.results[].pulp_href')
+}
+
 function create_deb_repo {
-    check_name_argument;
+    check_name_argument
 
     make_curl_req \
             POST \
@@ -175,7 +182,17 @@ function create_deb_repo {
 }
 
 function delete_deb_repo {
-    echo TODO:
+    check_name_argument
+
+    get_repo_href $name
+
+    [ ! -z "$func_res" ] || source myci-error.sh "repository '$name' not found"
+
+    # echo $func_res
+
+    make_curl_req DELETE ${pulp_url}$func_res 202
+
+    echo "repository '$name' deleted"
 }
 
 function check_subcommand {
@@ -210,6 +227,9 @@ function handle_repo_command {
             ;;
         create)
             create_${repo_type}_repo
+            ;;
+        delete)
+            delete_${repo_type}_repo
             ;;
         *)
             source myci-error.sh "unknown argument to repo command: $subcommand"
