@@ -72,7 +72,7 @@ done
 
 [ -z "$domain" ] && source myci-error.sh "MYCI_PULP_DOMAIN is not set and --domain argument is not given";
 
-credentials=$MYCI_PULP_USERNAME:$MYCI_PULP_PASSWORD
+MYCI_CREDENTIALS=$MYCI_PULP_USERNAME:$MYCI_PULP_PASSWORD
 
 pulp_url=https://$domain
 
@@ -118,10 +118,13 @@ function make_curl_req {
     
     local curl_cmd=(curl --location --silent $trusted --output $tmpfile \
             --write-out "%{http_code} %{ssl_verify_result}" \
-            --user $credentials \
             --request $method \
             $url)
-    
+
+    if [ ! -z "$MYCI_CREDENTIALS" ]; then
+        curl_cmd+=(--user "$MYCI_CREDENTIALS")
+    fi
+
     if [ ! -z "$data_arg" ]; then
         curl_cmd+=(--header "$content_type_header")
         curl_cmd+=($data_arg "$data")
