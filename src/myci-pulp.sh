@@ -113,11 +113,6 @@ function check_type_argument {
     return 0;
 }
 
-function check_name_argument {
-    [ -z "$name" ] && source myci-error.sh "--name argument is not given";
-    return 0;
-}
-
 function make_curl_req {
     local method=$1
     local url=$2
@@ -210,8 +205,28 @@ function get_repo_href {
     func_res=$(echo $func_res | jq -r '.results[].pulp_href')
 }
 
-function create_deb_repo {
-    check_name_argument
+function handle_deb_repo_create_command {
+    local name=
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            --help)
+                echo "options:"
+                echo "  --help              Show this help text and do nothing."
+                echo "  --name <repo_name>  Repository name."
+                exit 0
+                ;;
+            --name)
+                shift
+                name=$1
+                ;;
+            *)
+                source myci-error.sh "unknown command line argument: $1"
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    [ ! -z "$name" ] || source myci-error.sh "missing required argument: --name"
 
     make_curl_req \
             POST \
@@ -225,10 +240,32 @@ function create_deb_repo {
               \"retained_versions\":2, \
               \"remote\":null \
             }"
+    
+    echo "repository '$name' created"
 }
 
-function delete_deb_repo {
-    check_name_argument
+function handle_deb_repo_delete_command {
+    local name=
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            --help)
+                echo "options:"
+                echo "  --help              Show this help text and do nothing."
+                echo "  --name <repo_name>  Repository name."
+                exit 0
+                ;;
+            --name)
+                shift
+                name=$1
+                ;;
+            *)
+                source myci-error.sh "unknown command line argument: $1"
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    [ ! -z "$name" ] || source myci-error.sh "missing required argument: --name"
 
     get_repo_href $name
 
@@ -301,6 +338,16 @@ function handle_task_list_command {
 
 function handle_package_list_command {
     echo TODO
+}
+
+function handle_repo_create_command {
+    check_type_argument
+    handle_${repo_type}_${command}_${subcommand}_command $@
+}
+
+function handle_repo_delete_command {
+    check_type_argument
+    handle_${repo_type}_${command}_${subcommand}_command $@
 }
 
 handle_${command}_${subcommand}_command $@
