@@ -22,6 +22,7 @@ function set_repo_path {
 declare -A commands=( \
         [repo]=1 \
         [task]=1 \
+        [package]=1 \
     )
 
 declare -A repo_subcommands=( \
@@ -35,28 +36,34 @@ declare -A task_subcommands=( \
         [list]=1 \
     )
 
+declare -A package_subcommands=( \
+        [list]=1 \
+    )
+
 while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
 			echo "Usage:"
-			echo "	$(basename $0) [--help] [<options>] <command> <subcommand> [<command-options>] [...]"
+			echo "	$(basename $0) [--help] [<options>] <command> <subcommand> [--help] [...]"
 			echo " "
 			echo "Environment variable MYCI_PULP_USERNAME must be set to Pulp username."
 			echo "Environment variable MYCI_PULP_PASSWORD must be set to Pulp password."
             echo "If --domain argument is not given, then environment variable MYCI_PULP_DOMAIN must be set to Pulp domain."
             echo " "
             echo "options:"
-            echo "  --help    Show this help text and do nothing."
-            echo "  --domain <pulp-domain>    Specify pulp server domain name. This overrides MYCI_PULP_DOMAIN env var value."
-            echo "  --trusted  Allow self-signed certificate."
-            echo "  --type <repo-type>    Repository type: deb, maven, file, rpm, docker."
+            echo "  --help                  Show this help text and do nothing."
+            echo "  --domain <pulp-domain>  Specify pulp server domain name. This overrides MYCI_PULP_DOMAIN env var value."
+            echo "  --trusted               Allow self-signed certificate."
+            echo "  --type <repo-type>      Repository type: deb, maven, file, rpm, docker."
             echo " "
             echo "commands:"
-            echo "  repo    Operations on repositories."
-            echo "  task    Operations on tasks."
-			echo " "
-            echo "command-options:"
-            echo "  --help    Show help text on specific command and do nothing."
+            for i in "${!commands[@]}"; do {
+                echo "  $i"
+                eval "subcommands=\"\${!${i}_subcommands[@]}\""
+                for j in $subcommands; do
+                echo "    - $j"
+                done
+            } done
             echo " "
 			echo "Example:"
 			echo "	TODO: $(basename $0) -o cppfw -r debian -d buster -c main ../myci_0.1.29_all.deb"
