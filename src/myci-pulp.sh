@@ -205,6 +205,16 @@ function handle_repo_list_command {
     echo $func_res | "${jq_cmd[@]}"
 }
 
+function handle_repo_create_command {
+    check_type_argument
+    handle_${repo_type}_${command}_${subcommand}_command $@
+}
+
+function handle_repo_delete_command {
+    check_type_argument
+    handle_${repo_type}_${command}_${subcommand}_command $@
+}
+
 function handle_deb_repo_create_command {
     local name=
     while [[ $# > 0 ]] ; do
@@ -290,17 +300,13 @@ function handle_task_list_command {
 }
 
 function handle_package_list_command {
-    echo TODO
-}
-
-function handle_repo_create_command {
     check_type_argument
     handle_${repo_type}_${command}_${subcommand}_command $@
 }
 
-function handle_repo_delete_command {
-    check_type_argument
-    handle_${repo_type}_${command}_${subcommand}_command $@
+function handle_deb_package_list_command {
+    make_curl_req GET ${pulp_api_url}content/deb/packages/ 200
+    echo $func_res | jq
 }
 
 handle_${command}_${subcommand}_command $@
