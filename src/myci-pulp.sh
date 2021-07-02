@@ -174,6 +174,12 @@ function get_repos {
     make_curl_req GET ${pulp_api_url}repositories/$repo_path 200
 }
 
+function get_repo_href {
+    local repo_name=$1
+    make_curl_req GET ${pulp_api_url}repositories/$repo_path?name=$repo_name 200
+    func_res=$(echo $func_res | jq -r '.results[].pulp_href')
+}
+
 function handle_repo_list_command {
     local jq_cmd=(jq -r '.results[].name')
 
@@ -197,12 +203,6 @@ function handle_repo_list_command {
 
     get_repos
     echo $func_res | "${jq_cmd[@]}"
-}
-
-function get_repo_href {
-    local repo_name=$1
-    make_curl_req GET ${pulp_api_url}repositories/$repo_path?name=$repo_name 200
-    func_res=$(echo $func_res | jq -r '.results[].pulp_href')
 }
 
 function handle_deb_repo_create_command {
@@ -276,53 +276,6 @@ function handle_deb_repo_delete_command {
     make_curl_req DELETE ${pulp_url}$func_res 202
 
     echo "repository '$name' deleted"
-}
-
-function check_subcommand {
-    [ ! -z "$subcommand" ] || source myci-error.sh "subcommand expected right after command";
-}
-
-function handle_repo_command {
-    check_type_argument;
-    
-    while [[ $# > 0 ]] ; do
-        case $1 in
-            --name)
-                check_subcommand
-                shift
-                name=$1
-                ;;
-            *)
-                # [ -z "$subcommand" ] || source myci-error.sh "more than one subcommand given: $1";
-
-                # subcommand=$1
-                ;;
-        esac
-        [[ $# > 0 ]] && shift;
-    done
-
-    case $subcommand in
-        list)
-            list_repos
-            ;;
-        list-full)
-            list_repos_full
-            ;;
-        create)
-            create_${repo_type}_repo
-            ;;
-        delete)
-            delete_${repo_type}_repo
-            ;;
-        *)
-            source myci-error.sh "unknown subcommand: $subcommand"
-            ;;
-    esac
-}
-
-function list_tasks {
-    make_curl_req GET ${pulp_api_url}tasks/ 200
-    echo $func_res | jq
 }
 
 function get_task {
