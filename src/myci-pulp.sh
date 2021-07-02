@@ -8,10 +8,11 @@ domain=$MYCI_PULP_DOMAIN
 function set_repo_path {
     case $repo_type in
         deb)
-            repo_path=deb/apt/
+            repo_url_path=deb/apt/
+            package_url_path=content/deb/packages/
             ;;
         docker)
-            repo_path=container/container/
+            repo_url_path=container/container/
             ;;
         *)
             source myci-error.sh "unknown value of --type argument: $type";
@@ -37,6 +38,7 @@ declare -A task_subcommands=( \
 
 declare -A package_subcommands=( \
         [list]=1 \
+        [upload]=1 \
     )
 
 while [[ $# > 0 ]] ; do
@@ -129,6 +131,10 @@ function make_curl_req {
                     data_arg="--data"
                     local content_type_header="Content-Type: application/json"
                     ;;
+                form)
+                    data_arg="--form"
+                    local content_type_header="Content-Type: multipart/form-data"
+                    ;;
                 *)
                     source myci-error.sh "unknown content type: $content_type"
             esac
@@ -171,13 +177,24 @@ function make_curl_req {
 }
 
 function get_repos {
-    make_curl_req GET ${pulp_api_url}repositories/$repo_path 200
+    make_curl_req GET ${pulp_api_url}repositories/$repo_url_path 200
+}
+
+function get_repo {
+    local repo_name=$1
+    make_curl_req GET ${pulp_api_url}repositories/$repo_url_path?name=$repo_name 200
 }
 
 function get_repo_href {
     local repo_name=$1
-    make_curl_req GET ${pulp_api_url}repositories/$repo_path?name=$repo_name 200
+    get_repo $repo_name
     func_res=$(echo $func_res | jq -r '.results[].pulp_href')
+}
+
+function get_repo_latest_version_href {
+    local repo_name=$1
+    get_repo $repo_name
+    func_res=$(echo $func_res | jq -r '.results[].latest_version_href')
 }
 
 function handle_repo_list_command {
@@ -240,7 +257,7 @@ function handle_deb_repo_create_command {
 
     make_curl_req \
             POST \
-            ${pulp_api_url}repositories/$repo_path \
+            ${pulp_api_url}repositories/$repo_url_path \
             201 \
             json \
             "{ \
@@ -294,6 +311,46 @@ function get_task {
     make_curl_req GET ${pulp_url}$task_href 200
 }
 
+function wait_task_finish {
+    local task_href=$1
+    local timeout_sec=$2
+
+    [ ! -z "$task_href" ] || source myci-error.sh "ASSERT(false): wait_task_finish needs task href"
+
+    if [ -z "$timeout_sec" ]; then
+        timeout_sec=20
+    fi
+
+    echo "wait for task to finish"
+
+    while [[ $timeout_sec > 0 ]]; do
+        get_task $task_href
+        # echo $func_res | jq
+        local state=$(echo $func_res | jq -r ".state")
+
+        if [ "$state" != "running" ]; then
+            break
+        fi
+
+        timeout_sec=$((timeout_sec-1))
+        sleep 1
+    done
+
+    case $state in
+        completed)
+            echo "task completed"
+            ;;
+        failed)
+            echo "task failed: $(echo $func_res | jq -r '.error.description')"
+            ;;
+        *)
+            source myci-error.sh "ASSERT(false): unknown task state encountered: $state"
+            ;;
+    esac
+
+    func_res=$state
+}
+
 function handle_task_list_command {
     make_curl_req GET ${pulp_api_url}tasks/ 200
     echo $func_res | jq
@@ -305,8 +362,98 @@ function handle_package_list_command {
 }
 
 function handle_deb_package_list_command {
-    make_curl_req GET ${pulp_api_url}content/deb/packages/ 200
+    local repo_name=
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            --help)
+                echo "options:"
+                echo "  --help                      Show this help text and do nothing."
+                echo "  --repo <repository-name>    Repository to packages of."
+                exit 0
+                ;;
+            --repo)
+                shift
+                repo_name=$1
+                ;;
+            *)
+                source myci-error.sh "unknown command line argument: $1"
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    local args=
+
+    # TODO: debug
+    if [ ! -z "$repo_name" ]; then
+        get_repo_latest_version_href $repo_name
+        args=$args&repository_version=$func_res
+    fi
+
+    if [ ! -z "$args" ]; then
+        args="?$args"
+    fi
+
+    make_curl_req GET ${pulp_api_url}${package_url_path}${args} 200
     echo $func_res | jq
+}
+
+function handle_package_upload_command {
+    check_type_argument
+    handle_${repo_type}_${command}_${subcommand}_command $@
+}
+
+function handle_deb_package_upload_command {
+    local file_name=
+    local repo_name=
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            --help)
+                echo "options:"
+                echo "  --help                      Show this help text and do nothing."
+                echo "  --file <package-file-name>  Package file to upload."
+                echo "  --repo <repository-name>    Repository to upload the file to."
+                exit 0
+                ;;
+            --file)
+                shift
+                file_name=$1
+                ;;
+            --repo)
+                shift
+                repo_name=$1
+                ;;
+            *)
+                source myci-error.sh "unknown command line argument: $1"
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    [ ! -z "$file_name" ] || source myci-error.sh "missing required argument: --file"
+    [ ! -z "$repo_name" ] || source myci-error.sh "missing required argument: --repo"
+
+    get_repo_href $repo_name
+    local repo_href=$func_res
+    # echo "repo_href = $repo_href"
+
+    [ ! -z "$repo_href" ] || source myci-error.sh "repository '$repo_name' not found"
+
+    make_curl_req \
+            POST \
+            ${pulp_api_url}$package_url_path \
+            202 \
+            form \
+            "file=@$file_name;repository=$pulp_url$repo_href"
+
+    local task_href=$(echo $func_res | jq -r '.task')
+    echo "task_href = $task_href"
+    wait_task_finish $task_href
+
+    # get_task $task_href
+    # echo $func_res | jq
+
+    echo "package '$(basename $file_name)' uploaded to '$repo_name' repository"
 }
 
 handle_${command}_${subcommand}_command $@
