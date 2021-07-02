@@ -213,14 +213,7 @@ function handle_repo_command {
             list_repos_full
             ;;
         create)
-            case $repo_type in
-                deb)
-                    create_deb_repo
-                    ;;
-                *)
-                    source myci-error.sh "ASSERT(false): unexpected repo type: $type"
-                    ;;
-            esac
+            create_${repo_type}_repo
             ;;
         *)
             source myci-error.sh "ASSERT(false): unexpected subcommand in handle_repo_command: $subcommand"
