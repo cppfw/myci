@@ -149,7 +149,12 @@ function get_repos {
 
 function list_repos {
     get_repos
-    echo $func_res | jq # '.results[].name'
+    echo $func_res | jq '.results[].name'
+}
+
+function list_repos_full {
+    get_repos
+    echo $func_res | jq
 }
 
 function create_deb_repo {
@@ -160,23 +165,13 @@ function create_deb_repo {
             ${pulp_api_url}repositories/$repo_path \
             201 \
             json \
-            "{\"pulp_labels\":{},\"name\":\"$name\",\"description\":\"debian repo\",\"retained_versions\":2,\"remote\":null}"
-
-    # local tmpfile=$(mktemp)
-    # trap "rm -f $tmpfile" 0 2 3 9 15
-
-    # local res=($(curl \
-    #         --location \
-    #         --silent \
-    #         --output $tmpfile \
-    #         --write-out "%{http_code} %{ssl_verify_result}" \
-    #         $trusted \
-    #         --user $credentials \
-    #         --data "{ \"pulp_labels\":{}, \"name\":\"$name\", \"description\":\"debian repo\", \"retained_versions\": 2, \"remote\":null}" \
-    #         --header "Content-Type: application/json" \
-    #         --request POST \
-    #         ${pulp_api_url}repositories/$repo_path \
-    #     ));
+            "{ \
+              \"pulp_labels\":{}, \
+              \"name\":\"$name\", \
+              \"description\":\"debian repo\", \
+              \"retained_versions\":2, \
+              \"remote\":null \
+            }"
 }
 
 function delete_deb_repo {
@@ -190,15 +185,20 @@ function handle_repo_command {
         case $1 in
             --name)
                 shift
-                name=$1;
+                name=$1
                 ;;
             *)
                 [ -z "$subcommand" ] || source myci-error.sh "more than one subcommand given: $1";
 
-                if [ "$1" == "list" ] || [ "$1" == "create" ]; then
+                if \
+                        [ "$1" == "list" ] \
+                        || [ "$1" == "list-full" ] \
+                        || [ "$1" == "create" ] \
+                    ;
+                then
                     subcommand=$1
                 else
-                    source myci-error.sh "unknown argument to repo command: $1";
+                    source myci-error.sh "unknown argument to repo command: $1"
                 fi
                 ;;
         esac
@@ -207,10 +207,20 @@ function handle_repo_command {
 
     case $subcommand in
         list)
-            list_repos;
+            list_repos
+            ;;
+        list-full)
+            list_repos_full
             ;;
         create)
-            create_deb_repo;
+            case $repo_type in
+                deb)
+                    create_deb_repo
+                    ;;
+                *)
+                    source myci-error.sh "ASSERT(false): unexpected repo type: $type"
+                    ;;
+            esac
             ;;
         *)
             source myci-error.sh "ASSERT(false): unexpected subcommand in handle_repo_command: $subcommand"
@@ -220,7 +230,7 @@ function handle_repo_command {
 
 case $command in
     repo)
-        handle_repo_command $@;
+        handle_repo_command $@
         ;;
     *)
         source myci-error.sh "unknown command: $command";
