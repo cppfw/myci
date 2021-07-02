@@ -336,6 +336,8 @@ function wait_task_finish {
         sleep 1
     done
 
+    [ "$state" != "running" ] || source myci-error.sh "timeout hit while waiting for task to finish"
+
     case $state in
         completed)
             echo "task completed"
