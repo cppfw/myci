@@ -55,11 +55,7 @@ while [[ $# > 0 ]] ; do
             set_repo_path;
             ;;
 		*)
-            if [ "$1" == "repo" ] || [ "$1" == "list-repos" ]; then
-                command=$1
-            else
-                source myci-error.sh "unknown command or argument: $1"
-            fi
+            command=$1
 			;;
 	esac
 	[[ $# > 0 ]] && shift;
@@ -110,10 +106,9 @@ function make_curl_req {
             ;;
     esac
 
-    # echo "content_type_header = $content_type_header"
-    # echo "data_arg = $data_arg"
-
     local tmpfile=$(mktemp)
+
+    # delete temporary file on exit or signal caught
     trap "rm -f $tmpfile" 0 2 3 9 15
     
     local curl_cmd=(curl --location --silent $trusted --output $tmpfile \
@@ -235,7 +230,34 @@ function handle_repo_command {
             delete_${repo_type}_repo
             ;;
         *)
-            source myci-error.sh "unknown argument to repo command: $subcommand"
+            source myci-error.sh "unknown subcommand: $subcommand"
+            ;;
+    esac
+}
+
+function list_tasks {
+    make_curl_req GET ${pulp_api_url}tasks/ 200
+    echo $func_res | jq
+}
+
+function handle_task_command {
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            *)
+                [ -z "$subcommand" ] || source myci-error.sh "more than one subcommand given: $1";
+
+                subcommand=$1
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    case $subcommand in
+        list)
+            list_tasks
+            ;;
+        *)
+            source myci-error.sh "unknown subcommand: $subcommand"
             ;;
     esac
 }
@@ -243,6 +265,9 @@ function handle_repo_command {
 case $command in
     repo)
         handle_repo_command $@
+        ;;
+    task)
+        handle_task_command $@
         ;;
     *)
         source myci-error.sh "unknown command: $command";
