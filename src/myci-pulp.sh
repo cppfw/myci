@@ -409,7 +409,6 @@ function handle_deb_package_list_command {
 
     local args=
 
-    # TODO: debug
     if [ ! -z "$repo_name" ]; then
         get_repo_latest_version_href $repo_name
         args="$args&repository_version=$func_res"
@@ -489,12 +488,11 @@ function handle_deb_package_upload_command {
 
     make_curl_req \
             POST \
-            ${pupl_url}${repo_href}modify/ \
+            ${pulp_url}${repo_href}modify/ \
             202 \
             json \
-            "{ \
-              \"add_content_units\":[\"${pupl_url}$package_href\"], \
-            }"
+            "{\"add_content_units\":[\"${pulp_url}$package_href\"]}"
+    echo $func_res
     
     local task_href=$(echo $func_res | jq -r '.task')
     echo "task_href = $task_href"
