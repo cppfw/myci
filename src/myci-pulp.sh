@@ -10,6 +10,9 @@ function set_repo_path {
         deb)
             repo_path=deb/apt/
             ;;
+        docker)
+            repo_path=container/container/
+            ;;
         *)
             source myci-error.sh "unknown value of --type argument: $type";
             ;;
@@ -35,10 +38,11 @@ while [[ $# > 0 ]] ; do
             echo "  --help    Show this help text and do nothing."
             echo "  --domain <pulp-domain>    Specify pulp server domain name. This overrides MYCI_PULP_DOMAIN env var value."
             echo "  --trusted  Allow self-signed certificate."
-            echo "  --type <repo-type>    Repository type: deb, maven, file."
+            echo "  --type <repo-type>    Repository type: deb, maven, file, rpm, docker."
             echo " "
             echo "commands:"
             echo "  repo    Operations on repositories."
+            echo "  task    Operations on tasks."
 			echo " "
             echo "command-options:"
             echo "  --help    Show help text on specific command and do nothing."
