@@ -38,6 +38,7 @@ declare -A commands=( \
         [package]=1 \
         [orphans]=1 \
         [dist]=1 \
+        [publ]=1 \
     )
 
 declare -A repo_subcommands=( \
@@ -66,6 +67,12 @@ declare -A dist_subcommands=( \
         [delete]=1 \
     )
 
+declare -A publ_subcommands=( \
+        [list]=1 \
+        [create]=1 \
+        [delete]=1 \
+    )
+
 while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
@@ -78,7 +85,7 @@ while [[ $# > 0 ]] ; do
             echo " "
             echo "options:"
             echo "  --help                  Show this help text and do nothing."
-            echo "  --domain <pulp-domain>  Specify pulp server domain name. This overrides MYCI_PULP_DOMAIN env var value."
+            echo "  --domain <pulp-domain>  Specify pulp server domain name (e.g. https://mypulp.org). This overrides MYCI_PULP_DOMAIN env var value."
             echo "  --trusted               Allow self-signed certificate."
             echo "  --type <repo-type>      Repository type: deb, maven, file, rpm, docker."
             echo " "
@@ -131,9 +138,7 @@ eval "subcommand_valid=\${${command}_subcommands[$subcommand]}"
 
 MYCI_CREDENTIALS=$MYCI_PULP_USERNAME:$MYCI_PULP_PASSWORD
 
-pulp_url=https://$domain
-
-pulp_api_url=$pulp_url/pulp/api/v3/
+pulp_api_url=$domain/pulp/api/v3/
 
 function check_type_argument {
     [ -z "$repo_type" ] && error "--type argument is not given";
@@ -337,7 +342,7 @@ function handle_deb_repo_delete_command {
 
     # echo $func_res
 
-    make_curl_req DELETE ${pulp_url}$func_res 202
+    make_curl_req DELETE ${domain}$func_res 202
 
     echo "repository '$name' deleted"
 }
@@ -345,7 +350,7 @@ function handle_deb_repo_delete_command {
 function get_task {
     local task_href=$1
 
-    make_curl_req GET ${pulp_url}$task_href 200
+    make_curl_req GET ${domain}$task_href 200
 }
 
 function wait_task_finish {
@@ -524,7 +529,7 @@ function handle_deb_package_upload_command {
             form \
             "file=@$file_name" \
             "relative_path=pool/$repo_name/${base_file_name:0:1}/$base_file_name" \
-            "repository=$pulp_url$repo_href"
+            "repository=$domain$repo_href"
     # echo "resp = $func_res"
 
     local task_href=$(echo $func_res | jq -r '.task')
@@ -542,10 +547,10 @@ function handle_deb_package_upload_command {
 
     # make_curl_req \
     #         POST \
-    #         ${pulp_url}${repo_href}modify/ \
+    #         ${domain}${repo_href}modify/ \
     #         202 \
     #         json \
-    #         "{\"add_content_units\":[\"${pulp_url}$package_href\"]}"
+    #         "{\"add_content_units\":[\"${domain}$package_href\"]}"
     # # echo $func_res
     
     # local task_href=$(echo $func_res | jq -r '.task')
@@ -664,13 +669,102 @@ function handle_deb_dist_create_command {
             ${pulp_api_url}distributions/${pulp_api_url_suffix} \
             202 \
             json \
-            "{\"base_path\":\"$base_path\",\"name\":\"$name\",\"repository\":\"${pulp_url}${repo_href}\"}"
+            "{\"base_path\":\"$base_path\",\"name\":\"$name\",\"repository\":\"${domain}${repo_href}\"}"
 
     local task_href=$(echo $func_res | jq -r '.task')
     # echo "task_href = $task_href"
     wait_task_finish $task_href
 
     echo "distribution '$name' created"
+}
+
+function handle_publ_list_command {
+    make_curl_req \
+            GET \
+            ${pulp_api_url}publications/${pulp_api_url_suffix} \
+            200
+    echo $func_res | jq
+}
+
+function handle_publ_create_command {
+    check_type_argument
+    handle_${repo_type}_${command}_${subcommand}_command $@
+}
+
+function handle_deb_publ_create_command {
+    local repo_name=
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            --help)
+                echo "options:"
+                echo "  --help    Show this help text and do nothing."
+                echo "  --repo    Repository name to publish."
+                exit 0
+                ;;
+            --repo)
+                shift
+                repo_name=$1
+                ;;
+            *)
+                error "unknown command line argument: $1"
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    [ ! -z "$repo_name" ] || error "missing required argument: --repo"
+
+    get_repo_href $repo_name
+    local repo_href=$func_res
+
+    make_curl_req \
+            POST \
+            ${pulp_api_url}publications/${pulp_api_url_suffix} \
+            202 \
+            json \
+            "{\"repository\":\"${domain}${repo_href}\",\"simple\":true}"
+    
+    local task_href=$(echo $func_res | jq -r '.task')
+    # echo "task_href = $task_href"
+    wait_task_finish $task_href
+
+    echo "publication of repo '$repo_name' created"
+}
+
+function handle_publ_delete_command {
+    check_type_argument
+    handle_${repo_type}_${command}_${subcommand}_command $@
+}
+
+function handle_deb_publ_delete_command {
+    local publ_href=
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            --help)
+                echo "options:"
+                echo "  --help    Show this help text and do nothing."
+                echo "  --href    href of the publication to delete."
+                exit 0
+                ;;
+            --href)
+                shift
+                publ_href=$1
+                ;;
+            *)
+                error "unknown command line argument: $1"
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    [ ! -z "$publ_href" ] || error "missing required argument: --href"
+
+    make_curl_req \
+            DELETE \
+            ${domain}$publ_href \
+            204
+    
+    echo "publication deleted"
 }
 
 handle_${command}_${subcommand}_command $@
