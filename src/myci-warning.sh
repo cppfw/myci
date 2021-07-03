@@ -3,6 +3,8 @@
 # we want exit immediately if any command fails and we want error in piped commands to be preserved
 set -eo pipefail
 
+message=
+
 while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
@@ -16,7 +18,7 @@ while [[ $# > 0 ]] ; do
 			exit 0
 			;;
 		*)
-			[ ! -z "$message" ] && echo "only one message is allowed" && exit 1;
+			[ ! -z "$message" ] && echo "only one message is allowed: $1" && exit 1;
 			message="$1"
 			;;
 	esac

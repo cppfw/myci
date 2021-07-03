@@ -3,6 +3,18 @@
 # we want exit immediately if any command fails and we want error in piped commands to be preserved
 set -eo pipefail
 
+script_dir=$(dirname $0)
+
+function error {
+    local message=$1
+    source $script_dir/myci-error.sh "$message"
+}
+
+function warning {
+    local message=$1
+    source $script_dir/myci-warning.sh "$message"
+}
+
 domain=$MYCI_PULP_DOMAIN
 
 function set_repo_path {
@@ -15,7 +27,7 @@ function set_repo_path {
             repo_url_path=container/container/
             ;;
         *)
-            source myci-error.sh "unknown value of --type argument: $type";
+            error "unknown value of --type argument: $type";
             ;;
     esac
 }
@@ -91,7 +103,7 @@ while [[ $# > 0 ]] ; do
 		*)
             command=$1
             # echo "command handler = ${commands[$command]}"
-            [ ! -z "${commands[$command]}" ] || source myci-error.sh "unknown command: $command"
+            [ ! -z "${commands[$command]}" ] || error "unknown command: $command"
 			;;
 	esac
 	[[ $# > 0 ]] && shift;
@@ -101,14 +113,14 @@ done
 
 subcommand=$1
 shift
-[ ! -z "$subcommand" ] || source myci-error.sh "subcommand is not given"
+[ ! -z "$subcommand" ] || error "subcommand is not given"
 eval "subcommand_valid=\${${command}_subcommands[$subcommand]}"
-[ ! -z "$subcommand_valid" ] || source myci-error.sh "unknown subcommand: $subcommand"
+[ ! -z "$subcommand_valid" ] || error "unknown subcommand: $subcommand"
 
-[ -z "$MYCI_PULP_USERNAME" ] && source myci-error.sh "MYCI_PULP_USERNAME is not set";
-[ -z "$MYCI_PULP_PASSWORD" ] && source myci-error.sh "MYCI_PULP_PASSWORD is not set";
+[ -z "$MYCI_PULP_USERNAME" ] && error "MYCI_PULP_USERNAME is not set";
+[ -z "$MYCI_PULP_PASSWORD" ] && error "MYCI_PULP_PASSWORD is not set";
 
-[ -z "$domain" ] && source myci-error.sh "MYCI_PULP_DOMAIN is not set and --domain argument is not given";
+[ -z "$domain" ] && error "MYCI_PULP_DOMAIN is not set and --domain argument is not given";
 
 MYCI_CREDENTIALS=$MYCI_PULP_USERNAME:$MYCI_PULP_PASSWORD
 
@@ -117,7 +129,7 @@ pulp_url=https://$domain
 pulp_api_url=$pulp_url/pulp/api/v3/
 
 function check_type_argument {
-    [ -z "$repo_type" ] && source myci-error.sh "--type argument is not given";
+    [ -z "$repo_type" ] && error "--type argument is not given";
     return 0;
 }
 
@@ -142,7 +154,7 @@ function make_curl_req {
                     local content_type_header="Content-Type: multipart/form-data"
                     ;;
                 *)
-                    source myci-error.sh "unknown content type: $content_type"
+                    error "unknown content type: $content_type"
             esac
             ;;
     esac
@@ -174,11 +186,11 @@ function make_curl_req {
     # echo "curl_res[0] = ${curl_res[0]}"
 
     if [ -z "$trusted" ] && [ ${curl_res[1]} -ne 0 ]; then
-        source myci-error.sh "SSL verification failed, ssl_verify_result = ${curl_res[1]}, func_res = $func_res";
+        error "SSL verification failed, ssl_verify_result = ${curl_res[1]}, func_res = $func_res";
     fi
 
     if [ ${curl_res[0]} -ne $expected_http_code ]; then
-        source myci-error.sh "request failed, HTTP code = ${curl_res[0]} (expected $expected_http_code), func_res = $func_res"
+        error "request failed, HTTP code = ${curl_res[0]} (expected $expected_http_code), func_res = $func_res"
     fi
 }
 
@@ -189,18 +201,24 @@ function get_repos {
 function get_repo {
     local repo_name=$1
     make_curl_req GET ${pulp_api_url}repositories/$repo_url_path?name=$repo_name 200
+
+    if [[ $(echo $func_res | jq -r '.count') == 0 ]]; then
+        error "repository '$repo_name' not found"
+    fi
+
+    func_res=$(echo $func_res | jq -r '.results[0]')
 }
 
 function get_repo_href {
     local repo_name=$1
     get_repo $repo_name
-    func_res=$(echo $func_res | jq -r '.results[].pulp_href')
+    func_res=$(echo $func_res | jq -r '.pulp_href')
 }
 
 function get_repo_latest_version_href {
     local repo_name=$1
     get_repo $repo_name
-    func_res=$(echo $func_res | jq -r '.results[].latest_version_href')
+    func_res=$(echo $func_res | jq -r '.latest_version_href')
 }
 
 function handle_repo_list_command {
@@ -218,7 +236,7 @@ function handle_repo_list_command {
                 jq_cmd=(jq)
                 ;;
             *)
-                source myci-error.sh "unknown command line argument: $1"
+                error "unknown command line argument: $1"
                 ;;
         esac
         [[ $# > 0 ]] && shift;
@@ -253,13 +271,13 @@ function handle_deb_repo_create_command {
                 name=$1
                 ;;
             *)
-                source myci-error.sh "unknown command line argument: $1"
+                error "unknown command line argument: $1"
                 ;;
         esac
         [[ $# > 0 ]] && shift;
     done
 
-    [ ! -z "$name" ] || source myci-error.sh "missing required argument: --name"
+    [ ! -z "$name" ] || error "missing required argument: --name"
 
     make_curl_req \
             POST \
@@ -292,17 +310,17 @@ function handle_deb_repo_delete_command {
                 name=$1
                 ;;
             *)
-                source myci-error.sh "unknown command line argument: $1"
+                error "unknown command line argument: $1"
                 ;;
         esac
         [[ $# > 0 ]] && shift;
     done
 
-    [ ! -z "$name" ] || source myci-error.sh "missing required argument: --name"
+    [ ! -z "$name" ] || error "missing required argument: --name"
 
     get_repo_href $name
 
-    [ ! -z "$func_res" ] || source myci-error.sh "repository '$name' not found"
+    [ ! -z "$func_res" ] || error "repository '$name' not found"
 
     # echo $func_res
 
@@ -321,7 +339,7 @@ function wait_task_finish {
     local task_href=$1
     local timeout_sec=$2
 
-    [ ! -z "$task_href" ] || source myci-error.sh "ASSERT(false): wait_task_finish needs task href"
+    [ ! -z "$task_href" ] || error "ASSERT(false): wait_task_finish needs task href"
 
     if [ -z "$timeout_sec" ]; then
         timeout_sec=20
@@ -330,6 +348,7 @@ function wait_task_finish {
     echo "wait for task to finish"
 
     while [[ $timeout_sec > 0 ]]; do
+        echo "poll task status $timeout_sec"
         get_task $task_href
         # echo $func_res | jq
         local state=$(echo $func_res | jq -r ".state")
@@ -342,17 +361,17 @@ function wait_task_finish {
         sleep 1
     done
 
-    [ "$state" != "running" ] || source myci-error.sh "timeout hit while waiting for task to finish"
+    [ "$state" != "running" ] || error "timeout hit while waiting for task to finish"
 
     case $state in
         completed)
             echo "task completed"
             ;;
         failed)
-            source myci-error.sh "task failed: $(echo $func_res | jq -r '.error.description')"
+            error "task failed: $(echo $func_res | jq -r '.error.description')"
             ;;
         *)
-            source myci-error.sh "ASSERT(false): unknown task state encountered: $state"
+            error "ASSERT(false): unknown task state encountered: $state"
             ;;
     esac
 }
@@ -369,12 +388,19 @@ function handle_package_list_command {
 
 function get_deb_package {
     local file_name=$1
+    local repo_name=$2
 
     local pkg=($(echo $file_name | sed -E -e 's/^([^_]*)_([^_]*)_([^_]*).deb$/\1 \2 \3/g'))
 
-    [[ ${#pkg[@]} == 3 ]] || source myci-error.sh "malformed debian package name format: $file_name"
+    [[ ${#pkg[@]} == 3 ]] || error "malformed debian package name format: $file_name"
 
-    make_curl_req GET "${pulp_api_url}${package_url_path}?package=${pkg[0]}&version=${pkg[1]}&architecture=${pkg[2]}" 200
+    local repo_filter=
+    if [ ! -z "$repo_name" ]; then
+        get_repo_latest_version_href $repo_name
+        repo_filter="&repository_version=$func_res"
+    fi
+
+    make_curl_req GET "${pulp_api_url}${package_url_path}?package=${pkg[0]}&version=${pkg[1]}&architecture=${pkg[2]}${repo_filter}" 200
 
     local num_found=$(echo $func_res | jq -r '.count')
 
@@ -386,7 +412,7 @@ function get_deb_package {
             func_res=$(echo $func_res | jq -r '.results[0]')
             ;;
         *)
-            source myci-error.sh "ASSERT(false) more than one package found"
+            error "ASSERT(false) more than one package found"
             ;;
     esac
 }
@@ -406,7 +432,7 @@ function handle_deb_package_list_command {
                 repo_name=$1
                 ;;
             *)
-                source myci-error.sh "unknown command line argument: $1"
+                error "unknown command line argument: $1"
                 ;;
         esac
         [[ $# > 0 ]] && shift;
@@ -453,17 +479,20 @@ function handle_deb_package_upload_command {
                 repo_name=$1
                 ;;
             *)
-                source myci-error.sh "unknown command line argument: $1"
+                error "unknown command line argument: $1"
                 ;;
         esac
         [[ $# > 0 ]] && shift;
     done
 
-    [ ! -z "$file_name" ] || source myci-error.sh "missing required argument: --file"
-    [ ! -z "$repo_name" ] || source myci-error.sh "missing required argument: --repo"
+    [ ! -z "$file_name" ] || error "missing required argument: --file"
+    [ ! -z "$repo_name" ] || error "missing required argument: --repo"
 
-    get_deb_package $(basename $file_name)
-    # echo $func_res
+    get_deb_package $(basename $file_name) $repo_name
+    if [ ! -z "$func_res" ]; then
+        warning "package '$(basename $file_name)' already exists in repo '$repo_name', doing nothing"
+        exit 0
+    fi
 
     get_repo_href $repo_name
     local repo_href=$func_res
@@ -471,7 +500,7 @@ function handle_deb_package_upload_command {
 
     # get_repo_latest_version_href $repo_name
 
-    [ ! -z "$repo_href" ] || source myci-error.sh "repository '$repo_name' not found"
+    [ ! -z "$repo_href" ] || error "repository '$repo_name' not found"
 
     make_curl_req \
             POST \
@@ -487,7 +516,7 @@ function handle_deb_package_upload_command {
 
     local package_href=$(echo $func_res | jq -r '.created_resources[0]')
     # echo "package_href = $package_href"
-    [ ! -a "$package_href" ] || source myci-error.sh "ASSERT(false): handle_deb_package_upload_command: package_href is empty"
+    [ ! -a "$package_href" ] || error "ASSERT(false): handle_deb_package_upload_command: package_href is empty"
 
     # add package to the repo
 
