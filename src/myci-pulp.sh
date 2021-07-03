@@ -20,11 +20,11 @@ domain=$MYCI_PULP_DOMAIN
 function set_repo_path {
     case $repo_type in
         deb)
-            repo_url_path=deb/apt/
+            pulp_api_url_suffix=deb/apt/
             package_url_path=content/deb/packages/
             ;;
         docker)
-            repo_url_path=container/container/
+            pulp_api_url_suffix=container/container/
             ;;
         *)
             error "unknown value of --type argument: $type";
@@ -37,6 +37,7 @@ declare -A commands=( \
         [task]=1 \
         [package]=1 \
         [orphans]=1 \
+        [dist]=1 \
     )
 
 declare -A repo_subcommands=( \
@@ -56,6 +57,12 @@ declare -A package_subcommands=( \
     )
 
 declare -A orphans_subcommands=( \
+        [delete]=1 \
+    )
+
+declare -A dist_subcommands=( \
+        [list]=1 \
+        [create]=1 \
         [delete]=1 \
     )
 
@@ -201,12 +208,12 @@ function make_curl_req {
 }
 
 function get_repos {
-    make_curl_req GET ${pulp_api_url}repositories/$repo_url_path 200
+    make_curl_req GET ${pulp_api_url}repositories/$pulp_api_url_suffix 200
 }
 
 function get_repo {
     local repo_name=$1
-    make_curl_req GET ${pulp_api_url}repositories/$repo_url_path?name=$repo_name 200
+    make_curl_req GET ${pulp_api_url}repositories/$pulp_api_url_suffix?name=$repo_name 200
 
     if [[ $(echo $func_res | jq -r '.count') == 0 ]]; then
         error "repository '$repo_name' not found"
@@ -287,7 +294,7 @@ function handle_deb_repo_create_command {
 
     make_curl_req \
             POST \
-            ${pulp_api_url}repositories/$repo_url_path \
+            ${pulp_api_url}repositories/$pulp_api_url_suffix \
             201 \
             json \
             "{ \
@@ -554,6 +561,116 @@ function handle_orphans_delete_command {
     # echo "task_href = $task_href"
     wait_task_finish $task_href
     echo "orphaned content deleted"
+}
+
+function handle_dist_list_command {
+    local jq_cmd=(jq -r '.results[].name')
+
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            --help)
+                echo "options:"
+                echo "  --help    Show this help text and do nothing."
+                echo "  --full    Show full info."
+                exit 0
+                ;;
+            --full)
+                jq_cmd=(jq)
+                ;;
+            *)
+                error "unknown command line argument: $1"
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    make_curl_req \
+            GET \
+            ${pulp_api_url}distributions/${pulp_api_url_suffix} \
+            200
+    
+    echo $func_res | "${jq_cmd[@]}"
+}
+
+function get_dist {
+    local name=$1
+    make_curl_req \
+            GET \
+            ${pulp_api_url}distributions/${pulp_api_url_suffix}?name=${name} \
+            200
+    local num_dists=$(echo $func_res | jq -r '.count')
+
+    case $num_dists in
+        0)
+            error "distribution '$dist_name' not found"
+            ;;
+        1)
+            ;;
+        *)
+            error "ASSERT(false): more than one distribution with name '$dist_name' found, func_res = $func_res"
+            ;;
+    esac
+    
+    func_res=$(echo $func_res | jq -r '.results[0]')
+}
+
+function handle_dist_create_command {
+    check_type_argument
+    handle_${repo_type}_${command}_${subcommand}_command $@
+}
+
+function handle_deb_dist_create_command {
+    local name=
+    local repo_name=
+    local base_path=
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            --help)
+                echo "options:"
+                echo "  --help         Show this help text and do nothing."
+                echo "  --name         Distribution name."
+                echo "  --repo         Repository name to serve via distribution."
+                echo "  --base-path    Distribution base path."
+                exit 0
+                ;;
+            --name)
+                shift
+                name=$1
+                ;;
+            --repo)
+                shift
+                repo_name=$1
+                ;;
+            --base-path)
+                shift
+                base_path=$1
+                ;;
+            *)
+                error "unknown command line argument: $1"
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    [ ! -z "$name" ] || error "missing required argument: --name"
+    [ ! -z "$repo_name" ] || error "missing required argument: --repo"
+    [ ! -z "$base_path" ] || error "missing required argument: --base-path"
+
+    get_repo_href $repo_name
+    local repo_href=$func_res
+
+    make_curl_req \
+            POST \
+            ${pulp_api_url}distributions/${pulp_api_url_suffix} \
+            202 \
+            json \
+            "{\"base_path\":\"$base_path\",\"name\":\"$name\",\"repository\":\"${pulp_url}${repo_href}\"}"
+
+    local task_href=$(echo $func_res | jq -r '.task')
+    # echo "task_href = $task_href"
+    wait_task_finish $task_href
+
+    echo "distribution '$name' created"
 }
 
 handle_${command}_${subcommand}_command $@
