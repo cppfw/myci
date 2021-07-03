@@ -678,6 +678,45 @@ function handle_deb_dist_create_command {
     echo "distribution '$name' created"
 }
 
+function handle_dist_delete_command {
+    check_type_argument
+    handle_${repo_type}_${command}_${subcommand}_command $@
+}
+
+function handle_deb_dist_delete_command {
+    local dist_name=
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            --help)
+                echo "options:"
+                echo "  --help    Show this help text and do nothing."
+                echo "  --name    name of the distribution to delete."
+                exit 0
+                ;;
+            --name)
+                shift
+                dist_name=$1
+                ;;
+            *)
+                error "unknown command line argument: $1"
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    [ ! -z "$dist_name" ] || error "missing required argument: --name"
+
+    get_dist $dist_name
+    dist_href=$(echo $func_res | jq -r '.pulp_href')
+
+    make_curl_req \
+            DELETE \
+            ${domain}$dist_href \
+            202
+    
+    echo "distribution '$dist_name' deleted"
+}
+
 function handle_publ_list_command {
     make_curl_req \
             GET \
