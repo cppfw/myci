@@ -135,15 +135,19 @@ function check_type_argument {
 
 function make_curl_req {
     local method=$1
-    local url=$2
-    local expected_http_code=$3
+    shift
+    local url=$1
+    shift
+    local expected_http_code=$1
+    shift
 
     local data_arg=
     
     case $method in
         POST)
-            local content_type=$4
-            local data=$5
+            local content_type=$1
+            shift
+            local data=("$@")
             case $content_type in
                 json)
                     data_arg="--data"
@@ -175,7 +179,9 @@ function make_curl_req {
 
     if [ ! -z "$data_arg" ]; then
         curl_cmd+=(--header "$content_type_header")
-        curl_cmd+=($data_arg "$data")
+        for i in "${data[@]}"; do
+            curl_cmd+=($data_arg "$i")
+        done
     fi
 
     # echo "curl_cmd ="; printf '%s\n' "${curl_cmd[@]}"
@@ -488,9 +494,11 @@ function handle_deb_package_upload_command {
     [ ! -z "$file_name" ] || error "missing required argument: --file"
     [ ! -z "$repo_name" ] || error "missing required argument: --repo"
 
-    get_deb_package $(basename $file_name) $repo_name
+    local base_file_name=$(basename $file_name)
+
+    get_deb_package $base_file_name $repo_name
     if [ ! -z "$func_res" ]; then
-        warning "package '$(basename $file_name)' already exists in repo '$repo_name', doing nothing"
+        warning "package '$base_file_name' already exists in repo '$repo_name', doing nothing"
         exit 0
     fi
 
@@ -507,32 +515,37 @@ function handle_deb_package_upload_command {
             ${pulp_api_url}$package_url_path \
             202 \
             form \
-            "file=@$file_name"
-            # "file=@$file_name;repository=$pulp_url$repo_href"
+            "file=@$file_name" \
+            "relative_path=pool/$repo_name/${base_file_name:0:1}/$base_file_name" \
+            "repository=$pulp_url$repo_href"
+    # echo "resp = $func_res"
 
     local task_href=$(echo $func_res | jq -r '.task')
     # echo "task_href = $task_href"
     wait_task_finish $task_href
 
-    local package_href=$(echo $func_res | jq -r '.created_resources[0]')
-    # echo "package_href = $package_href"
-    [ ! -a "$package_href" ] || error "ASSERT(false): handle_deb_package_upload_command: package_href is empty"
+    # add package to repository is not needed as it is added right away in the previous request
+    # TODO: remove commented code
 
-    # add package to the repo
+    # local package_href=$(echo $func_res | jq -r '.created_resources[0]')
+    # # echo "package_href = $package_href"
+    # [ ! -a "$package_href" ] || error "ASSERT(false): handle_deb_package_upload_command: package_href is empty"
 
-    make_curl_req \
-            POST \
-            ${pulp_url}${repo_href}modify/ \
-            202 \
-            json \
-            "{\"add_content_units\":[\"${pulp_url}$package_href\"]}"
-    # echo $func_res
+    # # add package to the repo
+
+    # make_curl_req \
+    #         POST \
+    #         ${pulp_url}${repo_href}modify/ \
+    #         202 \
+    #         json \
+    #         "{\"add_content_units\":[\"${pulp_url}$package_href\"]}"
+    # # echo $func_res
     
-    local task_href=$(echo $func_res | jq -r '.task')
-    # echo "task_href = $task_href"
-    wait_task_finish $task_href
+    # local task_href=$(echo $func_res | jq -r '.task')
+    # # echo "task_href = $task_href"
+    # wait_task_finish $task_href
 
-    echo "package '$(basename $file_name)' uploaded to '$repo_name' repository"
+    echo "package '$base_file_name' uploaded to '$repo_name' repository"
 }
 
 function handle_orphans_delete_command {
