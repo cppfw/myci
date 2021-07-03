@@ -2,13 +2,14 @@ Source: myci
 Section: misc
 Priority: extra
 Maintainer: Ivan Gagis <igagis@gmail.com>
-Build-Depends: debhelper (>= 9), sed
+Build-Depends: debhelper (>= 9),
+        sed, jq, curl
 Standards-Version: 3.9.2
 
 Package: myci
 Section: devel
 Architecture: all
-Depends: sed
+Depends: sed, jq, curl
 Description: Helper CI scripts.
  Some helper CI scripts, mainly for deploying to different repositories.
 
