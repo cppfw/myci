@@ -106,9 +106,6 @@ while [[ $# > 0 ]] ; do
                 echo "    - $j"
                 done
             } done
-            echo " "
-			echo "Example:"
-			echo "	TODO: $(basename $0) -o cppfw -r debian -d buster -c main ../myci_0.1.29_all.deb"
 			exit 0
 			;;
         --trusted)
