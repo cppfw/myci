@@ -633,8 +633,6 @@ function handle_file_package_upload_command {
     local repo_href=$func_res
     # echo "repo_href = $repo_href"
 
-    # get_repo_latest_version_href $repo_name
-
     [ ! -z "$repo_href" ] || error "repository '$repo_name' not found"
 
     make_curl_req \
@@ -650,27 +648,6 @@ function handle_file_package_upload_command {
     local task_href=$(echo $func_res | jq -r '.task')
     # echo "task_href = $task_href"
     wait_task_finish $task_href
-
-    # add package to repository is not needed as it is added right away in the previous request
-    # TODO: remove commented code
-
-    # local package_href=$(echo $func_res | jq -r '.created_resources[0]')
-    # # echo "package_href = $package_href"
-    # [ ! -a "$package_href" ] || error "ASSERT(false): handle_deb_package_upload_command: package_href is empty"
-
-    # # add package to the repo
-
-    # make_curl_req \
-    #         POST \
-    #         ${domain}${repo_href}modify/ \
-    #         202 \
-    #         json \
-    #         "{\"add_content_units\":[\"${domain}$package_href\"]}"
-    # # echo $func_res
-    
-    # local task_href=$(echo $func_res | jq -r '.task')
-    # # echo "task_href = $task_href"
-    # wait_task_finish $task_href
 
     echo "package '$base_file_name' uploaded to '$repo_name' repository"
 }
@@ -716,8 +693,6 @@ function handle_deb_package_upload_command {
     get_repo_href $repo_name
     local repo_href=$func_res
     # echo "repo_href = $repo_href"
-
-    # get_repo_latest_version_href $repo_name
 
     [ ! -z "$repo_href" ] || error "repository '$repo_name' not found"
 
