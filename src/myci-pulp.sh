@@ -747,16 +747,23 @@ function handle_dist_list_command {
 
     local jq_cmd=(jq -r '.results[].name')
 
+    local dist_name=
+
     while [[ $# > 0 ]] ; do
         case $1 in
             --help)
                 echo "options:"
                 echo "  --help    Show this help text and do nothing."
                 echo "  --full    Show full info."
+                echo "  --name    List only one distribution with given name if it exists."
                 exit 0
                 ;;
             --full)
                 jq_cmd=(jq)
+                ;;
+            --name)
+                shift
+                dist_name=$1
                 ;;
             *)
                 error "unknown command line argument: $1"
@@ -765,9 +772,15 @@ function handle_dist_list_command {
         [[ $# > 0 ]] && shift;
     done
 
+    local dist_name_filter=
+    if [ ! -z "$dist_name" ]; then
+        dist_name_filter=?name=$dist_name
+    fi
+
+
     make_curl_req \
             GET \
-            ${pulp_api_url}distributions/${pulp_api_url_suffix} \
+            ${pulp_api_url}distributions/${pulp_api_url_suffix}${dist_name_filter} \
             200
     
     echo $func_res | "${jq_cmd[@]}"
