@@ -26,6 +26,9 @@ function set_repo_path {
         docker)
             pulp_api_url_suffix=container/container/
             ;;
+        file)
+            pulp_api_url_suffix=file/file/
+            ;;
         *)
             error "unknown value of --type argument: $type";
             ;;
@@ -274,11 +277,6 @@ function handle_repo_create_command {
     handle_${repo_type}_${command}_${subcommand}_command $@
 }
 
-function handle_repo_delete_command {
-    check_type_argument
-    handle_${repo_type}_${command}_${subcommand}_command $@
-}
-
 function handle_deb_repo_create_command {
     local name=
     while [[ $# > 0 ]] ; do
@@ -318,7 +316,86 @@ function handle_deb_repo_create_command {
     echo "repository '$name' created"
 }
 
+function handle_file_repo_create_command {
+    local name=
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            --help)
+                echo "options:"
+                echo "  --help              Show this help text and do nothing."
+                echo "  --name <repo_name>  Repository name."
+                exit 0
+                ;;
+            --name)
+                shift
+                name=$1
+                ;;
+            *)
+                error "unknown command line argument: $1"
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    [ ! -z "$name" ] || error "missing required argument: --name"
+
+    make_curl_req \
+            POST \
+            ${pulp_api_url}repositories/$pulp_api_url_suffix \
+            201 \
+            json \
+            "{ \
+              \"pulp_labels\":{}, \
+              \"name\":\"$name\", \
+              \"description\":\"generic file repo\", \
+              \"retained_versions\":2, \
+              \"remote\":null, \
+              \"autopublish\": true \
+            }"
+    
+    echo "repository '$name' created"
+}
+
+function handle_repo_delete_command {
+    check_type_argument
+    handle_${repo_type}_${command}_${subcommand}_command $@
+}
+
 function handle_deb_repo_delete_command {
+    local name=
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            --help)
+                echo "options:"
+                echo "  --help              Show this help text and do nothing."
+                echo "  --name <repo_name>  Repository name."
+                exit 0
+                ;;
+            --name)
+                shift
+                name=$1
+                ;;
+            *)
+                error "unknown command line argument: $1"
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    [ ! -z "$name" ] || error "missing required argument: --name"
+
+    get_repo_href $name
+
+    [ ! -z "$func_res" ] || error "repository '$name' not found"
+
+    # echo $func_res
+
+    make_curl_req DELETE ${domain}$func_res 202
+
+    echo "repository '$name' deleted"
+}
+
+function handle_file_repo_delete_command {
     local name=
     while [[ $# > 0 ]] ; do
         case $1 in
