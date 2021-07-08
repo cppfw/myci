@@ -39,6 +39,7 @@ declare -A commands=( \
         [orphans]=1 \
         [dist]=1 \
         [publ]=1 \
+        [signserv]=1 \
     )
 
 declare -A repo_subcommands=( \
@@ -71,6 +72,10 @@ declare -A publ_subcommands=( \
         [list]=1 \
         [create]=1 \
         [delete]=1 \
+    )
+
+declare -A signserv_subcommands=( \
+        [list]=1 \
     )
 
 while [[ $# > 0 ]] ; do
@@ -570,7 +575,7 @@ function handle_orphans_delete_command {
 
 function handle_dist_list_command {
     check_type_argument
-    
+
     local jq_cmd=(jq -r '.results[].name')
 
     while [[ $# > 0 ]] ; do
@@ -806,6 +811,23 @@ function handle_deb_publ_delete_command {
             204
     
     echo "publication deleted"
+}
+
+function handle_signserv_list_command {
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            *)
+                error "unknown command line argument: $1"
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    make_curl_req \
+            GET \
+            ${pulp_api_url}signing-services/ \
+            200
+    echo $func_res | jq
 }
 
 handle_${command}_${subcommand}_command $@
