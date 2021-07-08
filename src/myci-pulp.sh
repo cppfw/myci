@@ -21,13 +21,14 @@ function set_repo_path {
     case $repo_type in
         deb)
             pulp_api_url_suffix=deb/apt/
-            package_url_path=content/deb/packages/
+            package_url_path=deb/packages/
             ;;
         docker)
             pulp_api_url_suffix=container/container/
             ;;
         file)
             pulp_api_url_suffix=file/file/
+            package_url_path=file/files/
             ;;
         *)
             error "unknown value of --type argument: $type";
@@ -58,7 +59,6 @@ declare -A task_subcommands=( \
 declare -A package_subcommands=( \
         [list]=1 \
         [upload]=1 \
-        [delete]=1 \
     )
 
 declare -A orphans_subcommands=( \
@@ -476,14 +476,32 @@ function wait_task_finish {
     esac
 }
 
-function handle_task_list_command {
-    make_curl_req GET ${pulp_api_url}tasks/ 200
-    echo $func_res | jq
-}
+function get_file_package_href {
+    local file_name=$1
+    local repo_name=$2
 
-function handle_package_list_command {
     check_type_argument
-    handle_${repo_type}_${command}_${subcommand}_command $@
+
+    [ ! -z "$repo_name" ] || error "missing required argument: --repo"
+
+    get_repo_latest_version_href $repo_name
+    local repo_filter="&repository_version=$func_res"
+
+    make_curl_req GET "${pulp_api_url}content/${package_url_path}?${repo_filter}&relative_path=${repo_type}/${repo_name}/${file_name}" 200
+
+    local num_found=$(echo $func_res | jq -r '.count')
+
+    case $num_found in
+        0)
+            func_res=
+            ;;
+        1)
+            func_res=$(echo $func_res | jq -r '.results[0]')
+            ;;
+        *)
+            error "ASSERT(false) more than one package found"
+            ;;
+    esac
 }
 
 function get_deb_package {
@@ -500,7 +518,7 @@ function get_deb_package {
         repo_filter="&repository_version=$func_res"
     fi
 
-    make_curl_req GET "${pulp_api_url}${package_url_path}?package=${pkg[0]}&version=${pkg[1]}&architecture=${pkg[2]}${repo_filter}" 200
+    make_curl_req GET "${pulp_api_url}content/${package_url_path}?package=${pkg[0]}&version=${pkg[1]}&architecture=${pkg[2]}${repo_filter}" 200
 
     local num_found=$(echo $func_res | jq -r '.count')
 
@@ -515,6 +533,18 @@ function get_deb_package {
             error "ASSERT(false) more than one package found"
             ;;
     esac
+}
+
+function handle_task_list_command {
+    make_curl_req GET ${pulp_api_url}tasks/ 200
+    echo $func_res | jq
+}
+
+function handle_package_list_command {
+    # TODO: remove commented code?
+    # check_type_argument
+    # handle_${repo_type}_${command}_${subcommand}_command $@
+    handle_deb_package_list_command $@
 }
 
 function handle_deb_package_list_command {
@@ -549,13 +579,98 @@ function handle_deb_package_list_command {
         args="?$args"
     fi
 
-    make_curl_req GET "${pulp_api_url}${package_url_path}${args}" 200
+    make_curl_req GET "${pulp_api_url}content/${package_url_path}${args}" 200
     echo $func_res | jq
 }
 
 function handle_package_upload_command {
     check_type_argument
     handle_${repo_type}_${command}_${subcommand}_command $@
+}
+
+function handle_file_package_upload_command {
+    local file_name=
+    local repo_name=
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            --help)
+                echo "options:"
+                echo "  --help                      Show this help text and do nothing."
+                echo "  --file <package-file-name>  Package file to upload."
+                echo "  --repo <repository-name>    Repository to upload the file to."
+                exit 0
+                ;;
+            --file)
+                shift
+                file_name=$1
+                ;;
+            --repo)
+                shift
+                repo_name=$1
+                ;;
+            *)
+                error "unknown command line argument: $1"
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    [ ! -z "$file_name" ] || error "missing required argument: --file"
+    [ ! -z "$repo_name" ] || error "missing required argument: --repo"
+
+    local base_file_name=$(basename $file_name)
+
+    get_file_package_href $base_file_name $repo_name
+    # echo "func_res = $func_res"
+    if [ ! -z "$func_res" ]; then
+        warning "package '$base_file_name' already exists in repo '$repo_name', doing nothing"
+        exit 0
+    fi
+
+    get_repo_href $repo_name
+    local repo_href=$func_res
+    # echo "repo_href = $repo_href"
+
+    # get_repo_latest_version_href $repo_name
+
+    [ ! -z "$repo_href" ] || error "repository '$repo_name' not found"
+
+    make_curl_req \
+            POST \
+            ${pulp_api_url}content/$package_url_path \
+            202 \
+            form \
+            "file=@$file_name" \
+            "relative_path=${repo_type}/$repo_name/$base_file_name" \
+            "repository=$domain$repo_href"
+    # echo "resp = $func_res"
+
+    local task_href=$(echo $func_res | jq -r '.task')
+    # echo "task_href = $task_href"
+    wait_task_finish $task_href
+
+    # add package to repository is not needed as it is added right away in the previous request
+    # TODO: remove commented code
+
+    # local package_href=$(echo $func_res | jq -r '.created_resources[0]')
+    # # echo "package_href = $package_href"
+    # [ ! -a "$package_href" ] || error "ASSERT(false): handle_deb_package_upload_command: package_href is empty"
+
+    # # add package to the repo
+
+    # make_curl_req \
+    #         POST \
+    #         ${domain}${repo_href}modify/ \
+    #         202 \
+    #         json \
+    #         "{\"add_content_units\":[\"${domain}$package_href\"]}"
+    # # echo $func_res
+    
+    # local task_href=$(echo $func_res | jq -r '.task')
+    # # echo "task_href = $task_href"
+    # wait_task_finish $task_href
+
+    echo "package '$base_file_name' uploaded to '$repo_name' repository"
 }
 
 function handle_deb_package_upload_command {
@@ -606,11 +721,11 @@ function handle_deb_package_upload_command {
 
     make_curl_req \
             POST \
-            ${pulp_api_url}$package_url_path \
+            ${pulp_api_url}content/$package_url_path \
             202 \
             form \
             "file=@$file_name" \
-            "relative_path=pool/$repo_name/${base_file_name:0:1}/$base_file_name" \
+            "relative_path=${repo_type}/$repo_name/${base_file_name:0:1}/$base_file_name" \
             "repository=$domain$repo_href"
     # echo "resp = $func_res"
 
