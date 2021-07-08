@@ -376,7 +376,7 @@ function wait_task_finish {
         # echo $func_res | jq
         local state=$(echo $func_res | jq -r ".state")
 
-        if [ "$state" != "running" ]; then
+        if [ "$state" != "running" ] && [ "$state" != "waiting" ]; then
             break
         fi
 
@@ -737,15 +737,43 @@ function handle_publ_create_command {
     handle_${repo_type}_${command}_${subcommand}_command $@
 }
 
+function get_signing_service {
+    local signserv_name=$1
+    make_curl_req \
+            GET \
+            ${pulp_api_url}signing-services/?name=${signserv_name} \
+            200
+    
+    if [[ $(echo $func_res | jq -r '.count') == 0 ]]; then
+        error "signing service '$signserv_name' not found"
+    fi
+
+    func_res=$(echo $func_res | jq -r '.results[0]')
+}
+
+function get_signing_service_href {
+    local signserv_name=$1
+    get_signing_service $signserv_name
+    # echo $func_res | jq
+    func_res=$(echo $func_res | jq -r '.pulp_href')
+    # echo "fun_cres = $func_res"
+}
+
 function handle_deb_publ_create_command {
     local repo_name=
+    local signserv_name=
     while [[ $# > 0 ]] ; do
         case $1 in
             --help)
                 echo "options:"
-                echo "  --help    Show this help text and do nothing."
-                echo "  --repo    Repository name to publish."
+                echo "  --help        Show this help text and do nothing."
+                echo "  --repo        Repository name to publish."
+                echo "  --signserv    Name of the pulp signing service."
                 exit 0
+                ;;
+            --signserv)
+                shift
+                signserv_name=$1
                 ;;
             --repo)
                 shift
@@ -763,12 +791,19 @@ function handle_deb_publ_create_command {
     get_repo_href $repo_name
     local repo_href=$func_res
 
+    local signserv_uri_json_block=
+    if [ ! -z "$signserv_name" ]; then
+        get_signing_service_href $signserv_name
+        local signing_service_href=$func_res
+        signserv_uri_json_block=",\"signing_service\":\"${domain}${signing_service_href}\""
+    fi
+
     make_curl_req \
             POST \
             ${pulp_api_url}publications/${pulp_api_url_suffix} \
             202 \
             json \
-            "{\"repository\":\"${domain}${repo_href}\",\"simple\":true,\"signing_service\":\"sign-metadata\"}"
+            "{\"repository\":\"${domain}${repo_href}\",\"simple\":true${signserv_uri_json_block}}"
     
     local task_href=$(echo $func_res | jq -r '.task')
     # echo "task_href = $task_href"
