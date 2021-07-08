@@ -569,6 +569,8 @@ function handle_orphans_delete_command {
 }
 
 function handle_dist_list_command {
+    check_type_argument
+    
     local jq_cmd=(jq -r '.results[].name')
 
     while [[ $# > 0 ]] ; do
@@ -761,7 +763,7 @@ function handle_deb_publ_create_command {
             ${pulp_api_url}publications/${pulp_api_url_suffix} \
             202 \
             json \
-            "{\"repository\":\"${domain}${repo_href}\",\"simple\":true}"
+            "{\"repository\":\"${domain}${repo_href}\",\"simple\":true,\"signing_service\":\"sign-metadata\"}"
     
     local task_href=$(echo $func_res | jq -r '.task')
     # echo "task_href = $task_href"
