@@ -50,6 +50,7 @@ declare -A repo_subcommands=( \
         [list]=1 \
         [create]=1 \
         [delete]=1 \
+        [remove]=1 \
     )
 
 declare -A task_subcommands=( \
@@ -369,6 +370,69 @@ function handle_file_repo_create_command {
     echo "repository '$name' created"
 }
 
+function handle_repo_remove_command {
+    check_type_argument
+    handle_${repo_type}_${command}_${subcommand}_command $@
+}
+
+function handle_file_repo_remove_command {
+    local name=
+    local package=
+    while [[ $# > 0 ]] ; do
+        case $1 in
+            --help)
+                echo "Remove package from repo. Package remains orphaned."
+                echo ""
+                echo "options:"
+                echo "  --help                    Show this help text and do nothing."
+                echo "  --name <repo_name>        Repository name."
+                echo "  --package <package_name>  Package to remove from the repo."
+                exit 0
+                ;;
+            --name)
+                shift
+                name=$1
+                ;;
+            --package)
+                shift
+                package=$1
+                ;;
+            *)
+                error "unknown command line argument: $1"
+                ;;
+        esac
+        [[ $# > 0 ]] && shift;
+    done
+
+    [ ! -z "$name" ] || error "missing required argument: --name"
+    [ ! -z "$package" ] || error "missing required argument: --package"
+
+    get_repo_href $name
+    local repo_href=$func_res
+
+    get_file_package $package $name
+    local package_href=$(echo $func_res | jq -r '.pulp_href')
+    # echo "package_href = $package_href"
+    if [ -z "$package_href" ]; then
+        warning "package '$package' not found in repo '$name', nothing to remove"
+        return 0;
+    fi
+
+    make_curl_req \
+            POST \
+            ${domain}${repo_href}modify/ \
+            202 \
+            json \
+            "{\"remove_content_units\":[\"${domain}${package_href}\"]}"
+    # echo $func_res
+    
+    local task_href=$(echo $func_res | jq -r '.task')
+    # echo "task_href = $task_href"
+    wait_task_finish $task_href
+
+    echo "package '$package' removed from '$name' repository, the package remains orphaned"
+}
+
 function handle_repo_delete_command {
     check_type_argument
     handle_${repo_type}_${command}_${subcommand}_command $@
@@ -489,7 +553,7 @@ function wait_task_finish {
     esac
 }
 
-function get_file_package_href {
+function get_file_package {
     local file_name=$1
     local repo_name=$2
 
@@ -633,7 +697,7 @@ function handle_file_package_upload_command {
 
     local base_file_name=$(basename $file_name)
 
-    get_file_package_href $base_file_name $repo_name
+    get_file_package $base_file_name $repo_name
     # echo "func_res = $func_res"
     if [ ! -z "$func_res" ]; then
         warning "package '$base_file_name' already exists in repo '$repo_name', doing nothing"
