@@ -225,6 +225,8 @@ function get_repos {
 }
 
 function get_repo {
+    check_type_argument
+
     local repo_name=$1
     make_curl_req GET ${pulp_api_url}repositories/$pulp_api_url_suffix?name=$repo_name 200
 
@@ -820,10 +822,7 @@ function get_dist {
 
 function handle_dist_create_command {
     check_type_argument
-    handle_${repo_type}_${command}_${subcommand}_command $@
-}
 
-function handle_deb_dist_create_command {
     local name=
     local repo_name=
     local base_path=
@@ -879,10 +878,7 @@ function handle_deb_dist_create_command {
 
 function handle_dist_delete_command {
     check_type_argument
-    handle_${repo_type}_${command}_${subcommand}_command $@
-}
-
-function handle_deb_dist_delete_command {
+    
     local dist_name=
     while [[ $# > 0 ]] ; do
         case $1 in
