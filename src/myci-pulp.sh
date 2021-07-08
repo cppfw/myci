@@ -252,16 +252,22 @@ function get_repo_latest_version_href {
 function handle_repo_list_command {
     local jq_cmd=(jq -r '.results[].name')
 
+    local repo_name=
     while [[ $# > 0 ]] ; do
         case $1 in
             --help)
                 echo "options:"
                 echo "  --help  Show this help text and do nothing."
                 echo "  --full  Show full info."
+                echo "  --name  List only one repository with given name if it exists."
                 exit 0
                 ;;
             --full)
                 jq_cmd=(jq)
+                ;;
+            --name)
+                shift
+                repo_name=$1
                 ;;
             *)
                 error "unknown command line argument: $1"
@@ -270,7 +276,12 @@ function handle_repo_list_command {
         [[ $# > 0 ]] && shift;
     done
 
-    get_repos
+    local repo_name_filter
+    if [ ! -z "$repo_name" ]; then
+        repo_name_filter=?name=$repo_name
+    fi
+
+    make_curl_req GET ${pulp_api_url}repositories/${pulp_api_url_suffix}${repo_name_filter} 200
     echo $func_res | "${jq_cmd[@]}"
 }
 
@@ -776,7 +787,6 @@ function handle_dist_list_command {
     if [ ! -z "$dist_name" ]; then
         dist_name_filter=?name=$dist_name
     fi
-
 
     make_curl_req \
             GET \
