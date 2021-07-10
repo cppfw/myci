@@ -1,5 +1,10 @@
 #!/bin/bash
 
+function error {
+    local message=$1
+    source ${script_dir}myci-error.sh "$message"
+}
+
 # Creates a version for given package on Bintray
 # Usage:
 #     createVersionOnBintray <repo-owner> <repo-name> <package-name> <version-name>
@@ -144,4 +149,12 @@ function http_delete_file {
     [ -z "$res" ] && source myci-error.sh "curl failed while deleting file '$url'";
 	[ $res -ne 200 ] && myci-warning.sh "deleting file '$url' failed, HTTP code = $res";
 	return 0;
+}
+
+function parse_deb_file_name {
+	local file_name=$1
+
+    func_res=($(echo $file_name | sed -E -e 's/^([^_]*)_([^_]*)_([^_]*).deb$/\1 \2 \3/g'))
+
+    [[ ${#func_res[@]} == 3 ]] || error "malformed debian package name format: $file_name"
 }
