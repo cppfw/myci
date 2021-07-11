@@ -6,9 +6,6 @@ env:
   PACKAGE_NAME: ${{ github.event.repository.name }}
   MYCI_JFROG_USERNAME: ivan.gagis@gmail.com
   MYCI_JFROG_PASSWORD: ${{ secrets.MYCI_JFROG_PASSWORD }}
-  MYCI_PULP_DOMAIN: http://gagis.hopto.org
-  MYCI_PULP_USERNAME: admin
-  MYCI_PULP_PASSWORD: ${{ secrets.MYCI_PULP_PASSWORD }}
   MYCI_GIT_USERNAME: igagis
   MYCI_GIT_PASSWORD: ${{ secrets.MYCI_GIT_ACCESS_TOKEN }}
 jobs:
@@ -50,7 +47,11 @@ jobs:
         run: dpkg-buildpackage --unsigned-source --unsigned-changes
       - name: deploy deb packages
         # NOTE: the myci-dummy_x.x.x_armhf.deb package will be deployed to generate armhf packages index in the debian repo, in case there was no such index there
-        run: myci-deploy-debian-ssh.sh --server gagis.hopto.org --owner cppfw --repo ${{ matrix.os }} --distro ${{ matrix.codename }} --component main ../${PACKAGE_NAME}*_${PACKAGE_VERSION}_*.deb
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.MYCI_REPO_SSH_PUB_KEY }}" > ~/.ssh/id_rsa.pub
+          echo "${{ secrets.MYCI_REPO_SSH_KEY }}" > ~/.ssh/id_rsa
+          myci-deploy-debian-ssh.sh --server gagis.hopto.org --owner cppfw --repo ${{ matrix.os }} --distro ${{ matrix.codename }} --component main ../${PACKAGE_NAME}*_${PACKAGE_VERSION}_*.deb
         if: matrix.package_type == 'deb' && startsWith(github.ref, 'refs/tags/')
 ##### macosx #####
   macosx:
