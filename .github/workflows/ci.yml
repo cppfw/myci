@@ -52,6 +52,8 @@ jobs:
           echo "${{ secrets.MYCI_REPO_SSH_KEY }}" > ~/.ssh/repo_key_rsa
           chmod 600 ~/.ssh/repo_key_rsa
 
+          ls -d ~/.ssh/*
+
           echo "Host gagis" > ~/.ssh/config
           echo "  Hostname gagis.hopto.org" >> ~/.ssh/config
           echo "  IdentityFile ~/.ssh/repo_key_rsa" >> ~/.ssh/config
