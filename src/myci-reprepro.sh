@@ -30,7 +30,7 @@ while [[ $# > 0 ]] ; do
 			;;
 		--base-dir)
 			shift
-			base_dir=$1
+			base_dir=$1/
             [ -d "$base_dir" ] || error "base directory '$base_dir' does not exist"
 			;;
 		--owner)
@@ -57,7 +57,7 @@ done
 
 [ ! -z "$command" ] || error "command is not given"
 
-repo_dir="${base_dir}/${owner}/${repo}/"
+repo_dir="${base_dir}${owner}/${repo}/"
 conf_dir="${repo_dir}conf/"
 conf_distros_file="${conf_dir}distributions"
 
@@ -90,7 +90,11 @@ function is_arch_in_archs {
     local arch=$1
     local archs=$2
 
+    # echo "archs=$archs"
+
     for a in $archs; do
+        # echo "a=$a"
+        # echo "arch=$arch"
         if [ "$a" == "$arch" ]; then
             echo "true"
             return
@@ -126,7 +130,6 @@ function handle_add_command {
     [ ! -z "$distro" ] || error "missing required option: --distro"
     [ ! -z "$files" ] || error "missing deb files to add"
 
-    create_repo
     create_distro ${distro}
     local distro_file=$func_res
 
@@ -141,7 +144,7 @@ function handle_add_command {
         local arch=${func_res[2]}
         if [ "$arch" == "all" ]; then continue; fi
         # echo "arch = $arch"
-        if [ -z "$(is_arch_in_archs $arch $archs)" ]; then
+        if [ -z "$(is_arch_in_archs $arch "$archs")" ]; then
             archs_to_add="$archs_to_add $arch"
         fi
     done
@@ -160,4 +163,10 @@ function handle_add_command {
     fi
 }
 
-handle_${command}_command $@
+create_repo
+
+(
+    flock --exclusive --timeout 60 200
+
+    handle_${command}_command $@
+) 200>${repo_dir}lock
