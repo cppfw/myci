@@ -70,12 +70,12 @@ done
 [ ! -z "$files" ] || error "no package files given"
 
 tmp_dir=$(ssh $user@$server mktemp --tmpdir --directory myci_upload.XXXXXXXXXX)
-echo "tmp_dir = $tmp_dir"
+# echo "tmp_dir = $tmp_dir"
 trap "ssh $user@$server rm -rf $tmp_dir" EXIT ERR
 
 scp $files $user@$server:$tmp_dir
 
 remote_files=$(ssh $user@$server ls -d $tmp_dir/*)
-echo "remote_files = $remote_files"
+# echo "remote_files = $remote_files"
 
-ssh $user@$server myci-reprepro.sh --base-dir $base_dir --owner $owner --repo $repo add --distro $distro $remote_files
+ssh $user@$server myci-reprepro.sh --base-dir $base_dir --owner $owner --repo $repo add --distro $distro --component $component $remote_files

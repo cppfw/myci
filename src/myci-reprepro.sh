@@ -17,10 +17,11 @@ while [[ $# > 0 ]] ; do
 			echo "	$(basename $0) <options> <command> [--help] [...]"
 			echo " "
 			echo "options:"
-            echo "  --help                 show this help text and do nothing."
-			echo "  --base-dir <base-dir>  required option, base directory where all repos are stored."
-            echo "  --owner <owner>        required option, owner name"
-            echo "  --repo <repo>          required option, repository name"
+            echo "  --help                   show this help text and do nothing."
+			echo "  --base-dir <base-dir>    required option, base directory where all repos are stored."
+            echo "  --owner <owner>          required option, owner name."
+            echo "  --repo <repo>            required option, repository name."
+            echo "  --component <component>  debian repo component."
             echo ""
             echo "commands:"
             for i in "${!commands[@]}"; do {
@@ -77,7 +78,7 @@ function create_distro {
     if [ ! -f "${distro_file}" ]; then
         echo "Codename: ${distro}" >> ${distro_file}
         echo "Architectures: source" >> ${distro_file}
-        echo "Components: main" >> ${distro_file}
+        echo "Components: " >> ${distro_file}
         echo "SignWith: default" >> ${distro_file}
 
         echo "!include: ${distro_basename_file}" >> ${conf_distros_file}
@@ -86,16 +87,12 @@ function create_distro {
     func_res=$distro_file
 }
 
-function is_arch_in_archs {
-    local arch=$1
-    local archs=$2
+function is_in {
+    local str=$1
+    local strings=$2
 
-    # echo "archs=$archs"
-
-    for a in $archs; do
-        # echo "a=$a"
-        # echo "arch=$arch"
-        if [ "$a" == "$arch" ]; then
+    for s in $strings; do
+        if [ "$s" == "$str" ]; then
             echo "true"
             return
         fi
@@ -104,6 +101,7 @@ function is_arch_in_archs {
 
 function handle_add_command {
     local distro=
+    local component=
     local files=
     while [[ $# > 0 ]] ; do
         case $1 in
@@ -120,6 +118,10 @@ function handle_add_command {
                 shift
                 distro=$1
                 ;;
+            --component)
+                shift
+                component=$1
+                ;;
             *)
                 files="$files $1"
                 ;;
@@ -128,10 +130,18 @@ function handle_add_command {
     done
 
     [ ! -z "$distro" ] || error "missing required option: --distro"
+    [ ! -z "$component" ] || error "missing required argument: --component"
     [ ! -z "$files" ] || error "missing deb files to add"
 
     create_distro ${distro}
     local distro_file=$func_res
+
+    # read distro components
+    local comps=$(cat ${distro_file} | awk '$1 == "Components:" {$1=""; print $0}')
+    if [ -z "$(is_in $component "$comps")" ]; then
+        comps="${comps}${component}"
+        sed -E -i -e "s/^(Components:).*$/\1${comps}/g" ${distro_file}
+    fi
 
     # read distro archs
     local archs=$(cat ${distro_file} | awk '$1 == "Architectures:" {$1=""; print $0}')
@@ -144,7 +154,7 @@ function handle_add_command {
         local arch=${func_res[2]}
         if [ "$arch" == "all" ]; then continue; fi
         # echo "arch = $arch"
-        if [ -z "$(is_arch_in_archs $arch "$archs")" ]; then
+        if [ -z "$(is_in $arch "$archs")" ]; then
             archs_to_add="$archs_to_add $arch"
         fi
     done
