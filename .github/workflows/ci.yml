@@ -49,15 +49,15 @@ jobs:
         # NOTE: the myci-dummy_x.x.x_armhf.deb package will be deployed to generate armhf packages index in the debian repo, in case there was no such index there
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.MYCI_REPO_SSH_KEY }}" > ~/.ssh/id_rsa2
-          chmod 600 ~/.ssh/id_rsa2
-          ssh-keygen -y -f ~/.ssh/id_rsa2 > ~/.ssh/id_rsa2.pub
-          echo "pub key = "
-          cat ~/.ssh/id_rsa2.pub
+          echo "${{ secrets.MYCI_REPO_SSH_KEY }}" > repo_key_rsa
+          chmod 600repo_key_rsa
+          # ssh-keygen -y -frepo_key_rsa >repo_key_rsa.pub
+          # echo "pub key = "
+          # cat repo_key_rsa.pub
 
           echo "Host gagis" > ~/.ssh/config
           echo "Hostname gagis.hopto.org" >> ~/.ssh/config
-          echo "IdentityFile ~/.ssh/id_rsa2" >> ~/.ssh/config
+          echo "IdentityFile $(pwd)/repo_key_rsa" >> ~/.ssh/config
           echo "IdentitiesOnly yes" >> ~/.ssh/config
           echo "StrictHostKeyChecking no" >> ~/.ssh/config
 
@@ -65,7 +65,7 @@ jobs:
           cat ~/.ssh/config
 
           echo "ls..."
-          # ssh -i ~/.ssh/id_rsa2 -o IdentitiesOnly=yes -o StrictHostKeyChecking=no repo@gagis.hopto.org ls
+          # ssh -i repo_key_rsa -o IdentitiesOnly=yes -o StrictHostKeyChecking=no repo@gagis.hopto.org ls
           ssh repo@gagis ls
           echo "ls done"
 
