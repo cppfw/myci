@@ -48,7 +48,7 @@ jobs:
       - name: deploy deb packages
         # NOTE: the myci-dummy_x.x.x_armhf.deb package will be deployed to generate armhf packages index in the debian repo, in case there was no such index there
         run: |
-          mkdir -p ~/.ssh
+          mkdir -p /root/.ssh
           echo "${{ secrets.MYCI_REPO_SSH_KEY }}" > /root/.ssh/repo_key_rsa
           chmod 600 ~/.ssh/repo_key_rsa
 
