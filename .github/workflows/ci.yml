@@ -50,7 +50,7 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.MYCI_REPO_SSH_KEY }}" > repo_key_rsa
-          chmod 600repo_key_rsa
+          chmod 600 repo_key_rsa
           # ssh-keygen -y -frepo_key_rsa >repo_key_rsa.pub
           # echo "pub key = "
           # cat repo_key_rsa.pub
