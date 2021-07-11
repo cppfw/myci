@@ -140,7 +140,7 @@ function handle_add_command {
     local archs_to_add=
 
     for f in $files; do
-        parse_deb_file_name $f
+        parse_deb_file_name $(basename $f)
         local arch=${func_res[2]}
         if [ "$arch" == "all" ]; then continue; fi
         # echo "arch = $arch"
