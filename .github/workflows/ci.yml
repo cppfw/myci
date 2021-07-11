@@ -55,11 +55,11 @@ jobs:
 
           echo "USER = $USER"
           echo "HOME = $HOME"
-          ls -d ~/.ssh/*
+          # ls -d ~/.ssh/*
 
           echo "Host gagis" > ~/.ssh/config
           echo "  Hostname gagis.hopto.org" >> ~/.ssh/config
-          echo "  IdentityFile ~/.ssh/repo_key_rsa" >> ~/.ssh/config
+          echo "  IdentityFile" ~/.ssh/repo_key_rsa >> ~/.ssh/config
           echo "  User repo" >> ~/.ssh/config
           echo "  IdentitiesOnly yes" >> ~/.ssh/config
           echo "  StrictHostKeyChecking no" >> ~/.ssh/config
