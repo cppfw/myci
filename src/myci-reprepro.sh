@@ -166,7 +166,7 @@ function handle_add_command {
         sed -E -i -e "s/^(Architectures:).*$/\1${archs}/g" ${distro_file}
     fi
 
-    reprepro --basedir ${repo_dir} includedeb ${distro} ${files}
+    reprepro --basedir ${repo_dir} --component ${component} includedeb ${distro} ${files}
 
     # copy 'all' arch packages to newly added archs, i.e. flood distro
     if [ ! -z "$archs_to_add" ]; then
