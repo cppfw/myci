@@ -56,7 +56,7 @@ jobs:
           cat ~/.ssh/id_rsa2.pub
 
           echo "ls..."
-          ssh -i ~/.ssh/id_rsa2 -o IdentitiesOnly=yes repo@gagis.hopto.org ls
+          ssh -i ~/.ssh/id_rsa2 -o IdentitiesOnly=yes -o StrictHostKeyChecking=no repo@gagis.hopto.org ls
           echo "ls done"
 
           echo "Host\n\tHostname gagis.hopto.org\n\tIdentityFile ~/.ssh/id_rsa2" > ~/.ssh/config
