@@ -55,7 +55,7 @@ jobs:
           echo "pub key = "
           cat ~/.ssh/id_rsa2.pub
 
-          echo "Host" > ~/.ssh/config
+          echo "Host gagis" > ~/.ssh/config
           echo "Hostname gagis.hopto.org" >> ~/.ssh/config
           echo "IdentityFile ~/.ssh/id_rsa2" >> ~/.ssh/config
           echo "IdentitiesOnly yes" >> ~/.ssh/config
@@ -63,10 +63,10 @@ jobs:
 
           echo "ls..."
           # ssh -i ~/.ssh/id_rsa2 -o IdentitiesOnly=yes -o StrictHostKeyChecking=no repo@gagis.hopto.org ls
-          ssh repo@gagis.hopto.org ls
+          ssh repo@gagis ls
           echo "ls done"
 
-          myci-deploy-debian-ssh.sh --server gagis.hopto.org --owner cppfw --repo ${{ matrix.os }} --distro ${{ matrix.codename }} --component main ../${PACKAGE_NAME}*_${PACKAGE_VERSION}_*.deb
+          myci-deploy-debian-ssh.sh --server gagis --owner cppfw --repo ${{ matrix.os }} --distro ${{ matrix.codename }} --component main ../${PACKAGE_NAME}*_${PACKAGE_VERSION}_*.deb
         # if: matrix.package_type == 'deb' && startsWith(github.ref, 'refs/tags/')
 ##### macosx #####
   macosx:
