@@ -56,10 +56,10 @@ jobs:
           # cat repo_key_rsa.pub
 
           echo "Host gagis" > ~/.ssh/config
-          echo "Hostname gagis.hopto.org" >> ~/.ssh/config
-          echo "IdentityFile $(pwd)/repo_key_rsa" >> ~/.ssh/config
-          echo "IdentitiesOnly yes" >> ~/.ssh/config
-          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  Hostname gagis.hopto.org" >> ~/.ssh/config
+          echo "  IdentityFile $(pwd)/repo_key_rsa" >> ~/.ssh/config
+          echo "  IdentitiesOnly yes" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
 
           echo "config = "
           cat ~/.ssh/config
