@@ -50,6 +50,7 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.MYCI_REPO_SSH_KEY }}" > ~/.ssh/id_rsa2
+          chmod 600 ~/.ssh/id_rsa2
           ssh-keygen -y -f ~/.ssh/id_rsa2 > ~/.ssh/id_rsa2.pub
           myci-deploy-debian-ssh.sh --server gagis.hopto.org --owner cppfw --repo ${{ matrix.os }} --distro ${{ matrix.codename }} --component main ../${PACKAGE_NAME}*_${PACKAGE_VERSION}_*.deb
         if: matrix.package_type == 'deb' && startsWith(github.ref, 'refs/tags/')
