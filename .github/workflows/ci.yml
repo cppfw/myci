@@ -67,7 +67,7 @@ jobs:
 
           echo "ls..."
           # ssh -i repo_key_rsa -o IdentitiesOnly=yes -o StrictHostKeyChecking=no repo@gagis.hopto.org ls
-          ssh repo@gagis ls
+          ssh -v -v -v gagis ls
           echo "ls done"
 
           myci-deploy-debian-ssh.sh --server gagis --owner cppfw --repo ${{ matrix.os }} --distro ${{ matrix.codename }} --component main ../${PACKAGE_NAME}*_${PACKAGE_VERSION}_*.deb
