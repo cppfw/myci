@@ -49,9 +49,11 @@ jobs:
         # NOTE: the myci-dummy_x.x.x_armhf.deb package will be deployed to generate armhf packages index in the debian repo, in case there was no such index there
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.MYCI_REPO_SSH_KEY }}" > ~/.ssh/repo_key_rsa
+          echo "${{ secrets.MYCI_REPO_SSH_KEY }}" > /root/.ssh/repo_key_rsa
           chmod 600 ~/.ssh/repo_key_rsa
 
+          echo "USER = $USER"
+          echo "HOME = $HOME"
           ls -d ~/.ssh/*
 
           echo "Host gagis" > ~/.ssh/config
