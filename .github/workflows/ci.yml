@@ -52,6 +52,8 @@ jobs:
           echo "${{ secrets.MYCI_REPO_SSH_KEY }}" > ~/.ssh/id_rsa2
           chmod 600 ~/.ssh/id_rsa2
           ssh-keygen -y -f ~/.ssh/id_rsa2 > ~/.ssh/id_rsa2.pub
+          echo "pub key = "
+          cat ~/.ssh/id_rsa2.pub
           echo "Host\n\tHostname gagis.hopto.org\n\tIdentityFile ~/.ssh/id_rsa2" > ~/.ssh/config
 
           echo "ls..."
