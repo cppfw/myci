@@ -139,7 +139,8 @@ function handle_add_command {
     # read distro components
     local comps=$(cat ${distro_file} | awk '$1 == "Components:" {$1=""; print $0}')
     if [ -z "$(is_in $component "$comps")" ]; then
-        comps="${comps}${component}"
+        echo "add new component '$component'"
+        comps="${comps} ${component}"
         sed -E -i -e "s/^(Components:).*$/\1${comps}/g" ${distro_file}
     fi
 
