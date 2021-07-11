@@ -58,8 +58,8 @@ jobs:
           echo "Host" > ~/.ssh/config
           echo "Hostname gagis.hopto.org" >> ~/.ssh/config
           echo "IdentityFile ~/.ssh/id_rsa2" >> ~/.ssh/config
-          echo "IdentitiesOnly yes"
-          echo "StrictHostKeyChecking no"
+          echo "IdentitiesOnly yes" >> ~/.ssh/config
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
 
           echo "ls..."
           # ssh -i ~/.ssh/id_rsa2 -o IdentitiesOnly=yes -o StrictHostKeyChecking=no repo@gagis.hopto.org ls
