@@ -75,5 +75,6 @@ repo_dir=${base_dir}${owner}/${repo}/
 
 ssh_opts="-i ${ssh_key} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
 
-# ssh ${ssh_opts} $user@$server
+scp ${ssh_opts} $files $user@$server:$repo_dir
 
+ssh ${ssh_opts} $user@$server myci-pacman-add.sh --base-dir $base_dir --owner $owner --repo $repo --database $database $files
