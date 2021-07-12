@@ -79,7 +79,7 @@ ssh_opts="-i ${ssh_key} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
 
 tmp_dir=$(ssh ${ssh_opts} $user@$server mktemp --tmpdir --directory myci_upload.XXXXXXXXXX)
 # echo "tmp_dir = $tmp_dir"
-trap "ssh $server rm -rf $tmp_dir" EXIT ERR
+trap "ssh ${ssh_opts} $user@$server rm -rf $tmp_dir" EXIT ERR
 
 scp ${ssh_opts} $files $user@$server:$tmp_dir
 

@@ -82,6 +82,7 @@ function create_distro {
         echo "SignWith: default" >> ${distro_file}
 
         echo "!include: ${distro_basename_file}" >> ${conf_distros_file}
+        echo "" >> ${conf_distros_file}
     fi
 
     func_res=$distro_file
