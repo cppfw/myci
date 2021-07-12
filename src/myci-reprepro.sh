@@ -21,7 +21,6 @@ while [[ $# > 0 ]] ; do
 			echo "  --base-dir <base-dir>    required option, base directory where all repos are stored."
             echo "  --owner <owner>          required option, owner name."
             echo "  --repo <repo>            required option, repository name."
-            echo "  --component <component>  debian repo component."
             echo ""
             echo "commands:"
             for i in "${!commands[@]}"; do {
@@ -113,6 +112,7 @@ function handle_add_command {
                 echo "options:"
                 echo "  --help    show this help text and do nothing."
                 echo "  --distro  required option, distribution codename."
+                echo "  --component <component>  debian repo component."
                 exit 0
                 ;;
             --distro)
