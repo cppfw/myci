@@ -86,5 +86,4 @@ scp ${ssh_opts} $files $user@$server:$tmp_dir
 remote_files=$(ssh ${ssh_opts} $user@$server ls -d $tmp_dir/*)
 # echo "remote_files = $remote_files"
 
-# ssh ${ssh_opts} $user@$server myci-reprepro.sh --base-dir $base_dir --owner $owner --repo $repo add --distro $distro --component $component $remote_files
-ssh ${ssh_opts} $user@$server myci-freight-add.sh --base-dir $base_dir --owner $owner --repo $repo add --distro $distro --component $component $remote_files
+ssh ${ssh_opts} $user@$server myci-freight-add.sh --base-dir $base_dir --owner $owner --repo $repo --distro $distro --component $component $remote_files
