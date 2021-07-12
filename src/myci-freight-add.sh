@@ -6,10 +6,6 @@ set -eo pipefail
 script_dir="$(dirname $0)/"
 source ${script_dir}myci-common.sh
 
-declare -A commands=( \
-        [add]=1 \
-    )
-
 while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
@@ -61,19 +57,22 @@ done
 [ ! -z "$files" ] || error "missing deb files to add"
 
 repo_dir="$(realpath --canonicalize-missing ${base_dir}${owner}/${repo})/"
-conf_file="${repo_dir}etc/freight.conf"
 
-# create repo if needed
+# create repo dir if needed
 
-if [ ! -f "${conf_file}" ]; then
+if [ ! -d "$repo_dir" ]; then
 	mkdir -p $repo_dir
-	# mkdir -p ${repo_dir}lib
-	first_key_email=$(gpg --list-keys | sed -E -n -e 's/.*<([^ >]*)>.*/\1/p' | head -1)
-	[ ! -z "$first_key_email" ] || error "no default GPG key found"
-	freight-init --gpg=$first_key_email --libdir=${repo_dir}lib --cachedir=${repo_dir} --archs="source" ${repo_dir}
 fi
 
 function perform_freight_add {
+	local conf_file="${repo_dir}etc/freight.conf"
+
+	if [ ! -f "${conf_file}" ]; then
+		first_key_email=$(gpg --list-keys | sed -E -n -e 's/.*<([^ >]*)>.*/\1/p' | head -1)
+		[ ! -z "$first_key_email" ] || error "no default GPG key found"
+		freight-init --gpg=$first_key_email --libdir=${repo_dir}lib --cachedir=${repo_dir} --archs="source" ${repo_dir}
+	fi
+
 	# read repo archs
     local archs=$(cat ${conf_file} | sed -E -n -e 's/^ARCHS="([^"]*)"$/\1/p')
     # echo "archs = $archs"

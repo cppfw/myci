@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# we want exit immediately if any command fails and we want error in piped commands to be preserved
+set -eo pipefail
+
+script_dir="$(dirname $0)/"
+source ${script_dir}myci-common.sh
+
+while [[ $# > 0 ]] ; do
+	case $1 in
+		--help)
+			echo "usage:"
+			echo "	$(basename $0) [--help] <options> <pkg-file> [<pkg-file>...]"
+			echo " "
+			echo "options:"
+            echo "  --help                   show this help text and do nothing."
+			echo "  --base-dir <base-dir>    required option, base directory where all repos are stored."
+            echo "  --owner <owner>          required option, owner name, e.g. ivan"
+            echo "  --repo <repo>            required option, repository name, e.g. msys2/mingw32"
+			echo "  --database <name>        required option, debian repo distro, e.g. cppfw_mingw32."
+			exit 0
+			;;
+		--base-dir)
+			shift
+			base_dir=$1/
+            [ -d "$base_dir" ] || error "base directory '$base_dir' does not exist"
+			;;
+		--owner)
+			shift
+			owner=$1
+			;;
+		--repo)
+            shift
+            repo=$1
+            ;;
+		--database)
+			shift
+			database=$1
+			;;
+		*)
+            files="$files $1"
+			;;
+	esac
+	[[ $# > 0 ]] && shift;
+done
+
+[ ! -z "$base_dir" ] || error "missing required argument: --base-dir"
+[ ! -z "$owner" ] || error "missing required argument: --owner"
+[ ! -z "$repo" ] || error "missing required argument: --repo"
+[ ! -z "$database" ] || error "missing required option: --database"
+[ ! -z "$files" ] || error "missing deb files to add"
+
+repo_dir="$(realpath --canonicalize-missing ${base_dir}${owner}/${repo})/"
+
+if [ ! -d "$repo_dir" ]; then
+    mkdir -p $repo_dir;
+fi
+
+function perform_pacman_add {
+    (
+        cd $repo_dir
+        for file in $files; do
+            local f=$(basename $file)
+            echo "add package '$f' to database"
+            repo-add $database.db.tar.gz $f
+        done
+    )
+}
+
+(
+    flock --exclusive --timeout 60 200
+    
+	perform_pacman_add
+) 200>${repo_dir}lock
