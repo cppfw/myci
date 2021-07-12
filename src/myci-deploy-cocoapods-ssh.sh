@@ -85,7 +85,7 @@ done
 
 [ ! -z "$MYCI_GIT_PASSWORD" ] || error "MYCI_GIT_PASSWORD is not set"
 [ ! -z "$repo" ] || error "missing required option: --repo"
-[ ! -z "$version" ] error "missing required option: --version"
+[ ! -z "$version" ] || error "missing required option: --version"
 [ ! -z "$podspec" ] || error "podspec file is not given"
 
 if [ ! -z "$server" ] ||
