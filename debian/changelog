@@ -1,3 +1,9 @@
+myci (0.1.106) unstable; urgency=medium
+
+  * build for debian armv7
+
+ -- Ivan Gagis <igagis@gmail.com>  Tue, 13 Jul 2021 02:08:30 +0300
+
 myci (0.1.105) unstable; urgency=medium
 
   * deployment to cocoapods via ssh
