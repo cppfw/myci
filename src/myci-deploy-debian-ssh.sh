@@ -18,6 +18,7 @@ while [[ $# > 0 ]] ; do
 			echo " "
 			echo "options:"
             echo "  --help                   show this help text and do nothing."
+            echo "  --key <ssh-key>          ssh private key to authenticate to the server."
 			echo "  --server <server>        ssh server"
             echo "  --user <user>            linux user name on the server, defaults to 'repo'"
             echo "  --base-dir <path>        repositories base directory on the server, defaults to 'repo'"
@@ -27,6 +28,10 @@ while [[ $# > 0 ]] ; do
             echo "  --component <component>  debian repo component"
 			exit 0
 			;;
+        --key)
+            shift
+            ssh_key=$1
+            ;;
         --server)
             shift
             server=$1
@@ -63,6 +68,7 @@ while [[ $# > 0 ]] ; do
 done
 
 [ ! -z "$server" ] || error "required option is not given: --server"
+[ ! -z "$ssh_key" ] || error "required option is not given: --key"
 [ ! -z "$owner" ] || error "required option is not given: --owner"
 [ ! -z "$repo" ] || error "required option is not given: --repo"
 [ ! -z "$distro" ] || error "required option is not given: --distro"
@@ -73,9 +79,11 @@ tmp_dir=$(ssh $server mktemp --tmpdir --directory myci_upload.XXXXXXXXXX)
 # echo "tmp_dir = $tmp_dir"
 trap "ssh $server rm -rf $tmp_dir" EXIT ERR
 
-scp $files $server:$tmp_dir
+ssh_opts="-i ${ssh_key} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
 
-remote_files=$(ssh $server ls -d $tmp_dir/*)
+scp ${ssh_opts} $files $user@$server:$tmp_dir
+
+remote_files=$(ssh ${ssh_opts} $user@$server ls -d $tmp_dir/*)
 # echo "remote_files = $remote_files"
 
-ssh $server myci-reprepro.sh --base-dir $base_dir --owner $owner --repo $repo add --distro $distro --component $component $remote_files
+ssh ${ssh_opts} $user@$server myci-reprepro.sh --base-dir $base_dir --owner $owner --repo $repo add --distro $distro --component $component $remote_files
