@@ -48,32 +48,8 @@ jobs:
       - name: deploy deb packages
         # NOTE: the myci-dummy_x.x.x_armhf.deb package will be deployed to generate armhf packages index in the debian repo, in case there was no such index there
         run: |
-          # mkdir -p ~/.ssh
-          # mkdir -p ~/.ssh
           echo "${{ secrets.MYCI_REPO_SSH_KEY }}" > repo_key_rsa
           chmod 600 repo_key_rsa
-
-          echo "id = "
-          id
-          echo "USER = $USER"
-          echo "HOME = $HOME"
-          # ls -d ~/.ssh/*
-
-          # echo "Host gagis" > ~/.ssh/config
-          # echo "  Hostname gagis.hopto.org" >> ~/.ssh/config
-          # echo "  IdentityFile" ~/.ssh/repo_key_rsa >> ~/.ssh/config
-          # echo "  User repo" >> ~/.ssh/config
-          # echo "  IdentitiesOnly yes" >> ~/.ssh/config
-          # echo "  StrictHostKeyChecking no" >> ~/.ssh/config
-
-          # echo "config = "
-          # cat ~/.ssh/config
-
-          # echo "ls..."
-          ssh -i repo_key_rsa -o IdentitiesOnly=yes -o StrictHostKeyChecking=no repo@gagis.hopto.org ls
-          # ssh -v -v -v -F ~/.ssh/config gagis ls
-          # echo "ls done"
-
           myci-deploy-debian-ssh.sh --key repo_key_rsa --server gagis.hopto.org --owner cppfw --repo ${{ matrix.os }} --distro ${{ matrix.codename }} --component main ../${PACKAGE_NAME}*_${PACKAGE_VERSION}_*.deb
         # if: matrix.package_type == 'deb' && startsWith(github.ref, 'refs/tags/')
 ##### macosx #####
