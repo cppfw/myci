@@ -1,3 +1,9 @@
+myci (0.1.107) unstable; urgency=medium
+
+  * fix typo
+
+ -- Ivan Gagis <igagis@gmail.com>  Tue, 13 Jul 2021 02:41:02 +0300
+
 myci (0.1.106) unstable; urgency=medium
 
   * build for debian armv7
