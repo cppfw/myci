@@ -60,7 +60,7 @@ done
 [ ! -z "$component" ] || error "missing required argument: --component"
 [ ! -z "$files" ] || error "missing deb files to add"
 
-repo_dir="$(realpath ${base_dir}${owner}/${repo})/"
+repo_dir="$(realpath --canonicalize-missing ${base_dir}${owner}/${repo})/"
 conf_file="${repo_dir}etc/freight.conf"
 
 # create repo if needed
