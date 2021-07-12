@@ -77,6 +77,7 @@ fi
     flock --exclusive --timeout 60 200
     
 	for f in $files; do
+		echo "freight-add -c ${conf_file} $f apt/$distro"
 		freight-add -c ${conf_file} $f apt/$distro
 	done
 
