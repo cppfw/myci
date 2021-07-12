@@ -60,8 +60,6 @@ done
 [ ! -z "$component" ] || error "missing required argument: --component"
 [ ! -z "$files" ] || error "missing deb files to add"
 
-
-
 repo_dir="${base_dir}${owner}/${repo}/"
 conf_file="${repo_dir}/etc/freight.conf"
 
@@ -75,13 +73,13 @@ if [ ! -f "${conf_file}" ]; then
 	freight-init --gpg=$first_key_email --libdir=${repo_dir}lib --cachedir=${repo_dir} ${repo_dir}
 fi
 
-function freight_add {
-	freight-add -c ${conf_file} $files apt/$distro
-}
-
 (
     flock --exclusive --timeout 60 200
-    freight_add
+    
+	for f in $files; do
+		freight-add -c ${conf_file} $f apt/$distro
+	done
+	
 	freight-cache -c ${conf_file}
 ) 200>${repo_dir}lock
 
