@@ -96,7 +96,7 @@ function perform_freight_add {
     # update architectures
     if [ ! -z "$archs_to_add" ]; then
         archs="${archs}${archs_to_add}"
-		echo "updateing repo config archs to '${archs}'"
+		echo "updating repo config archs to '${archs}'"
 		sed -E -i -e "s/^ARCHS=\"[^\"]*\"$/ARCHS=\"${archs}\"/g" ${conf_file}
     fi
 
