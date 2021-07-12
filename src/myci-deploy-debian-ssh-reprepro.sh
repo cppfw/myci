@@ -8,7 +8,7 @@ script_dir="$(dirname $0)/"
 source ${script_dir}myci-common.sh
 
 user=repo
-base_dir=repo/
+base_dir=/var/www/repo/
 
 while [[ $# > 0 ]] ; do
 	case $1 in
