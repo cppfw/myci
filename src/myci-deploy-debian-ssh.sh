@@ -75,11 +75,11 @@ done
 [ ! -z "$component" ] || error "required option is not given: --component"
 [ ! -z "$files" ] || error "no package files given"
 
-tmp_dir=$(ssh $server mktemp --tmpdir --directory myci_upload.XXXXXXXXXX)
+ssh_opts="-i ${ssh_key} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
+
+tmp_dir=$(ssh ${ssh_opts} $user@$server mktemp --tmpdir --directory myci_upload.XXXXXXXXXX)
 # echo "tmp_dir = $tmp_dir"
 trap "ssh $server rm -rf $tmp_dir" EXIT ERR
-
-ssh_opts="-i ${ssh_key} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
 
 scp ${ssh_opts} $files $user@$server:$tmp_dir
 

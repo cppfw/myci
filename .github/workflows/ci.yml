@@ -70,7 +70,7 @@ jobs:
           # cat ~/.ssh/config
 
           # echo "ls..."
-          # ssh -i ~/.ssh/repo_key_rsa -o IdentitiesOnly=yes -o StrictHostKeyChecking=no repo@gagis.hopto.org ls
+          ssh -i repo_key_rsa -o IdentitiesOnly=yes -o StrictHostKeyChecking=no repo@gagis.hopto.org ls
           # ssh -v -v -v -F ~/.ssh/config gagis ls
           # echo "ls done"
 
