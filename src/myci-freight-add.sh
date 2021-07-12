@@ -60,8 +60,8 @@ done
 [ ! -z "$component" ] || error "missing required argument: --component"
 [ ! -z "$files" ] || error "missing deb files to add"
 
-repo_dir="${base_dir}${owner}/${repo}/"
-conf_file="${repo_dir}/etc/freight.conf"
+repo_dir="$(realpath ${base_dir}${owner}/${repo})/"
+conf_file="${repo_dir}etc/freight.conf"
 
 # create repo if needed
 
@@ -79,7 +79,7 @@ fi
 	for f in $files; do
 		freight-add -c ${conf_file} $f apt/$distro
 	done
-	
+
 	freight-cache -c ${conf_file}
 ) 200>${repo_dir}lock
 
