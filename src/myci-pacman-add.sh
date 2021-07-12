@@ -48,7 +48,7 @@ done
 [ ! -z "$owner" ] || error "missing required argument: --owner"
 [ ! -z "$repo" ] || error "missing required argument: --repo"
 [ ! -z "$database" ] || error "missing required option: --database"
-[ ! -z "$files" ] || error "missing deb files to add"
+[ ! -z "$files" ] || error "missing package files to add"
 
 repo_dir="$(realpath --canonicalize-missing ${base_dir}${owner}/${repo})/"
 
@@ -57,12 +57,13 @@ if [ ! -d "$repo_dir" ]; then
 fi
 
 function perform_pacman_add {
+    first_key_email=$(gpg --list-keys | sed -E -n -e 's/.*<([^ >]*)>.*/\1/p' | head -1)
     (
         cd $repo_dir
         for file in $files; do
             local f=$(basename $file)
             echo "add package '$f' to database"
-            repo-add $database.db.tar.gz $f
+            repo-add --new --verify --key $first_key_email --sign $database.db.tar.gz $f
         done
     )
 }
