@@ -126,7 +126,7 @@ if [ ! -z "$server" ]; then
     remote_files=$(ssh ${ssh_opts} $user@$server ls -d $tmp_dir/*)
     # echo "remote_files = $remote_files"
 
-    ssh ${ssh_opts} $user@$server myci-generic-add.sh --base-dir $base_dir --owner $owner --repo $repo $remote_files
+    ssh ${ssh_opts} $user@$server myci-generic-add.sh --base-dir $base_dir --owner $owner --repo $generic_repo $remote_files
 
 	echo "done deploying '$package_name' binary package version $version to generic repo"
 fi
