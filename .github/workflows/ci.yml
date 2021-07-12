@@ -50,7 +50,7 @@ jobs:
         run: |
           echo "${{ secrets.MYCI_REPO_SSH_KEY }}" > repo_key_rsa && chmod 600 repo_key_rsa
           myci-deploy-debian-ssh-freight.sh --key repo_key_rsa --server gagis.hopto.org --owner cppfw --repo ${{ matrix.os }} --distro ${{ matrix.codename }} --component main ../${PACKAGE_NAME}*_${PACKAGE_VERSION}_*.deb
-        if: matrix.package_type == 'deb' && startsWith(github.ref, 'refs/tags/')
+        # if: matrix.package_type == 'deb' && startsWith(github.ref, 'refs/tags/')
 ##### macosx #####
   macosx:
     runs-on: macos-latest

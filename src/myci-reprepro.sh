@@ -87,18 +87,6 @@ function create_distro {
     func_res=$distro_file
 }
 
-function is_in {
-    local str=$1
-    local strings=$2
-
-    for s in $strings; do
-        if [ "$s" == "$str" ]; then
-            echo "true"
-            return
-        fi
-    done
-}
-
 function handle_add_command {
     local distro=
     local component=

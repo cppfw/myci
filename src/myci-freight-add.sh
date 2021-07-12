@@ -70,18 +70,46 @@ if [ ! -f "${conf_file}" ]; then
 	# mkdir -p ${repo_dir}lib
 	first_key_email=$(gpg --list-keys | sed -E -n -e 's/.*<([^ >]*)>.*/\1/p' | head -1)
 	[ ! -z "$first_key_email" ] || error "no default GPG key found"
-	freight-init --gpg=$first_key_email --libdir=${repo_dir}lib --cachedir=${repo_dir} ${repo_dir}
+	freight-init --gpg=$first_key_email --libdir=${repo_dir}lib --cachedir=${repo_dir} --archs="source" ${repo_dir}
 fi
 
-(
-    flock --exclusive --timeout 60 200
-    
+function perform_freight_add {
+	# read repo archs
+    local archs=$(cat ${conf_file} | sed -E -n -e 's/^ARCHS="([^"]*)"$/\1/p')
+    # echo "archs = $archs"
+
+	# check missing architectures and add those
+
+	local archs_to_add=
+
+    for f in $files; do
+        parse_deb_file_name $(basename $f)
+        local arch=${func_res[2]}
+        if [ "$arch" == "all" ]; then continue; fi
+        # echo "arch = $arch"
+        if [ -z "$(is_in $arch "$archs")" ]; then
+			echo "arch '$arch' is not in config, adding"
+            archs_to_add="$archs_to_add $arch"
+        fi
+    done
+
+    # update architectures
+    if [ ! -z "$archs_to_add" ]; then
+        archs="${archs}${archs_to_add}"
+		echo "updateing repo config archs to '${archs}'"
+		sed -E -i -e "s/^ARCHS=\"[^\"]*\"$/ARCHS=\"${archs}\"/g" ${conf_file}
+    fi
+
 	for f in $files; do
-		echo "freight-add -c ${conf_file} $f apt/$distro"
+		# echo "freight-add -c ${conf_file} $f apt/$distro"
 		freight-add -c ${conf_file} $f apt/$distro
 	done
 
 	freight-cache -c ${conf_file}
+}
+
+(
+    flock --exclusive --timeout 60 200
+    
+	perform_freight_add
 ) 200>${repo_dir}lock
-
-

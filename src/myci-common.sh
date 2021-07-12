@@ -158,3 +158,15 @@ function parse_deb_file_name {
 
     [[ ${#func_res[@]} == 3 ]] || error "malformed debian package name format: $file_name"
 }
+
+function is_in {
+    local str=$1
+    local strings=$2
+
+    for s in $strings; do
+        if [ "$s" == "$str" ]; then
+            echo "true"
+            return
+        fi
+    done
+}
