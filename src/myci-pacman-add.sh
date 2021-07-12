@@ -58,14 +58,13 @@ fi
 
 function perform_pacman_add {
     first_key_email=$(gpg --list-keys | sed -E -n -e 's/.*<([^ >]*)>.*/\1/p' | head -1)
-    (
-        cd $repo_dir
-        for file in $files; do
-            local f=$(basename $file)
-            echo "add package '$f' to database"
-            repo-add --new --verify --key $first_key_email --sign $database.db.tar.gz $f
-        done
-    )
+
+    for file in $files; do
+        cp $file $repo_dir
+        local f=$(basename $file)
+        echo "add package '$f' to database"
+        repo-add --new --verify --key $first_key_email --sign ${repo_dir}$database.db.tar.gz ${repo_dir}$f
+    done
 }
 
 (

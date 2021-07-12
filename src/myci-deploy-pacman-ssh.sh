@@ -71,10 +71,14 @@ done
 [ ! -z "$database" ] || error "required option is not given: --database"
 [ ! -z "$files" ] || error "no package files given"
 
-repo_dir=${base_dir}${owner}/${repo}/
-
 ssh_opts="-i ${ssh_key} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
 
-scp ${ssh_opts} $files $user@$server:$repo_dir
+tmp_dir=$(ssh ${ssh_opts} $user@$server mktemp --tmpdir --directory myci_upload.XXXXXXXXXX)
+# echo "tmp_dir = $tmp_dir"
+trap "ssh ${ssh_opts} $user@$server rm -rf $tmp_dir" EXIT ERR
 
-ssh ${ssh_opts} $user@$server myci-pacman-add.sh --base-dir $base_dir --owner $owner --repo $repo --database $database $files
+scp ${ssh_opts} $files $user@$server:$tmp_dir
+
+remote_files=$(ssh ${ssh_opts} $user@$server ls -d $tmp_dir/*)
+
+ssh ${ssh_opts} $user@$server myci-pacman-add.sh --base-dir $base_dir --owner $owner --repo $repo --database $database $remote_files
