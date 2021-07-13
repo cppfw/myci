@@ -170,3 +170,70 @@ function is_in {
         fi
     done
 }
+
+function make_curl_req {
+    local method=$1
+    shift
+    local url=$1
+    shift
+    local expected_http_code=$1
+    shift
+
+    local data_arg=
+    
+    case $method in
+        POST)
+            local content_type=$1
+            shift
+            local data=("$@")
+            case $content_type in
+                json)
+                    data_arg="--data"
+                    local content_type_header="Content-Type: application/json"
+                    ;;
+                form)
+                    data_arg="--form"
+                    local content_type_header="Content-Type: multipart/form-data"
+                    ;;
+                *)
+                    error "unknown content type: $content_type"
+            esac
+            ;;
+    esac
+
+    local tmpfile=$(mktemp)
+
+    # delete temporary file on exit or signal caught
+    trap "rm -f $tmpfile" 0 2 3 9 15
+    
+    local curl_cmd=(curl --location --silent $trusted --output $tmpfile \
+            --write-out "%{http_code} %{ssl_verify_result}" \
+            --request $method \
+            $url)
+
+    if [ ! -z "$MYCI_CREDENTIALS" ]; then
+        curl_cmd+=(--user "$MYCI_CREDENTIALS")
+    fi
+
+    if [ ! -z "$data_arg" ]; then
+        curl_cmd+=(--header "$content_type_header")
+        for i in "${data[@]}"; do
+            curl_cmd+=($data_arg "$i")
+        done
+    fi
+
+    # echo "curl_cmd ="; printf '%s\n' "${curl_cmd[@]}"
+
+    local curl_res=($("${curl_cmd[@]}" || true));
+    func_res=$(cat $tmpfile)
+
+    # echo "curl_res[0] = ${curl_res[0]}"
+
+    if [ -z "$trusted" ] && [ ${curl_res[1]} -ne 0 ]; then
+        error "SSL verification failed, ssl_verify_result = ${curl_res[1]}, func_res = $func_res";
+    fi
+
+    if [ ${curl_res[0]} -ne $expected_http_code ]; then
+        error "request failed, HTTP code = ${curl_res[0]} (expected $expected_http_code), func_res = $func_res"
+    fi
+}
