@@ -76,6 +76,6 @@ make_curl_req \
         "maven2.asset1=@$pom_file" \
         "maven2.asset1.extension=pom" \
         "maven2.asset2=@$aar_file;type=application/java-archive" \
-        "maven2.asset2.extension=jar"
+        "maven2.asset2.extension=${aar_file##*.}"
 
 echo "done deploying to Nexus maven repo"
