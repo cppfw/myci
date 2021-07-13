@@ -21,14 +21,10 @@ while [[ $# > 0 ]] ; do
 			echo "The AAR file should be named in form <package_name-X.Y.Z.aar>, where X, Y, Z are numbers."
 			echo "	Example: myawesomelib-1.3.14.aar"
 			echo "The POM file should be named same as AAR file but with .pom suffix and should reside right next to .aar file."
-			# echo "The repo-path must always be in a form <java-package-path>/<version>, see example below."
             echo ""
             echo "options:"
             echo "  --base-url <url>    Nexus API base url"
             echo "  --repo <repo-name>  Repository name."
-			echo ""
-			echo "Example:"
-			echo "	$(basename $0) -d cppfw -r android -p io/github/cppfw/myawesomelib/1.3.14 myawesomelib-1.3.14.aar"
 			exit 0
 			;;
         --base-url)
