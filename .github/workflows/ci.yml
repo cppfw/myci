@@ -25,15 +25,15 @@ jobs:
     container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     name: linux - ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     steps:
-      - name: git clone
-        uses: actions/checkout@v2
       - name: install ci tools
         run: |
           # configure timezone to avoid 'tzdata' package to require user interaction during installation (needed for ubuntu:focal)
           TZ=Europe/Helsinki ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
           apt update
-          apt install --assume-yes devscripts equivs
+          apt install --assume-yes devscripts equivs git
+      - name: git clone
+        uses: myci-actions/checkout@master
       - name: install myci
         run: make install
       - name: set PACKAGE_VERSION
