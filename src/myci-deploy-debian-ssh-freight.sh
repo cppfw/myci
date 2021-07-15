@@ -74,6 +74,11 @@ done
 [ ! -z "$component" ] || error "required option is not given: --component"
 [ ! -z "$files" ] || error "no package files given"
 
+# TODO: --owner is DEPRECATED, remove when support for --owner is removed
+if [ ! -z "$owner" ]; then
+    owner="${owner}/"
+fi
+
 ssh_opts="-i ${ssh_key} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
 
 tmp_dir=$(ssh ${ssh_opts} $user@$server mktemp --tmpdir --directory myci_upload.XXXXXXXXXX)
@@ -85,4 +90,4 @@ scp ${ssh_opts} $files $user@$server:$tmp_dir
 remote_files=$(ssh ${ssh_opts} $user@$server ls -d $tmp_dir/*)
 # echo "remote_files = $remote_files"
 
-ssh ${ssh_opts} $user@$server myci-freight-add.sh --base-dir $base_dir --owner "$owner" --repo $repo --distro $distro --component $component $remote_files
+ssh ${ssh_opts} $user@$server myci-freight-add.sh --base-dir $base_dir --repo ${owner}${repo} --distro $distro --component $component $remote_files
