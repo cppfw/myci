@@ -1,3 +1,9 @@
+myci (0.1.117) unstable; urgency=medium
+
+  * deprecate --owner in pacman scripts
+
+ -- Ivan Gagis <igagis@gmail.com>  Fri, 16 Jul 2021 00:15:47 +0300
+
 myci (0.1.116) unstable; urgency=medium
 
   * fix owner deprecation
