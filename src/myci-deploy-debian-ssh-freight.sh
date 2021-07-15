@@ -22,8 +22,7 @@ while [[ $# > 0 ]] ; do
 			echo "  --server <server>        ssh server"
             echo "  --user <user>            linux user name on the server, defaults to 'repo'"
             echo "  --base-dir <path>        repositories base directory on the server, defaults to 'repo'"
-            echo "  --owner <owner>          repository owner name"
-            echo "  --repo <repo>            debian repo name"
+            echo "  --repo <repo>            debian repo name, e.g. repo/debian"
             echo "  --distro <distro>        debian distro name"
             echo "  --component <component>  debian repo component"
 			exit 0
@@ -45,6 +44,7 @@ while [[ $# > 0 ]] ; do
 			base_dir=$1/
 			;;
 		--owner)
+			echo "DEPRECATED: --owner, use --repo <owner>/<repo-name> instead"
 			shift
 			owner=$1
 			;;
@@ -69,7 +69,6 @@ done
 
 [ ! -z "$server" ] || error "required option is not given: --server"
 [ ! -z "$ssh_key" ] || error "required option is not given: --key"
-[ ! -z "$owner" ] || error "required option is not given: --owner"
 [ ! -z "$repo" ] || error "required option is not given: --repo"
 [ ! -z "$distro" ] || error "required option is not given: --distro"
 [ ! -z "$component" ] || error "required option is not given: --component"
@@ -86,4 +85,4 @@ scp ${ssh_opts} $files $user@$server:$tmp_dir
 remote_files=$(ssh ${ssh_opts} $user@$server ls -d $tmp_dir/*)
 # echo "remote_files = $remote_files"
 
-ssh ${ssh_opts} $user@$server myci-freight-add.sh --base-dir $base_dir --owner $owner --repo $repo --distro $distro --component $component $remote_files
+ssh ${ssh_opts} $user@$server myci-freight-add.sh --base-dir $base_dir --owner "$owner" --repo $repo --distro $distro --component $component $remote_files
