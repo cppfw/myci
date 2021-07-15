@@ -43,7 +43,7 @@ else
     echo "Installing missing dependency packages: $deps"
 fi
 
-apt install -y $deps
+apt --quiet install --assume-yes $deps
 
 # finally, check again that all dependencies were installed successfully.
 dpkg-checkbuilddeps
