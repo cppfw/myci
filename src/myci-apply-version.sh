@@ -6,11 +6,18 @@ set -eo pipefail
 while [[ $# > 0 ]] ; do
 	case "$1" in
 		--help)
-			echo "Prorab apply version utility."
-			echo "Usage:"
-			echo "	myci-apply-version.sh -v/--version <version> <list-of-input-files> [--filename-only]"
-			echo "Input files are files with '.in' extension"
-			exit
+			echo "myci apply version utility. Replaces all occurrences of '\$(version)' in a file with given version string."
+			echo ""
+			echo "usage:"
+			echo "	$(basename $0) <options> <list-of-input-files>"
+			echo ""
+			echo "input files must have '.in' suffix"
+			echo ""
+			echo "options:"
+			echo "  -v, --version <version>  version string to apply"
+			echo "      --filename-only      apply version only to file name"
+			echo "      --out-dir <dir>      directory where to put resulting files, if not specified, the files are placed next to input files"
+			exit 0
 			;;
 		-v)
 			shift
@@ -23,6 +30,10 @@ while [[ $# > 0 ]] ; do
 		--filename-only)
 			filenameonly="true"
 			;;
+		--out-dir)
+			shift
+			out_dir=$1
+			;;
 		*)
 			infiles="$infiles $1"
 			;;
@@ -33,9 +44,13 @@ done
 echo "Applying version $version to files:"
 
 for i in $infiles; do
-	echo "	$i"
-
 	outfile=$(echo $i | sed -e "s/\(.*\)\.in$/\1/" | sed -e "s/\$(version)/$version/g")
+
+	if [ ! -z "$out_dir" ]; then
+		outfile="${out_dir}/$(basename $outfile)"
+	fi
+
+	echo "	$i -> $outfile"
 
 	if [ -z "$filenameonly" ]; then
 		sed -e "s/\$(version)/$version/g" $i > $outfile
