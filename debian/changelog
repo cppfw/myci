@@ -1,3 +1,9 @@
+myci (0.1.112) unstable; urgency=medium
+
+  * add --out-dir option to apply version script
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 15 Jul 2021 16:42:04 +0300
+
 myci (0.1.111) unstable; urgency=medium
 
   * build ofr i386
