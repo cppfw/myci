@@ -24,8 +24,7 @@ while [[ $# > 0 ]] ; do
 			echo "  --server <server>        ssh server"
             echo "  --user <user>            linux user name on the server, defaults to 'repo'"
             echo "  --base-dir <path>        repositories base directory on the server, defaults to 'repo'"
-            echo "  --owner <owner>          repository owner name"
-            echo "  --repo <repo>            repo name"
+            echo "  --repo <repo>            repo name, e.g. repo/msys/mingw32"
             echo "  --database <name>        pacman database name"
 			exit 0
 			;;
@@ -46,6 +45,7 @@ while [[ $# > 0 ]] ; do
 			base_dir=$1/
 			;;
 		--owner)
+            echo "DEPRECATED: --owner, use --repo <owner>/<repo-name> instead"
 			shift
 			owner=$1
 			;;
@@ -66,10 +66,14 @@ done
 
 [ ! -z "$server" ] || error "required option is not given: --server"
 [ ! -z "$ssh_key" ] || error "required option is not given: --key"
-[ ! -z "$owner" ] || error "required option is not given: --owner"
 [ ! -z "$repo" ] || error "required option is not given: --repo"
 [ ! -z "$database" ] || error "required option is not given: --database"
 [ ! -z "$files" ] || error "no package files given"
+
+# TODO: --owner is DEPRECATED, remove when support for --owner is removed
+if [ ! -z "$owner" ]; then
+    owner="${owner}/"
+fi
 
 ssh_opts="-i ${ssh_key} -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
 
@@ -81,4 +85,4 @@ scp ${ssh_opts} $files $user@$server:$tmp_dir
 
 remote_files=$(ssh ${ssh_opts} $user@$server ls -d $tmp_dir/*)
 
-ssh ${ssh_opts} $user@$server myci-pacman-add.sh --base-dir $base_dir --owner $owner --repo $repo --database $database $remote_files
+ssh ${ssh_opts} $user@$server myci-pacman-add.sh --base-dir $base_dir --repo ${owner}${repo} --database $database $remote_files
