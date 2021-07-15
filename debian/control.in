@@ -3,13 +3,16 @@ Section: misc
 Priority: extra
 Maintainer: Ivan Gagis <igagis@gmail.com>
 Build-Depends: debhelper (>= 9),
-        sed, curl, openssh-client
+        sed
 Standards-Version: 3.9.2
 
 Package: myci
 Section: devel
 Architecture: all
-Depends: sed, jq, curl
+Depends:
+        sed,
+        curl,
+        openssh-client
 Description: Helper CI scripts.
  Some helper CI scripts, mainly for deploying to different repositories.
 
