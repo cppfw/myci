@@ -1,3 +1,9 @@
+myci (0.1.115) unstable; urgency=medium
+
+  * deprecate --owner in freight scripts
+
+ -- Ivan Gagis <igagis@gmail.com>  Fri, 16 Jul 2021 00:02:42 +0300
+
 myci (0.1.114) unstable; urgency=medium
 
   * add debian dependency on openssh-client package
