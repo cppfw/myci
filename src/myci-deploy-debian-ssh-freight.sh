@@ -22,7 +22,7 @@ while [[ $# > 0 ]] ; do
 			echo "  --server <server>        ssh server"
             echo "  --user <user>            linux user name on the server, defaults to 'repo'"
             echo "  --base-dir <path>        repositories base directory on the server, defaults to 'repo'"
-            echo "  --repo <repo>            debian repo name, e.g. repo/debian"
+            echo "  --repo <repo>            debian repo name, e.g. cppfw/debian"
             echo "  --distro <distro>        debian distro name"
             echo "  --component <component>  debian repo component"
 			exit 0

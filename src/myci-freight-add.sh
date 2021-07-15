@@ -15,7 +15,7 @@ while [[ $# > 0 ]] ; do
 			echo "options:"
             echo "  --help                   show this help text and do nothing."
 			echo "  --base-dir <base-dir>    required option, base directory where all repos are stored."
-			echo "  --repo <repo>            required option, repository name, e.g. repo/debian"
+			echo "  --repo <repo>            required option, repository name, e.g. cppfw/debian"
 			echo "  --distro <distro>        required option, debian repo distro, e.g. buster."
             echo "  --component <component>  required option, debian repo component, e.g. main"
 			exit 0

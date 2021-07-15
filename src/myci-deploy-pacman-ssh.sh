@@ -24,7 +24,7 @@ while [[ $# > 0 ]] ; do
 			echo "  --server <server>        ssh server"
             echo "  --user <user>            linux user name on the server, defaults to 'repo'"
             echo "  --base-dir <path>        repositories base directory on the server, defaults to 'repo'"
-            echo "  --repo <repo>            repo name, e.g. repo/msys/mingw32"
+            echo "  --repo <repo>            repo name, e.g. cppfw/msys/mingw32"
             echo "  --database <name>        pacman database name"
 			exit 0
 			;;

@@ -30,8 +30,7 @@ while [[ $# > 0 ]] ; do
             echo "  --key <ssh-key>               ssh key."
             echo "  --user <ssh-user>             ssh user. Defaults to 'repo'."
             echo "  --base-dir <dir>              generic repo base dir. Dir on the server where repos reside. Defaults to '/var/www/repo/'"
-            echo "  --owner <repo-owner>          generic repo owner, e.g. ivan."
-            echo "  --generic-repo <repo>         generice repo name, e.g. cocoapods."
+            echo "  --generic-repo <repo>         generice repo name, e.g. cppfw/cocoapods."
             echo "  --package <package-file>      binary package name."
             exit 0
 			;;
@@ -60,6 +59,7 @@ while [[ $# > 0 ]] ; do
             base_dir=$1
             ;;
         --owner)
+            echo "DEPRECATED: --owner, use --repo <owner>/<repo-name> instead"
             shift
             owner=$1
             ;;
@@ -92,7 +92,6 @@ if [ ! -z "$server" ] ||
         [ ! -z "$ssh_key" ] ||
         [ ! -z "$user" ] ||
         [ ! -z "$base_dir" ] ||
-        [ ! -z "$owner" ] ||
         [ ! -z "$generic_repo" ] ||
         [ ! -z "$package" ];
 then
@@ -101,7 +100,6 @@ then
     [ ! -z "$ssh_key" ] || error "missing required option: --key"
     [ ! -z "$user" ] || error "missing required option: --user"
     [ ! -z "$base_dir" ] || error "missing required option: --base_dir"
-    [ ! -z "$owner" ] || error "missing required option: --owner"
     [ ! -z "$generic_repo" ] || error "missing required option: --generic_repo"
     [ ! -z "$package" ] || error "missing required option: --package"
 fi
@@ -126,9 +124,14 @@ if [ ! -z "$server" ]; then
     remote_files=$(ssh ${ssh_opts} $user@$server ls -d $tmp_dir/*)
     # echo "remote_files = $remote_files"
 
-    ssh ${ssh_opts} $user@$server myci-generic-add.sh --base-dir $base_dir --owner $owner --repo $generic_repo $remote_files
+    # TODO: --owner is DEPRECATED, remove when support for --owner is removed
+    if [ ! -z "$owner" ]; then
+        owner="${owner}/"
+    fi
 
-	echo "done deploying '$package_name' binary package version $version to generic repo"
+    ssh ${ssh_opts} $user@$server myci-generic-add.sh --base-dir $base_dir --repo ${owner}$generic_repo $remote_files
+
+    echo "done deploying '$package_name' binary package version $version to generic repo"
 fi
 
 echo "deploy to cocoapods"

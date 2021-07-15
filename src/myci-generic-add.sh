@@ -13,10 +13,9 @@ while [[ $# > 0 ]] ; do
 			echo "	$(basename $0) [--help] <options> <pkg-file> [<pkg-file>...]"
 			echo " "
 			echo "options:"
-            echo "  --help                   show this help text and do nothing."
+			echo "  --help                   show this help text and do nothing."
 			echo "  --base-dir <base-dir>    required option, base directory where all repos are stored."
-            echo "  --owner <owner>          required option, owner name, e.g. ivan"
-            echo "  --repo <repo>            required option, repository name, e.g. msys2/mingw32"
+			echo "  --repo <repo>            required option, repository name, e.g. cppfw/msys2/mingw32"
 			exit 0
 			;;
 		--base-dir)
@@ -25,6 +24,7 @@ while [[ $# > 0 ]] ; do
             [ -d "$base_dir" ] || error "base directory '$base_dir' does not exist"
 			;;
 		--owner)
+			echo "DEPRECATED: --owner, use --repo <owner>/<repo-name> instead"
 			shift
 			owner=$1
 			;;
@@ -40,7 +40,6 @@ while [[ $# > 0 ]] ; do
 done
 
 [ ! -z "$base_dir" ] || error "missing required argument: --base-dir"
-[ ! -z "$owner" ] || error "missing required argument: --owner"
 [ ! -z "$repo" ] || error "missing required argument: --repo"
 [ ! -z "$files" ] || error "missing package files to add"
 
