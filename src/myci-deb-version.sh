@@ -9,7 +9,6 @@ source ${script_dir}myci-common.sh
 changelog_file=$1
 
 if [ -z "$changelog_file" ]; then
-    echo "no input changelog file given, trying to use debian/changelog"
     changelog_file="debian/changelog"
 fi
 

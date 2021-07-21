@@ -3,6 +3,8 @@
 # we want exit immediately if any command fails and we want error in piped commands to be preserved
 set -eo pipefail
 
+script_dir="$(dirname $0)/"
+
 while [[ $# > 0 ]] ; do
 	case "$1" in
 		--help)
@@ -40,6 +42,11 @@ while [[ $# > 0 ]] ; do
 	esac
 	[[ $# > 0 ]] && shift;
 done
+
+if [ -z "$version" ]; then
+	echo "version is not given, trying to extract it from debian/changelog"
+	version="$(${script_dir}myci-deb-version.sh)"
+fi
 
 echo "Applying version $version to files:"
 
