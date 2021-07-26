@@ -67,7 +67,7 @@ function perform_pacman_add {
 }
 
 (
-    flock --exclusive --timeout 60 200
+    flock --exclusive --timeout 600 200
     
 	perform_pacman_add
 ) 200>${repo_dir}lock
