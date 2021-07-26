@@ -9,7 +9,7 @@ source ${script_dir}myci-common.sh
 # define required options to empty values
 declare -A local opts=( \
     [license]= \
-    [suffixes]="cpp,hpp" \
+    [suffixes]="cpp,hpp,cxx,hxx" \
     [check]="false" \
 )
 
@@ -25,7 +25,7 @@ while [[ $# > 0 ]] ; do
             echo "  --help                  show this help text."
 			echo "  --license <file>        file containing the license text. Required option."
             echo "  --dir <dir>             directory to search for source files recursively."
-            echo "  --suffixes <s1,s2,...>  comma separated file suffixes to serch for. Defaults to 'cpp,hpp'."
+            echo "  --suffixes <s1,s2,...>  comma separated file suffixes to serch for. Defaults to 'cpp,hpp,cxx,hxx'."
             echo "  --check                 just check for license presense, do not modify any files."
 			exit 0
 			;;
