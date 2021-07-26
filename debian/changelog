@@ -1,3 +1,9 @@
+myci (0.1.120) unstable; urgency=medium
+
+  * license script
+
+ -- Ivan Gagis <igagis@gmail.com>  Mon, 26 Jul 2021 22:30:57 +0300
+
 myci (0.1.119) unstable; urgency=medium
 
   * improve some scripts
