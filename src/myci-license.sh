@@ -6,12 +6,7 @@ set -eo pipefail
 script_dir="$(dirname $0)/"
 source ${script_dir}myci-common.sh
 
-# define required options to empty values
-declare -A local opts=( \
-    [license]= \
-    [suffixes]="cpp,hpp,cxx,hxx" \
-    [check]="false" \
-)
+suffixes="cpp,hpp,cxx,hxx"
 
 while [[ $# > 0 ]] ; do
 	case "$1" in
@@ -31,18 +26,18 @@ while [[ $# > 0 ]] ; do
 			;;
 		--license)
 			shift
-			opts[license]=$1
+			license=$1
 			;;
 		--dir)
             shift
-			opts[dir]=$1
+			dir=$1
 			;;
-		--pattern)
+		--suffixes)
 			shift
-			opts[pattern]=$1
+			suffixes=$1
 			;;
         --check)
-            opts[check]="true"
+            check="true"
             ;;
 		*)
 			infiles="$infiles $1"
@@ -51,20 +46,18 @@ while [[ $# > 0 ]] ; do
 	[[ $# > 0 ]] && shift;
 done
 
-for opt in ${!opts[@]}; do
-    [ ! -z "${opts[$opt]}" ] || error "missing option: --$opt"
-done
+[ ! -z "$license" ] || error "missing option: --license"
 
-if [ ! -z "${opts[dir]}" ]; then
+if [ ! -z "${dir}" ]; then
     find_patterns=
     joiner="-name"
-    for s in ${opts[suffixes]//,/ }; do
+    for s in ${suffixes//,/ }; do
         find_patterns="$find_patterns $joiner *.$s"
         joiner="-or -name"
     done
 
     # echo "find_patterns = $find_patterns"
-    find_cmd=(find ${opts[dir]} -type f $find_patterns)
+    find_cmd=(find ${dir} -type f $find_patterns)
 
     infiles="$infiles $(${find_cmd[@]})"
 fi
@@ -82,7 +75,7 @@ tmp_file="${tmp_dir}/tmp_file"
 license_file="${tmp_dir}/license"
 
 echo "/*" > $license_file
-cat ${opts[license]} >> $license_file
+cat ${license} >> $license_file
 echo "*/" >> $license_file
 echo "" >> $license_file
 echo "$license_end" >> $license_file
@@ -102,7 +95,7 @@ for f in $infiles; do
 	# echo "license_end_line = $license_end_line"
 
 	if [ -z "$license_end_line" ]; then
-		if [ "${opts[check]}" == "true" ]; then
+		if [ "${check}" == "true" ]; then
 			echo "$f: error: no license"
 			error="true"
 		else
@@ -116,7 +109,7 @@ for f in $infiles; do
 	fi
 
 	if [ ! -z "$(head -$license_length $f | diff $license_file -)" ]; then
-		if [ "${opts[check]}" == "true" ]; then
+		if [ "${check}" == "true" ]; then
 			echo "$f: error: wrong license"
 			error="true"
 		else
