@@ -71,13 +71,63 @@ fi
 
 # echo "infiles = $infiles"
 
-license_length=$(wc -l ${opts[license]} | cut --fields=1 --delimiter=' ')
-echo "license_length = $license_length"
+license_end="/* ================ LICENSE END ================ */"
+
+# generate temporary file
+tmp_dir=$(mktemp --tmpdir --directory myci.XXXXXXXXXX)
+trap "rm --force --recursive $tmp_dir" EXIT ERR
+
+tmp_file="${tmp_dir}/tmp_file"
+
+license_file="${tmp_dir}/license"
+
+echo "/*" > $license_file
+cat ${opts[license]} >> $license_file
+echo "*/" >> $license_file
+echo "" >> $license_file
+echo "$license_end" >> $license_file
+
+license_length=$(wc -l $license_file | cut --fields=1 --delimiter=' ')
+# echo "license_length = $license_length"
+
+# escape license end for awk
+license_end=${license_end//\//\\/}
+license_end=${license_end//\*/\\*}
+# echo "license_end = $license_end"
+
+error="false"
 
 for f in $infiles; do
+    license_end_line=$(awk "/^${license_end}$/{ print NR; exit }" $f)
+	# echo "license_end_line = $license_end_line"
 
-    license_end_line=$(awk '/^\/\/ ================ LICENSE END ================ \/\/$/{ print NR; exit }' $f)
+	if [ -z "$license_end_line" ]; then
+		if [ "${opts[check]}" == "true" ]; then
+			echo "$f: error: no license"
+			error="true"
+		else
+			echo "append license $f"
+			cat $license_file > $tmp_file
+			echo "" >> $tmp_file
+			cat $f >> $tmp_file
+			mv $tmp_file $f
+		fi
+		continue
+	fi
 
-    echo "license_end_line = $license_end_line"
-
+	if [ ! -z "$(head -$license_length $f | diff $license_file -)" ]; then
+		if [ "${opts[check]}" == "true" ]; then
+			echo "$f: error: wrong license"
+			error="true"
+		else
+			echo "replace license $f"
+			cat $license_file > $tmp_file
+			tail --lines=+$((license_end_line+1)) $f >> $tmp_file
+			mv $tmp_file $f
+		fi
+	fi
 done
+
+if [ "$error" == "true" ]; then
+	error "some files doesn't have proper license"
+fi
