@@ -82,7 +82,7 @@ echo "*/" >> $license_file
 echo "" >> $license_file
 echo "$license_end" >> $license_file
 
-license_length=$(wc -l $license_file | cut -f 1 -d ' ')
+license_length=$(wc -l $license_file | awk '{print $1}')
 # echo "license_length = $license_length"
 
 # escape license end for awk
