@@ -1,3 +1,9 @@
+myci (0.1.123) unstable; urgency=medium
+
+  * do not use long key names
+
+ -- Ivan Gagis <igagis@gmail.com>  Mon, 26 Jul 2021 23:48:41 +0300
+
 myci (0.1.122) unstable; urgency=medium
 
   * do not use array
