@@ -67,8 +67,9 @@ fi
 license_end="/* ================ LICENSE END ================ */"
 
 # generate temporary file
-tmp_dir=$(mktemp --tmpdir --directory myci.XXXXXXXXXX)
-trap "rm --force --recursive $tmp_dir" EXIT ERR
+# Note, that mktemp on MacOS doesn't support long key names, so use short ones '-p -d'
+tmp_dir=$(mktemp -p -d myci.XXXXXXXXXX)
+trap "rm -rf $tmp_dir" EXIT ERR
 
 tmp_file="${tmp_dir}/tmp_file"
 
@@ -115,7 +116,7 @@ for f in $infiles; do
 		else
 			echo "replace license $f"
 			cat $license_file > $tmp_file
-			tail --lines=+$((license_end_line+1)) $f >> $tmp_file
+			tail -n +$((license_end_line+1)) $f >> $tmp_file
 			mv $tmp_file $f
 		fi
 	fi
