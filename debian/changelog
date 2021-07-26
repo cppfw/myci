@@ -1,3 +1,9 @@
+myci (0.1.121) unstable; urgency=medium
+
+  * set lock file timeout to 10 min
+
+ -- Ivan Gagis <igagis@gmail.com>  Mon, 26 Jul 2021 23:14:52 +0300
+
 myci (0.1.120) unstable; urgency=medium
 
   * license script
