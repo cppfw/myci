@@ -68,8 +68,9 @@ license_end="/* ================ LICENSE END ================ */"
 
 # generate temporary file
 # Note, that mktemp on MacOS doesn't support long key names, so use short ones '-p -d'
-tmp_dir=$(mktemp -p -d myci.XXXXXXXXXX)
+tmp_dir=$(mktemp -d /tmp/myci.XXXXXXXXXX)
 trap "rm -rf $tmp_dir" EXIT ERR
+# echo "tmp_dir = $tmp_dir"
 
 tmp_file="${tmp_dir}/tmp_file"
 
