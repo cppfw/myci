@@ -76,7 +76,8 @@ echo "license_length = $license_length"
 
 for f in $infiles; do
 
+    license_end_line=$(awk '/^\/\/ ================ LICENSE END ================ \/\/$/{ print NR; exit }' $f)
 
-echo "bla"
+    echo "license_end_line = $license_end_line"
 
 done
