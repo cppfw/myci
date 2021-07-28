@@ -128,5 +128,7 @@ jobs:
         key-server: http://gagis.hopto.org/repo/cppfw/pubkey.gpg
     - name: git clone
       uses: myci-actions/checkout@master
-    - name: test
-      run: make test
+    - name: build
+      run: |
+        cd msys2
+        PKGEXT='.pkg.tar.xz' makepkg-mingw --syncdeps --noconfirm --skipinteg
