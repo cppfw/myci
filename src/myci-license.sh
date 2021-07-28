@@ -77,11 +77,11 @@ tmp_file="${tmp_dir}/tmp_file"
 license_file="${tmp_dir}/license"
 
 # to avoid problems with line endings under msys2, put explicit '\n' at each echo.
-echo -e -n "/*\n" > $license_file
+printf "/*\n" > $license_file
 cat ${license} >> $license_file
-echo -e -n "*/\n" >> $license_file
-echo -e -n "\n" >> $license_file
-echo -e -n "${license_end}\n" >> $license_file
+printf "*/\n" >> $license_file
+printf "\n" >> $license_file
+printf "${license_end}\n" >> $license_file
 
 license_length=$(wc -l $license_file | awk '{print $1}')
 # echo "license_length = $license_length"
@@ -104,7 +104,7 @@ for f in $infiles; do
 		else
 			echo "append license $f"
 			cat $license_file > $tmp_file
-			echo "" >> $tmp_file
+			printf "\n" >> $tmp_file
 			cat $f >> $tmp_file
 			mv $tmp_file $f
 		fi
