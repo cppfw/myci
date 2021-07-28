@@ -1,3 +1,9 @@
+myci (0.1.128) unstable; urgency=medium
+
+  * do not stop after first error
+
+ -- Ivan Gagis <igagis@gmail.com>  Wed, 28 Jul 2021 23:42:35 +0300
+
 myci (0.1.127) unstable; urgency=medium
 
   * print license diff
