@@ -77,11 +77,11 @@ tmp_file="${tmp_dir}/tmp_file"
 license_file="${tmp_dir}/license"
 
 # to avoid problems with line endings under msys2, put explicit '\n' at each echo.
-printf "/*\n" > $license_file
+echo "/*" > $license_file
 cat ${license} >> $license_file
-printf "*/\n" >> $license_file
-printf "\n" >> $license_file
-printf "${license_end}\n" >> $license_file
+echo "*/" >> $license_file
+echo "" >> $license_file
+echo "${license_end}" >> $license_file
 
 license_length=$(wc -l $license_file | awk '{print $1}')
 # echo "license_length = $license_length"
@@ -114,7 +114,7 @@ for f in $infiles; do
 	if [ ! -z "$(head -$license_length $f | diff $license_file -)" ]; then
 		if [ "${check}" == "true" ]; then
 			echo "$f: error: wrong license"
-			head -$license_length $f | diff $license_file - | xxd || true
+			head -$license_length $f | diff $license_file - || true
 			error="true"
 		else
 			echo "replace license $f"
