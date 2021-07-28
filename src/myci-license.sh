@@ -113,7 +113,7 @@ for f in $infiles; do
 	if [ ! -z "$(head -$license_length $f | diff $license_file -)" ]; then
 		if [ "${check}" == "true" ]; then
 			echo "$f: error: wrong license"
-			head -$license_length $f | diff $license_file -
+			head -$license_length $f | diff $license_file - || true
 			error="true"
 		else
 			echo "replace license $f"
