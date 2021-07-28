@@ -1,3 +1,9 @@
+myci (0.1.130) unstable; urgency=medium
+
+  * use printf instead of echo
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 29 Jul 2021 01:01:55 +0300
+
 myci (0.1.129) unstable; urgency=medium
 
   * explicit \n
