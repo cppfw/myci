@@ -128,6 +128,8 @@ jobs:
         key-server: http://gagis.hopto.org/repo/cppfw/pubkey.gpg
     - name: git clone
       uses: myci-actions/checkout@master
+    - name: install myci
+      run: make install
     - name: prepare pacman package
       run: myci-apply-version.sh -v $(myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in
     - name: build
