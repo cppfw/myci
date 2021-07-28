@@ -4,9 +4,10 @@ class Myci < Formula
   url "https://github.com/cppfw/myci/archive/$(version).tar.gz"
   sha256 "$(sha256)"
 
+  depends_on "dos2unix"
   depends_on "md5sha1sum"
   depends_on "curl"
-  depends_on "jq"
+#  depends_on "jq"
 
   def install
     ENV['PATH'] += ':/usr/local/bin'
