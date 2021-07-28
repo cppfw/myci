@@ -59,10 +59,12 @@ jobs:
       uses: myci-actions/checkout@master
     - name: install myci
       run: make install
+    - name: install deps
+      run: myci-brew-install.sh `myci-list-deps-homebrew.sh`
     - name: build
-      run: make autojobs=true
+      run: make
     - name: test
-      run: make test autojobs=true
+      run: make test
     - name: deploy
       run: myci-deploy-homebrew.sh --tap cppfw/tap
       if: startsWith(github.ref, 'refs/tags/')
