@@ -3,8 +3,7 @@ Section: misc
 Priority: extra
 Maintainer: Ivan Gagis <igagis@gmail.com>
 Build-Depends: debhelper (>= 9),
-        sed,
-        dos2unix
+        sed
 Standards-Version: 3.9.2
 
 Package: myci
@@ -13,8 +12,7 @@ Architecture: all
 Depends:
         sed,
         curl,
-        openssh-client,
-        dos2unix
+        openssh-client
 Description: Helper CI scripts.
  Some helper CI scripts, mainly for deploying to different repositories.
 

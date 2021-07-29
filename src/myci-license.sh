@@ -82,7 +82,6 @@ cat ${license} >> $license_file
 echo "*/" >> $license_file
 echo "" >> $license_file
 echo "${license_end}" >> $license_file
-dos2unix --quiet $license_file
 
 license_length=$(wc -l $license_file | awk '{print $1}')
 # echo "license_length = $license_length"
@@ -105,14 +104,14 @@ for f in $infiles; do
 		else
 			echo "append license $f"
 			cat $license_file > $tmp_file
-			printf "\n" | dos2unix >> $tmp_file
+			echo "" >> $tmp_file
 			cat $f >> $tmp_file
 			mv $tmp_file $f
 		fi
 		continue
 	fi
 
-	if ! head -$license_length $f | dos2unix | cmp $license_file; then
+	if ! head -$license_length $f | cmp --print-bytes $license_file; then
 		if [ "${check}" == "true" ]; then
 			echo "$f: error: wrong license"
 			head -$license_length $f | diff $license_file - || true
