@@ -59,7 +59,7 @@ function perform_generic_add {
 }
 
 (
-    flock --exclusive --timeout 600 200
+    flock --verbose --exclusive --timeout 600 200
     
 	perform_generic_add
 ) 200>${repo_dir}lock
