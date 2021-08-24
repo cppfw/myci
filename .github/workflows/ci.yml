@@ -33,7 +33,7 @@ jobs:
           # configure timezone to avoid 'tzdata' package to require user interaction during installation (needed for ubuntu:focal)
           TZ=Europe/Helsinki ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-          apt --quiet update
+          apt --quiet update --assume-yes
           apt --quiet install --assume-yes devscripts equivs git
       - name: git clone
         uses: myci-actions/checkout@master
