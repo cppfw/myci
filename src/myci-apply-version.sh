@@ -60,7 +60,9 @@ echo "Applying version $version to files:"
 for i in $infiles; do
 	outfile=$(echo $i | sed -e "s/\(.*\)\.in$/\1/" | sed -e "s/\$(version)/$version/g")
 
-	outfile="${out_dir}$(basename $outfile)"
+	if [ ! -z "$out_dir" ]; then
+		outfile="${out_dir}$(basename $outfile)"
+	fi
 
 	echo "	$i -> $outfile"
 
