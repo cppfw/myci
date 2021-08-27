@@ -1,3 +1,9 @@
+myci (0.1.137) unstable; urgency=medium
+
+  * avoid adding double slash in paths
+
+ -- Ivan Gagis <igagis@gmail.com>  Fri, 27 Aug 2021 16:10:04 +0300
+
 myci (0.1.136) unstable; urgency=medium
 
   * set freight timeout to 3600 sec
