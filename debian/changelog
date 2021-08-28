@@ -1,3 +1,9 @@
+myci (0.1.138) unstable; urgency=medium
+
+  * build for debian bullseye
+
+ -- Ivan Gagis <igagis@gmail.com>  Sat, 28 Aug 2021 19:23:35 +0300
+
 myci (0.1.137) unstable; urgency=medium
 
   * avoid adding double slash in paths
