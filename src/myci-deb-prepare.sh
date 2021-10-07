@@ -52,7 +52,7 @@ listOfInstalls=$(ls $debianization_dir/*.install.in 2>/dev/null || true) # allow
 
 for i in $listOfInstalls; do
 	echo "applying soname to $i"
-	cp $i ${i%.install.in}$soname.install
+	sed -e "s/\$(soname)/$soname/g" $i > ${i%.install.in}$soname.install
 done
 
 echo "applying soname to $debianization_dir/control.in"
