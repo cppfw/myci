@@ -1,1 +1,1 @@
-usr/lib/libstob.so.*
+usr/lib/libstob$(soname).so.*
