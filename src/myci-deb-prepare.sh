@@ -9,30 +9,22 @@ while [[ $# > 0 ]] ; do
     case $1 in
         --help)
             echo "Usage:"
-            echo "	$(basename $0) [-s/--soname <soname> -d/--debian-dir <path-to-debianization-dir>]"
+            echo "	$(basename $0) [--soname <soname> --debian-dir <path-to-debianization-dir>]"
             echo " "
-            echo "If '-s' parameter is not given the script tries to read soname from src/soname.txt file."
-			echo "If '-d' parameter is not given the script tries to locate debianization files in 'debian' directory."
+            echo "If '--soname' parameter is not given the script tries to read soname from src/soname.txt file."
+			echo "If '--debian-dir' parameter is not given the script tries to locate debianization files in 'debian' directory."
             echo " "
             echo "Example:"
-            echo "	$(basename $0) -s 4 -d debian"
+            echo "	$(basename $0) --soname 4 --debian-dir debian"
             exit 0
-			;;
-        -s)
-			shift
-			soname=$1
 			;;
 		--soname)
 			shift
 			soname=$1
 			;;
-		-d)
-			shift
-			debianization=$1
-			;;
 		--debian-dir)
 			shift
-			debianization=$1
+			debianization_dir=$1
 			;;
     esac
 
@@ -41,8 +33,8 @@ done
 
 echo "Preparing Debian package for building"
 
-if [ -z "$debianization" ]; then
-	debianization=debian
+if [ -z "$debianization_dir" ]; then
+	debianization_dir=debian
 fi
 
 if [ -z "$soname" ]; then
@@ -56,15 +48,15 @@ else
 	echo "detected soname = $soname"
 fi
 
-listOfInstalls=$(ls $debianization/*.install.in 2>/dev/null || true) # allow package without *.install.in
+listOfInstalls=$(ls $debianization_dir/*.install.in 2>/dev/null || true) # allow package without *.install.in
 
 for i in $listOfInstalls; do
 	echo "applying soname to $i"
 	cp $i ${i%.install.in}$soname.install
 done
 
-echo "applying soname to $debianization/control.in"
+echo "applying soname to $debianization_dir/control.in"
 
-sed -e "s/\$(soname)/$soname/g" $debianization/control.in > $debianization/control
+sed -e "s/\$(soname)/$soname/g" $debianization_dir/control.in > $debianization_dir/control
 
 echo "Debian package prepared for building!"

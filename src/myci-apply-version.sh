@@ -16,13 +16,14 @@ while [[ $# > 0 ]] ; do
 			echo "input files must have '.in' suffix"
 			echo ""
 			echo "options:"
-			echo "  -v, --version <version>  version string to apply"
-			echo "      --filename-only      apply version only to file name"
-			echo "      --out-dir <dir>      directory where to put resulting files, if not specified, the files are placed next to input files"
+			echo "  --version <version>  version string to apply"
+			echo "  --filename-only      apply version only to file name"
+			echo "  --out-dir <dir>      directory where to put resulting files, if not specified, the files are placed next to input files"
 			exit 0
 			;;
 		-v)
 			shift
+			echo "DEPRECATED: -v command line option is deprecated, use --version"
 			version=$1
 			;;
 		--version)
