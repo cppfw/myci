@@ -58,7 +58,7 @@ for i in $listOfInstalls; do
 	# BACKWARDS COMPATIBILITY: in case file name does not contain $ sign, then do not
 	#                          substitute $(soname) variable in file name, but just append soname value to it.
 	#                          Otherwise do $(soname) substitution in file name.
-	if [ $(echo "$i" | sed -n -e "s/.*\$.*/true/p") == "true" ]; then
+	if [ "$(echo "$i" | sed -n -e "s/.*\$.*/true/p")" == "true" ]; then
 		${script_dir}myci-subst-var.sh --var soname --val $soname $i
 	else
 		sed -e "s/\$(soname)/$soname/g" $i > ${i%.install.in}$soname.install
