@@ -57,7 +57,7 @@ if [ ! -z "$out_dir" ]; then
 	fi
 fi
 
-echo "substituting variable '$variable' in files:"
+echo "substituting variable '$variable' = '$value' in files:"
 
 for i in $infiles; do
 	outfile=$(echo $i | sed -e "s/\(.*\)\.in$/\1/" | sed -e "s/\$($variable)/$value/g")

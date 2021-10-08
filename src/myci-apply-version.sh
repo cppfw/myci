@@ -31,11 +31,11 @@ while [[ $# > 0 ]] ; do
 			version=$1
 			;;
 		--filename-only)
-			filenameonly="true"
+			args="$args --filename-only"
 			;;
 		--out-dir)
 			shift
-			out_dir=$1
+			args="$args --out-dir $1"
 			;;
 		*)
 			infiles="$infiles $1"
@@ -49,27 +49,4 @@ if [ -z "$version" ]; then
 	version="$(${script_dir}myci-deb-version.sh)"
 fi
 
-# make sure the out_dir ends with slash
-if [ ! -z "$out_dir" ]; then
-	if [[ "$out_dir" != */ ]]; then
-		out_dir="${out_dir}/"
-	fi
-fi
-
-echo "Applying version $version to files:"
-
-for i in $infiles; do
-	outfile=$(echo $i | sed -e "s/\(.*\)\.in$/\1/" | sed -e "s/\$(version)/$version/g")
-
-	if [ ! -z "$out_dir" ]; then
-		outfile="${out_dir}$(basename $outfile)"
-	fi
-
-	echo "	$i -> $outfile"
-
-	if [ -z "$filenameonly" ]; then
-		sed -e "s/\$(version)/$version/g" $i > $outfile
-	else
-		cp $i $outfile
-	fi
-done
+${script_dir}myci-subst-var.sh --var version --val $version $args $infiles
