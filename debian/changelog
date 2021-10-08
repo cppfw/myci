@@ -1,3 +1,9 @@
+myci (0.1.141) unstable; urgency=medium
+
+  * make myci-deb-prepare.sh substitute soname var in filenames
+
+ -- Ivan Gagis <igagis@gmail.com>  Fri, 08 Oct 2021 14:02:03 +0300
+
 myci (0.1.140) unstable; urgency=medium
 
   * build for arm32v7/debian bullseye
