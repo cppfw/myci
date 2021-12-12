@@ -17,11 +17,11 @@ while [[ $# > 0 ]] ; do
 			echo "	$(basename $0) <options> [<list-of-input-files>]"
 			echo ""
 			echo "options:"
-            echo "  --help                  show this help text."
+			echo "  --help                  show this help text."
 			echo "  --license <file>        file containing the license text. Required option."
-            echo "  --dir <dir>             directory to search for source files recursively."
-            echo "  --suffixes <s1,s2,...>  comma separated file suffixes to serch for. Defaults to 'cpp,hpp,cxx,hxx'."
-            echo "  --check                 just check for license presense, do not modify any files."
+			echo "  --dir <dir>             directory to search for source files recursively."
+			echo "  --suffixes <s1,s2,...>  comma separated file suffixes to serch for. Defaults to 'cpp,hpp,cxx,hxx'."
+			echo "  --check                 just check for license presense, do not modify any files."
 			exit 0
 			;;
 		--license)
@@ -29,16 +29,16 @@ while [[ $# > 0 ]] ; do
 			license=$1
 			;;
 		--dir)
-            shift
+			shift
 			dir=$1
 			;;
 		--suffixes)
 			shift
 			suffixes=$1
 			;;
-        --check)
-            check="true"
-            ;;
+		--check)
+			check="true"
+			;;
 		*)
 			infiles="$infiles $1"
 			;;
@@ -49,17 +49,20 @@ done
 [ ! -z "$license" ] || error "missing option: --license"
 
 if [ ! -z "${dir}" ]; then
-    find_patterns=
-    joiner="-name"
-    for s in ${suffixes//,/ }; do
-        find_patterns="$find_patterns $joiner *.$s"
-        joiner="-or -name"
-    done
+	find_patterns=
+	joiner="-name"
+	for s in ${suffixes//,/ }; do
+		find_patterns="$find_patterns $joiner *.$s"
+		joiner="-or -name"
+	done
 
-    # echo "find_patterns = $find_patterns"
-    find_cmd=(find ${dir} -type f $find_patterns)
+	# echo "find_patterns = $find_patterns"
+	find_cmd=(find ${dir} -type f "$find_patterns")
 
-    infiles="$infiles $(${find_cmd[@]})"
+	# echo "find_cmd = ${find_cmd[@]}"
+	set -f # prevent '*.cpp'-like patterns to be expanded by bash
+	infiles="$infiles $(${find_cmd[@]})"
+	set +f # restore expansion mode
 fi
 
 # echo "infiles = $infiles"
@@ -94,7 +97,7 @@ license_end=${license_end//\*/\\*}
 error="false"
 
 for f in $infiles; do
-    license_end_line=$(awk "/^${license_end}$/{ print NR; exit }" $f)
+	license_end_line=$(awk "/^${license_end}$/{ print NR; exit }" $f)
 	# echo "license_end_line = $license_end_line"
 
 	if [ -z "$license_end_line" ]; then
