@@ -33,7 +33,7 @@ while [[ $# > 0 ]] ; do
 	[[ $# > 0 ]] && shift;
 done
 
-echo "Preparing Debian package for building"
+echo "preparing debian package for building"
 
 if [ -z "$debianization_dir" ]; then
 	debianization_dir=debian
@@ -69,4 +69,4 @@ echo "applying soname to $debianization_dir/control.in"
 
 sed -e "s/\$(soname)/$soname/g" $debianization_dir/control.in > $debianization_dir/control
 
-echo "Debian package prepared for building!"
+echo "debian package prepared for building"
