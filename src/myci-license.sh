@@ -6,7 +6,7 @@ set -eo pipefail
 script_dir="$(dirname $0)/"
 source ${script_dir}myci-common.sh
 
-suffixes="cpp,hpp,cxx,hxx"
+suffixes="c,h,cpp,hpp,cxx,hxx"
 
 while [[ $# > 0 ]] ; do
 	case "$1" in
