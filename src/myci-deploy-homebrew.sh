@@ -55,7 +55,7 @@ echo "getting version from Debian changelog"
 version=$(myci-deb-version.sh debian/changelog)
 
 # echo $version
-myci-apply-version.sh -v $version $infiles
+myci-apply-version.sh --version $version $infiles
 
 # clean if needed
 rm -rf $tapname

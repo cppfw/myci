@@ -102,7 +102,7 @@ if [ ! -z "$domain" ] || [ ! -z "$jfrog_repo" ] || [ ! -z "$zip_package_file" ];
 	[ -z "$zip_package_file" ] && source myci-error.sh "package file for uploading to JFrog artifactory is not given";
 fi
 
-myci-apply-version.sh -v $version $podspecfile
+myci-apply-version.sh --version $version $podspecfile
 
 outpodspecfile=$(echo $podspecfile | sed -n -e 's/\(.*\)\.in$/\1/p')
 

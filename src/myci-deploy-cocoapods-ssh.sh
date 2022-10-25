@@ -104,7 +104,7 @@ then
     [ ! -z "$package" ] || error "missing required option: --package"
 fi
 
-${script_dir}myci-apply-version.sh -v $version $podspec
+${script_dir}myci-apply-version.sh --version $version $podspec
 
 outpodspec=$(echo $podspec | sed -n -e 's/\(.*\)\.in$/\1/p')
 
