@@ -37,7 +37,7 @@ for i in $inputs; do
     set -e
     if [ $exit_code != 0 ]; then
         echo "no package '$i' installed, install it";
-        brew install $i;
+        brew install --overwrite $i;
     else
         echo "package '$i' is already installed, upgrade it";
         brew upgrade $i;
