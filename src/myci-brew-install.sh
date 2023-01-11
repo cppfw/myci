@@ -29,7 +29,7 @@ done
 # echo inputs = $inputs
 
 for i in $inputs; do
-echo $i
+    echo $i
     # check if package is already installed
     set +e
     brew list $i > /dev/null 2>&1
