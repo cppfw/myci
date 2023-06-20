@@ -107,7 +107,8 @@ function perform_freight_add {
 }
 
 (
-    flock --verbose --exclusive --timeout 3600 200
+	# 3 hours timeout = 10800 seconds
+	flock --verbose --exclusive --timeout 10800 200
     
 	perform_freight_add
 ) 200>${repo_dir}lock
