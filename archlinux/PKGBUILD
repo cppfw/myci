@@ -1,6 +1,6 @@
 # Maintainer: Ivan Gagis <igagis@gmail.com>
 pkgname=myci
-pkgver=$(version)
+pkgver=$PACKAGE_VERSION
 pkgrel=1
 epoch=
 pkgdesc="Ivan Gagis's CI scripts"
