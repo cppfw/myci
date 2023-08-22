@@ -80,8 +80,9 @@ jobs:
         with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
       - name: build
         run: |
+          # provide write access to user nobody
+          chmod --recursive 777 .
           cd archlinux
-          chmod 777 .
           sudo --user=nobody --preserve-env=PACKAGE_VERSION makepkg --syncdeps --noconfirm --skipinteg
 ##### macosx #####
   macosx:
