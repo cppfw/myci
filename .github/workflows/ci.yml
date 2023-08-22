@@ -70,7 +70,7 @@ jobs:
     steps:
       - name: install ci tools
         run: |
-          pacman --sync --refresh --noconfirm base-devel
+          pacman --sync --refresh --noconfirm base-devel git
       - name: git clone
         uses: myci-actions/checkout@master
       - name: install myci
