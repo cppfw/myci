@@ -32,7 +32,7 @@ jobs:
     container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     name: linux - ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     steps:
-      - name: install ci tools
+      - name: install ci tools (deb)
         run: |
           # configure timezone to avoid 'tzdata' package to require user interaction during installation (needed for ubuntu:focal)
           TZ=Europe/Helsinki ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
@@ -40,7 +40,7 @@ jobs:
           apt --quiet update --assume-yes
           apt --quiet install --assume-yes devscripts equivs git
         if: matrix.package_type == 'deb'
-      - name: install ci tools
+      - name: install ci tools (pacman)
         run: |
           pacman --sync --refresh --noconfirm git make
         if: matrix.package_type == 'pacman'
@@ -57,13 +57,13 @@ jobs:
       - name: install deps
         run: myci-deb-install-build-deps.sh
         if: matrix.package_type == 'deb'
-      - name: build
+      - name: build (deb)
         run: dpkg-buildpackage --unsigned-source --unsigned-changes
         if: matrix.package_type == 'deb'
-      - name: build
+      - name: build (pacman)
         run: |
           cd archlinux
-          makepkg --syncdeps --noconfirm --skipinteg
+          sudo --user=nobody makepkg --syncdeps --noconfirm --skipinteg
         if: matrix.package_type == 'pacman'
       - name: deploy deb packages
         # NOTE: the myci-dummy_x.x.x_armhf.deb package will be deployed to generate armhf packages index in the debian repo, in case there was no such index there
