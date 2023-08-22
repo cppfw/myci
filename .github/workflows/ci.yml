@@ -40,6 +40,10 @@ jobs:
           apt --quiet update --assume-yes
           apt --quiet install --assume-yes devscripts equivs git
         if: matrix.package_type == 'deb'
+      - name: install ci tools
+        run: |
+          pacman -Sy git
+        if: matrix.package_type == 'pacman'
       - name: git clone
         uses: myci-actions/checkout@master
       - name: install myci
