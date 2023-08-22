@@ -42,7 +42,7 @@ jobs:
         if: matrix.package_type == 'deb'
       - name: install ci tools (pacman)
         run: |
-          pacman --sync --refresh --noconfirm git make
+          pacman --sync --refresh --noconfirm git make sudo
         if: matrix.package_type == 'pacman'
       - name: git clone
         uses: myci-actions/checkout@master
