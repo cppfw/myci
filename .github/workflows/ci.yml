@@ -7,43 +7,37 @@ env:
   MYCI_GIT_USERNAME: igagis
   MYCI_GIT_PASSWORD: ${{ secrets.MYCI_GIT_ACCESS_TOKEN }}
 jobs:
-##### linux #####
-  linux:
+##### deb #####
+  deb:
     strategy:
       fail-fast: false
       matrix:
         include:
-          # - {os: debian, codename: stretch, image_owner: , package_type: deb}
-          - {os: debian, codename: buster, image_owner: , package_type: deb}
-          - {os: debian, codename: buster, image_owner: i386/, package_type: deb, labels: [i386,docker]}
-          - {os: debian, codename: buster, image_owner: arm32v7/, package_type: deb, labels: [arm,docker]}
-          - {os: debian, codename: bullseye, image_owner: , package_type: deb}
-          - {os: debian, codename: bullseye, image_owner: i386/, package_type: deb, labels: [i386,docker]}
-          - {os: debian, codename: bullseye, image_owner: arm32v7/, package_type: deb, labels: [arm,docker]}
-          - {os: debian, codename: bullseye, image_owner: arm64v8/, package_type: deb, labels: [arm64,docker]}
-          - {os: ubuntu, codename: bionic, image_owner: , package_type: deb}
-          - {os: ubuntu, codename: focal, image_owner: , package_type: deb}
-          - {os: ubuntu, codename: jammy, image_owner: , package_type: deb}
-          # - {os: raspbian, codename: stretch, image_owner: igagis/, package_type: deb, labels: [arm,docker]}
-          - {os: raspbian, codename: buster, image_owner: igagis/, package_type: deb, labels: [arm,docker]}
-          - {os: raspbian, codename: bullseye, image_owner: igagis/, package_type: deb, labels: [arm,docker]}
-          - {os: archlinux, codename: latest, image_owner: , package_type: pacman}
+          # - {os: debian, codename: stretch, image_owner: }
+          - {os: debian, codename: buster, image_owner: }
+          - {os: debian, codename: buster, image_owner: i386/, labels: [i386,docker]}
+          - {os: debian, codename: buster, image_owner: arm32v7/, labels: [arm,docker]}
+          - {os: debian, codename: bullseye, image_owner: }
+          - {os: debian, codename: bullseye, image_owner: i386/, labels: [i386,docker]}
+          - {os: debian, codename: bullseye, image_owner: arm32v7/, labels: [arm,docker]}
+          - {os: debian, codename: bullseye, image_owner: arm64v8/, labels: [arm64,docker]}
+          - {os: ubuntu, codename: bionic, image_owner: }
+          - {os: ubuntu, codename: focal, image_owner: }
+          - {os: ubuntu, codename: jammy, image_owner: }
+          # - {os: raspbian, codename: stretch, image_owner: igagis/, labels: [arm,docker]}
+          - {os: raspbian, codename: buster, image_owner: igagis/, labels: [arm,docker]}
+          - {os: raspbian, codename: bullseye, image_owner: igagis/, labels: [arm,docker]}
     runs-on: ${{ (matrix.labels == '' && 'ubuntu-latest') || matrix.labels }}
     container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     name: linux - ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     steps:
-      - name: install ci tools (deb)
+      - name: install ci tools
         run: |
           # configure timezone to avoid 'tzdata' package to require user interaction during installation (needed for ubuntu:focal)
           TZ=Europe/Helsinki ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
           apt --quiet update --assume-yes
           apt --quiet install --assume-yes devscripts equivs git
-        if: matrix.package_type == 'deb'
-      - name: install ci tools (pacman)
-        run: |
-          pacman --sync --refresh --noconfirm git make sudo
-        if: matrix.package_type == 'pacman'
       - name: git clone
         uses: myci-actions/checkout@master
       - name: install myci
@@ -53,25 +47,42 @@ jobs:
         with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
       - name: prepare debian package
         run: myci-deb-prepare.sh
-        if: matrix.package_type == 'deb'
       - name: install deps
         run: myci-deb-install-build-deps.sh
-        if: matrix.package_type == 'deb'
-      - name: build (deb)
+      - name: build
         run: dpkg-buildpackage --unsigned-source --unsigned-changes
-        if: matrix.package_type == 'deb'
-      - name: build (pacman)
-        run: |
-          cd archlinux
-          chmod 777 .
-          sudo --user=nobody makepkg --syncdeps --noconfirm --skipinteg
-        if: matrix.package_type == 'pacman'
       - name: deploy deb packages
         # NOTE: the myci-dummy_x.x.x_armhf.deb package will be deployed to generate armhf packages index in the debian repo, in case there was no such index there
         run: |
           echo "${{ secrets.MYCI_REPO_SSH_KEY }}" > repo_key_rsa && chmod 600 repo_key_rsa
           myci-deploy-debian-ssh-freight.sh --key repo_key_rsa --server gagis.hopto.org --repo cppfw/${{ matrix.os }} --distro ${{ matrix.codename }} --component main ../${PACKAGE_NAME}*_${PACKAGE_VERSION}_*.deb
-        if: matrix.package_type == 'deb' && startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/')
+##### archlinux #####
+  archlinux:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: archlinux, codename: latest, image_owner: }
+    runs-on: ${{ (matrix.labels == '' && 'ubuntu-latest') || matrix.labels }}
+    container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
+    name: linux - ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
+    steps:
+      - name: install ci tools
+        run: |
+          pacman --sync --refresh --noconfirm git make sudo
+      - name: git clone
+        uses: myci-actions/checkout@master
+      - name: install myci
+        run: make install
+      - name: set PACKAGE_VERSION
+        uses: myci-actions/export-env-var@master
+        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
+      - name: build
+        run: |
+          cd archlinux
+          chmod 777 .
+          sudo --user=nobody --preserve-env=PACKAGE_VERSION makepkg --syncdeps --noconfirm --skipinteg
 ##### macosx #####
   macosx:
     runs-on: macos-latest
