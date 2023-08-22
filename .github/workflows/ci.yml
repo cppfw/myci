@@ -62,8 +62,8 @@ jobs:
         if: matrix.package_type == 'deb'
       - name: build (pacman)
         run: |
-          chmod 777 .
           cd archlinux
+          chmod 777 .
           sudo --user=nobody makepkg --syncdeps --noconfirm --skipinteg
         if: matrix.package_type == 'pacman'
       - name: deploy deb packages
