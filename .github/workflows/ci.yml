@@ -72,7 +72,7 @@ jobs:
     steps:
       - name: install ci tools
         run: |
-          pacman --sync --refresh --sysupgrade --noconfirm base-devel git
+          pacman --sync --refresh --sysupgrade --noconfirm --noprogressbar base-devel git
       - name: git clone
         uses: myci-actions/checkout@master
       - name: install myci
@@ -80,7 +80,7 @@ jobs:
       - name: set PACKAGE_VERSION
         uses: myci-actions/export-env-var@master
         with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
-      # makepkg needs to install dependency packages, so nobody user need sudo rights
+      # makepkg needs to install dependency packages, so nobody user needs sudo rights
       - name: add nobody to sudoers
         run: |
           echo "nobody ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
@@ -89,7 +89,7 @@ jobs:
           # provide write access to user nobody
           chmod --recursive 777 .
           cd archlinux
-          sudo --user=nobody --preserve-env=PACKAGE_VERSION makepkg --syncdeps --noconfirm --skipinteg
+          sudo --user=nobody --preserve-env=PACKAGE_VERSION makepkg --syncdeps --noconfirm --skipinteg --noprogressbar
       - name: deploy
         run: |
           echo "${{ secrets.MYCI_REPO_SSH_KEY }}" > repo_key_rsa && chmod 600 repo_key_rsa
