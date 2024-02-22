@@ -1,3 +1,9 @@
+myci (0.1.153) unstable; urgency=medium
+
+  * debian bookworm
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 22 Feb 2024 12:08:23 +0200
+
 myci (0.1.152) unstable; urgency=medium
 
   * archlinux: deploy to arch repos
