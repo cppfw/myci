@@ -16,7 +16,7 @@ while [[ $# > 0 ]] ; do
             echo "  --help                   show this help text and do nothing."
 			echo "  --base-dir <base-dir>    required option, base directory where all repos are stored."
 			echo "  --repo <repo>            required option, repository name, e.g. cppfw/msys2/mingw32"
-			echo "  --database <name>        required option, debian repo distro, e.g. cppfw_mingw32."
+			echo "  --database <name>        required option, database name, e.g. cppfw_mingw32."
 			exit 0
 			;;
 		--base-dir)
