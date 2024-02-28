@@ -57,10 +57,9 @@ done
 
 repo_dir="$(realpath --canonicalize-missing ${base_dir}${owner}/${repo})/"
 
-echo "repo_dir = $repo_dir"
+# echo "repo_dir = $repo_dir"
 
 # create repo dir if needed
-
 if [ ! -d "$repo_dir" ]; then
 	mkdir -p $repo_dir
 fi
