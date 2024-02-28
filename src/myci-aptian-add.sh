@@ -57,6 +57,8 @@ done
 
 repo_dir="$(realpath --canonicalize-missing ${base_dir}${owner}/${repo})/"
 
+echo "repo_dir = $repo_dir"
+
 # create repo dir if needed
 
 if [ ! -d "$repo_dir" ]; then
@@ -64,7 +66,7 @@ if [ ! -d "$repo_dir" ]; then
 fi
 
 function perform_aptian_add {
-	local conf_file="${repo_dir}/aptian.conf"
+	local conf_file="${repo_dir}aptian.conf"
 
 	if [ ! -f "${conf_file}" ]; then
 		first_key_email=$(gpg --list-keys | sed -E -n -e 's/.*<([^ >]*)>.*/\1/p' | head -1)
