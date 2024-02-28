@@ -64,12 +64,11 @@ if [ ! -d "$repo_dir" ]; then
 fi
 
 function perform_aptian_add {
-	local conf_file="${repo_dir}etc/freight.conf"
+	local conf_file="${repo_dir}/aptian.conf"
 
 	if [ ! -f "${conf_file}" ]; then
 		first_key_email=$(gpg --list-keys | sed -E -n -e 's/.*<([^ >]*)>.*/\1/p' | head -1)
 		[ ! -z "$first_key_email" ] || error "no default GPG key found"
-		# freight-init --gpg=$first_key_email --libdir=${repo_dir}lib --cachedir=${repo_dir} --archs="source" ${repo_dir}
         aptian init --gpg=$first_key_email --dir=${repo_dir}
 	fi
 
