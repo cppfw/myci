@@ -1,3 +1,9 @@
+myci (0.1.154) unstable; urgency=medium
+
+  * aptian
+
+ -- Ivan Gagis <igagis@gmail.com>  Wed, 28 Feb 2024 14:01:47 +0200
+
 myci (0.1.153) unstable; urgency=medium
 
   * debian bookworm
