@@ -32,8 +32,8 @@ jobs:
     steps:
       - name: check inputs
         run: |
-          if [ "${{ input.type }}" == "patch" ]; then
-            if [ -z "${{ input.message }}" ]; then
+          if [ "${{ inputs.type }}" == "patch" ]; then
+            if [ -z "${{ inputs.message }}" ]; then
               echo "ERROR: message is empty! For releasing a patch a message is required"
               exit 1
             fi
