@@ -14,7 +14,7 @@ on:
         - release
       message:
         description: 'Release message for patch, will be added to debian/changelog'
-        required: ${{ inputs.type == 'patch' }}
+        required: false
         type: string
 env:
   DEBEMAIL: ${{ vars.DEBEMAIL }}
@@ -30,6 +30,14 @@ jobs:
           - {os: debian, codename: bookworm, image_owner: }
     container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     steps:
+      - name: check inputs
+        run: |
+          if [ "${{ input.type }}" == "patch" ]; then
+            if [ -z "${{ input.message }}" ]; then
+              echo "ERROR: message is empty! For releasing a patch a message is required"
+              exit 1
+            fi
+          fi
       - name: add cppfw deb repo
         uses: myci-actions/add-deb-repo@master
         with:
