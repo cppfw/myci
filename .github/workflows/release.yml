@@ -1,8 +1,6 @@
 name: make release
 on:
   workflow_dispatch:
-    branches:
-      - main
     inputs:
       type:
         description: 'Release type'
@@ -45,6 +43,10 @@ jobs:
         uses: myci-actions/checkout@master
         with:
           submodules: true
+      - name: set git identity
+        run: |
+          git config --global user.email $DEBEMAIL
+          git config --global user.name "$DEBFULLNAME"
       - name: checkout main branch
         run: git checkout main
       - name: install myci
