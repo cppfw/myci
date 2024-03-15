@@ -1,0 +1,39 @@
+name: make release
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Release message, will be added to debian/changelog'
+        required: true
+      type:
+        description: 'Release type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    name: release - ${{ inputs.type }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - {os: debian, codename: bookworm, image_owner: }
+    container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
+    steps:
+      # - name: add cppfw deb repo
+      #   uses: myci-actions/add-deb-repo@master
+      #   with:
+      #     repo: deb https://gagis.hopto.org/repo/cppfw/${{ matrix.os }} ${{ matrix.codename }} main
+      #     repo-name: cppfw
+      #     keys-asc: https://gagis.hopto.org/repo/cppfw/pubkey.gpg
+      #     install: myci git
+      - name: git clone
+        uses: myci-actions/checkout@master
+      - name: install myci
+        run: make install
+      # TODO:

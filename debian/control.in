@@ -12,7 +12,8 @@ Architecture: all
 Depends:
         sed,
         curl,
-        openssh-client
+        openssh-client,
+        devscripts
 Description: Helper CI scripts.
  Some helper CI scripts, mainly for deploying to different repositories.
 
