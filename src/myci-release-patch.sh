@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# script for quick release of new revision, i.e. version maj.min.rev+1.
+# script for quick release of new patch version, i.e. version maj.min.patch+1.
 
-# Revision from debian changelog will be incremented
+# Version from debian changelog will be incremented
 # and a comment passed as argument is added.
 
 # we want exit immediately if any command fails and we want error in piped commands to be preserved
@@ -18,6 +18,6 @@ echo "check that debian/changelog is not UNRELEASED"
 distro=$(${script_dir}myci-deb-get-dist.sh)
 [ "$distro" != "UNRELEASED" ] || source ${script_dir}myci-error.sh "the debian/changelog is in UNRELEASED state, cannot make patch release. Do general release instead."
 
-source ${script_dir}myci-deb-bump-version.sh --revision "$1"
+source ${script_dir}myci-deb-bump-version.sh --patch "$1"
 
 source ${script_dir}myci-release.sh --no-release-checks

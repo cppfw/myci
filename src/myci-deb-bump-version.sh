@@ -18,16 +18,21 @@ while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
 			echo "Usage:"
-			echo "  $(basename $0) [--revision] <first-comment>"
+			echo "  $(basename $0) [--patch|--major] <first-comment>"
 			echo " "
-			echo "By default minor version is bumped. If --revision is supplied then revision version is bumped."
+			echo "By default minor version is bumped."
+			echo "If --patch is supplied then patch version is bumped."
+			echo "If --major is supplied then patch version is bumped."
 			echo " "
 			echo "Example:"
 			echo "  $(basename $0) \"first comment item in new version changelog\""
 			exit 0
 			;;
-		--revision)
-			is_revision=true
+		--patch)
+			is_patch=true
+			;;
+		--major)
+			is_major=true
 			;;
 		*)
             [ -z "$comment" ] || source ${script_dir}myci-error.sh "more than one comment specified"
@@ -49,8 +54,11 @@ rev=$(echo $version | sed -n -e 's/^[0-9]*\.[0-9]*\.\([0-9]*\)$/\1/p')
 
 echo old version = $maj.$min.$rev
 
-if [ "$is_revision" == "true" ]; then
-    echo bump revision version
+if [ "$is_major" == "true" ]
+	echo bump major version
+    newver=$((maj+1)).0.0
+elif [ "$is_patch" == "true" ]; then
+    echo bump patch version
     newver=$maj.$min.$((rev+1))
 else
     echo bump minor version
