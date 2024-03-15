@@ -45,8 +45,8 @@ jobs:
           submodules: true
       - name: set git identity
         run: |
-          git config --global user.email $DEBEMAIL
-          git config --global user.name "$DEBFULLNAME"
+          git config user.email $DEBEMAIL
+          git config user.name "$DEBFULLNAME"
       - name: checkout main branch
         run: git checkout main
       - name: install myci
