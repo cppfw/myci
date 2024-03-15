@@ -15,6 +15,7 @@ on:
         required: false
         type: string
 env:
+  MYCI_GIT_PASSWORD: ${{ secrets.MYCI_GIT_PASSWORD }}
   DEBEMAIL: ${{ vars.DEBEMAIL }}
   DEBFULLNAME: ${{ vars.DEBFULLNAME }}
 jobs:
