@@ -57,7 +57,7 @@ echo old version = $maj.$min.$rev
 if [ "$is_major" == "true" ]
 	echo bump major version
     newver=$((maj+1)).0.0
-elif [ "$is_patch" == "true" ]; then
+else if [ "$is_patch" == "true" ]; then
     echo bump patch version
     newver=$maj.$min.$((rev+1))
 else
