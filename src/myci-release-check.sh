@@ -6,6 +6,8 @@
 # we want exit immediately if any command fails and we want error in piped commands to be preserved
 set -eo pipefail
 
+script_dir="$(dirname $0)/"
+
 while [[ $# > 0 ]] ; do
 	case $1 in
 		--help)
@@ -44,7 +46,7 @@ echo "check for main up to date"
 
 if [ "$no_unreleased_check" != "true" ]; then
     echo "check that debian/changelog is UNRELEASED"
-    distro=$($(dirname $0)/get-distribution.sh)
+    distro=$(${script_dir}myci-deb-get-dist.sh)
     [ "$distro" == "UNRELEASED" ] || source myci-error.sh "the debian/changelog is not in UNRELEASED state: $distro"
 fi
 

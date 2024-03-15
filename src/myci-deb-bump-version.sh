@@ -9,8 +9,10 @@
 # we want exit immediately if any command fails and we want error in piped commands to be preserved
 set -eo pipefail
 
-[[ ! -z ${DEBEMAIL+x} ]] || source myci-error.sh "DEBEMAIL is unset"
-[[ ! -z ${DEBFULLNAME+x} ]] || source myci-error.sh "DEBFULLNAME is unset"
+script_dir="$(dirname $0)/"
+
+[[ ! -z ${DEBEMAIL+x} ]] || source ${script_dir}myci-error.sh "DEBEMAIL is unset"
+[[ ! -z ${DEBFULLNAME+x} ]] || source ${script_dir}myci-error.sh "DEBFULLNAME is unset"
 
 while [[ $# > 0 ]] ; do
 	case $1 in
@@ -28,16 +30,16 @@ while [[ $# > 0 ]] ; do
 			is_revision=true
 			;;
 		*)
-            [ -z "$comment" ] || source myci-error.sh "more than one comment specified"
+            [ -z "$comment" ] || source ${script_dir}myci-error.sh "more than one comment specified"
 			comment="$1"
 			;;
 	esac
 	[[ $# > 0 ]] && shift;
 done
 
-[ ! -z "$comment" ] || source myci-error.sh "comment as argument expected"
+[ ! -z "$comment" ] || source ${script_dir}myci-error.sh "comment as argument expected"
 
-version=$(myci-deb-version.sh debian/changelog)
+version=$(${script_dir}myci-deb-version.sh debian/changelog)
 
 # echo $version
 
@@ -57,4 +59,4 @@ fi
 
 echo new version = $newver
 
-dch --newversion="$newver" "$comment" || source myci-error.sh "updating debian/changelog failed"
+dch --newversion="$newver" "$comment" || source ${script_dir}myci-error.sh "updating debian/changelog failed"

@@ -36,4 +36,15 @@ jobs:
         uses: myci-actions/checkout@master
       - name: install myci
         run: make install
-      # TODO:
+      - name: release patch
+        if: ${{ inputs.type == 'patch' }}
+        run: |
+          echo "TODO: release patch!!!"
+      - name: release minor
+        if: ${{ inputs.type == 'minor' }}
+        run: |
+          echo "TODO: release minor!!!"
+      - name: release major
+        if: ${{ inputs.type == 'major' }}
+        run: |
+          echo "TODO: release major!!!"
