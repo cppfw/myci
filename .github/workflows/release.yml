@@ -38,15 +38,16 @@ jobs:
               exit 1
             fi
           fi
-      - name: add cppfw deb repo
-        uses: myci-actions/add-deb-repo@master
-        with:
-          repo: deb https://gagis.hopto.org/repo/cppfw/${{ matrix.os }} ${{ matrix.codename }} main
-          repo-name: cppfw
-          keys-asc: https://gagis.hopto.org/repo/cppfw/pubkey.gpg
-          install: make git devscripts
+      - name: install ci tools
+        run: |
+          apt --quiet update --yes
+          apt --quiet install --yes make git devscripts
       - name: git clone
         uses: myci-actions/checkout@master
+        with:
+          submodules: true
+      - name: checkout main branch
+        run: git checkout main
       - name: install myci
         run: make install
       - name: patch
