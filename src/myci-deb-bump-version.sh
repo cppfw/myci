@@ -54,10 +54,10 @@ rev=$(echo $version | sed -n -e 's/^[0-9]*\.[0-9]*\.\([0-9]*\)$/\1/p')
 
 echo old version = $maj.$min.$rev
 
-if [ "$is_major" == "true" ]
+if [ "$is_major" == "true" ]; then
 	echo bump major version
     newver=$((maj+1)).0.0
-else if [ "$is_patch" == "true" ]; then
+elif [ "$is_patch" == "true" ]; then
     echo bump patch version
     newver=$maj.$min.$((rev+1))
 else
