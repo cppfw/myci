@@ -30,7 +30,7 @@ jobs:
           repo: deb https://gagis.hopto.org/repo/cppfw/${{ matrix.os }} ${{ matrix.codename }} main
           repo-name: cppfw
           keys-asc: https://gagis.hopto.org/repo/cppfw/pubkey.gpg
-          install: git
+          install: make git devscripts
       - name: git clone
         uses: myci-actions/checkout@master
       - name: install myci
