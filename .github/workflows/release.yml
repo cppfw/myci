@@ -1,10 +1,9 @@
 name: make release
 on:
   workflow_dispatch:
+    branches:
+      - main
     inputs:
-      message:
-        description: 'Release message, will be added to debian/changelog'
-        required: true
       type:
         description: 'Release type'
         required: true
@@ -13,6 +12,10 @@ on:
         options:
         - patch
         - release
+      message:
+        description: 'Release message for patch, will be added to debian/changelog'
+        required: ${{ inputs.type == 'patch' }}
+        type: string
 env:
   DEBEMAIL: ${{ vars.DEBEMAIL }}
   DEBFULLNAME: ${{ vars.DEBFULLNAME }}
@@ -45,5 +48,4 @@ jobs:
       - name: release
         if: ${{ inputs.type == 'release' }}
         run: |
-          echo "DEBEMAIL = $DEBEMAIL"
-          myci-release.sh "${{ inputs.message }}"
+          myci-release.sh
