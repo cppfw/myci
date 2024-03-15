@@ -13,6 +13,9 @@ on:
         options:
         - patch
         - release
+env:
+  DEBEMAIL: ${{ env.DEBEMAIL }}
+  DEBFULLNAME: ${{ env.DEBFULLNAME }}
 jobs:
   release:
     runs-on: ubuntu-latest
