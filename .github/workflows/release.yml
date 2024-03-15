@@ -30,13 +30,12 @@ jobs:
           - {os: debian, codename: bookworm, image_owner: }
     container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     steps:
-      - name: check inputs
+      - name: check patch inputs
+        if: ${{ inputs.type == 'patch' }}
         run: |
-          if [ "${{ inputs.type }}" == "patch" ]; then
-            if [ -z "${{ inputs.message }}" ]; then
-              echo "ERROR: message is empty! For releasing a patch a message is required"
-              exit 1
-            fi
+          if [ -z "${{ inputs.message }}" ]; then
+            echo "ERROR: message is empty! For releasing a patch a message is required"
+            exit 1
           fi
       - name: install ci tools
         run: |
