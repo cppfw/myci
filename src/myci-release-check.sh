@@ -25,7 +25,7 @@ while [[ $# > 0 ]] ; do
             no_unreleased_check=true;
             ;;
 		*)
-            source myci-error.sh "unknown argument specified: $1"
+            source ${script_dir}myci-error.sh "unknown argument specified: $1"
 			;;
 	esac
 	[[ $# > 0 ]] && shift;

@@ -16,7 +16,7 @@ source ${script_dir}myci-release-check.sh --no-unreleased-check
 
 echo "check that debian/changelog is not UNRELEASED"
 distro=$(${script_dir}myci-deb-get-dist.sh)
-[ "$distro" != "UNRELEASED" ] || source myci-error.sh "the debian/changelog is in UNRELEASED state, cannot make patch release. Do general release instead."
+[ "$distro" != "UNRELEASED" ] || source ${script_dir}myci-error.sh "the debian/changelog is in UNRELEASED state, cannot make patch release. Do general release instead."
 
 source ${script_dir}myci-deb-bump-version.sh --revision "$1"
 
