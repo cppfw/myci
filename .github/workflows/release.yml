@@ -12,12 +12,11 @@ on:
         type: choice
         options:
         - patch
-        - minor
-        - major
+        - release
 jobs:
   release:
     runs-on: ubuntu-latest
-    name: release - ${{ inputs.type }}
+    name: ${{ inputs.type }}
     strategy:
       fail-fast: true
       matrix:
@@ -36,15 +35,11 @@ jobs:
         uses: myci-actions/checkout@master
       - name: install myci
         run: make install
-      - name: release patch
+      - name: patch
         if: ${{ inputs.type == 'patch' }}
         run: |
-          echo "TODO: release patch!!!"
-      - name: release minor
-        if: ${{ inputs.type == 'minor' }}
+          myci-release-patch.sh "${{ inputs.message }}"
+      - name: release
+        if: ${{ inputs.type == 'release' }}
         run: |
-          echo "TODO: release minor!!!"
-      - name: release major
-        if: ${{ inputs.type == 'major' }}
-        run: |
-          echo "TODO: release major!!!"
+          myci-release.sh "${{ inputs.message }}"

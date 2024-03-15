@@ -48,8 +48,8 @@ git commit --all --message="release $version" || source ${script_dir}myci-error.
 
 git branch --force latest HEAD || source ${script_dir}myci-error.sh "git branch --force latest HEAD failed"
 
-git push --set-upstream origin latest master || source ${script_dir}myci-error.sh "git push failed"
+GIT_ASKPASS=${script_dir}myci-git-askpass.sh git push --set-upstream origin latest master || source ${script_dir}myci-error.sh "git push failed"
 
 git tag $version || source ${script_dir}myci-error.sh "git tag failed"
 
-git push --force --tags || source ${script_dir}myci-error.sh "git push --tags failed"
+GIT_ASKPASS=${script_dir}myci-git-askpass.sh git push --force --tags || source ${script_dir}myci-error.sh "git push --tags failed"
