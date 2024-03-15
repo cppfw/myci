@@ -24,13 +24,13 @@ jobs:
           - {os: debian, codename: bookworm, image_owner: }
     container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     steps:
-      # - name: add cppfw deb repo
-      #   uses: myci-actions/add-deb-repo@master
-      #   with:
-      #     repo: deb https://gagis.hopto.org/repo/cppfw/${{ matrix.os }} ${{ matrix.codename }} main
-      #     repo-name: cppfw
-      #     keys-asc: https://gagis.hopto.org/repo/cppfw/pubkey.gpg
-      #     install: myci git
+      - name: add cppfw deb repo
+        uses: myci-actions/add-deb-repo@master
+        with:
+          repo: deb https://gagis.hopto.org/repo/cppfw/${{ matrix.os }} ${{ matrix.codename }} main
+          repo-name: cppfw
+          keys-asc: https://gagis.hopto.org/repo/cppfw/pubkey.gpg
+          install: git
       - name: git clone
         uses: myci-actions/checkout@master
       - name: install myci
