@@ -13,7 +13,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - {os: debian, codename: stretch, image_owner: }
           - {os: debian, codename: buster, image_owner: }
           # - {os: debian, codename: buster, image_owner: i386/, labels: [i386,docker]}
           - {os: debian, codename: buster, image_owner: arm32v7/, labels: [arm,docker]}
