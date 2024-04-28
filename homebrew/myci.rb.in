@@ -9,10 +9,10 @@ class Myci < Formula
 
   def install
     ENV['PATH'] += ':/usr/local/bin'
-    system "make", "install", "PREFIX=#{prefix}"
+    system "make", "--include-dir=$(brew --prefix)/include", "install", "PREFIX=#{prefix}"
   end
 
   test do
-    system "make", "test"
+    system "make", "--include-dir=$(brew --prefix)/include", "test"
   end
 end
