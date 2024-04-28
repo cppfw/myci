@@ -114,7 +114,7 @@ for f in $infiles; do
 		continue
 	fi
 
-	if ! cmp --bytes=$license_length $f $license_file; then
+	if ! head -$license_length $f | cmp - $license_file; then
 		if [ "${check}" == "true" ]; then
 			echo "$f: error: wrong license"
 			head -$license_length $f | diff $license_file - || true
