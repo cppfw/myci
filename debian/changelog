@@ -1,3 +1,9 @@
+myci (0.1.164) unstable; urgency=medium
+
+  * fix myci-license under macos
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 28 Apr 2024 15:29:26 +0300
+
 myci (0.1.163) unstable; urgency=medium
 
   * test 5
