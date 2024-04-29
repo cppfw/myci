@@ -8,7 +8,7 @@ class Myci < Formula
   depends_on "curl"
 
   def install
-    ENV['PATH'] += ':#{ENV['HOMEBREW_PREFIX']}/bin'
+    ENV['PATH'] += ":#{ENV['HOMEBREW_PREFIX']}/bin"
     system "make", "--include-dir=#{ENV['HOMEBREW_PREFIX']}/include", "install", "PREFIX=#{prefix}"
   end
 
