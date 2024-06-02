@@ -69,7 +69,7 @@ jobs:
           - {image: "lopsided/archlinux-arm64v8:latest", arch: arm64, labels: [arm64,docker]}
     runs-on: ${{ (matrix.labels == '' && 'ubuntu-latest') || matrix.labels }}
     container: ${{ matrix.image }}
-    name: linux - archlinux - ${{ matrix.arch }}
+    name: linux - archlinux | ${{ matrix.arch }}
     steps:
       - name: install ci tools
         run: |
@@ -155,7 +155,7 @@ jobs:
         include:
           - {arch: i686, repo: mingw32}
           - {arch: x86_64, repo: mingw64}
-    name: msys2 - ${{ matrix.repo }}
+    name: msys2 | ${{ matrix.repo }}
     steps:
     - name: make msys2 to provide the default shell
       uses: msys2/setup-msys2@v2
