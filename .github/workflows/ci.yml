@@ -31,7 +31,7 @@ jobs:
           - {os: raspbian, codename: bookworm, image_owner: igagis/, labels: [arm32,docker]}
     runs-on: ${{ (matrix.labels == '' && 'ubuntu-latest') || matrix.labels }}
     container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
-    name: linux - ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}  ${{ matrix.labels[0] }}
+    name: linux - ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }} | ${{ matrix.labels[0] }}
     steps:
       - name: install ci tools
         run: |
