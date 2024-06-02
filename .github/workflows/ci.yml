@@ -24,7 +24,7 @@ jobs:
           # - {os: debian, codename: bookworm, image_owner: i386/, labels: [i386,docker]}
           - {os: debian, codename: bookworm, image_owner: , labels: [arm32,docker]}
           - {os: debian, codename: bookworm, image_owner: , labels: [arm64,docker]}
-          - {os: debian, codename: bookworm, image_owner: , labels: [riscv64,docker]}
+          - {os: debian, codename: sid, image_owner: , labels: [riscv64,docker]} # TODO: remove
           - {os: ubuntu, codename: bionic, image_owner: }
           - {os: ubuntu, codename: focal, image_owner: }
           - {os: ubuntu, codename: jammy, image_owner: }
