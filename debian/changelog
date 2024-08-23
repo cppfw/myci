@@ -1,3 +1,9 @@
+myci (0.1.167) unstable; urgency=medium
+
+  * list remote files without newlines
+
+ -- Ivan Gagis <igagis@gmail.com>  Fri, 23 Aug 2024 16:00:25 +0300
+
 myci (0.1.166) unstable; urgency=medium
 
   * add logging to deploy-apt-ssh script
