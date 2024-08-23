@@ -89,7 +89,7 @@ echo "local_files = $files"
 echo "copying local files to remote server"
 scp ${ssh_opts} $files $user@$server:$tmp_dir
 
-remote_files=$(ssh ${ssh_opts} $user@$server ls -d $tmp_dir/*)
+remote_files=$(ssh ${ssh_opts} $user@$server "ls --directory $tmp_dir/* | tr '\n' ' '")
 echo "done copying local files to remote server"
 echo "remote_files = $remote_files"
 
