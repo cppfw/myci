@@ -44,7 +44,7 @@ jobs:
           apt --quiet update --yes
           apt --quiet install --yes make git devscripts
       - name: git clone
-        uses: myci-actions/checkout@master
+        uses: myci-actions/checkout@main
         with:
           submodules: true
       - name: set git identity
