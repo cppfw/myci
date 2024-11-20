@@ -7,8 +7,6 @@ script_dir="$(dirname $0)/"
 
 source ${script_dir}myci-common.sh
 
-# this script is used for preparing the debian package before building with dpkg-buildpackage.
-
 while [[ $# > 0 ]] ; do
     case $1 in
         --help)
@@ -44,9 +42,10 @@ fi
 
 [ ! -z "$version" ] || error "required option is not given: --version"
 
-${script_dir}myci-apply-version.sh --version $version --out-dir $vcpkgization_dir/overlay/thepackage $vcpkgization_dir/vcpkg.json.in
+${script_dir}myci-apply-version.sh --version $version $vcpkgization_dir/vcpkg.json.in
 
-homepage=$(jq -r .homepage $vcpkgization_dir/overlay/thepackage/vcpkg.json)
+homepage=$(jq -r .homepage $vcpkgization_dir/vcpkg.json)
+package_name=$(jq -r .name $vcpkgization_dir/vcpkg.json)
 
 archive_url=$homepage/archive/$version.tar.gz
 
@@ -55,6 +54,17 @@ sha512=$(curl --fail --location --silent --show-error $archive_url | sha512sum -
 
 # echo "sha512 = $sha512"
 
-${script_dir}myci-subst-var.sh --var archive_hash --val $sha512 --out-dir $vcpkgization_dir/overlay/thepackage $vcpkgization_dir/portfile.cmake.in
+overlay_package_dir=$vcpkgization_dir/overlay/$package_name
+
+mkdir -p $overlay_package_dir
+
+${script_dir}myci-subst-var.sh --var archive_hash --val $sha512 --out-dir $overlay_package_dir $vcpkgization_dir/portfile.cmake.in
+
+mv $vcpkgization_dir/vcpkg.json $overlay_package_dir
+cp $vcpkgization_dir/usage $overlay_package_dir
 
 echo "vcpkg package prepared"
+
+echo "trying to install the package"
+
+vcpkg install $package_name --overlay-ports=$vcpkgization_dir/overlay
