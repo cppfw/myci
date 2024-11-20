@@ -14,7 +14,8 @@ Depends:
         curl,
         openssh-client,
         git,
-        devscripts
+        devscripts,
+        jq
 Description: Helper CI scripts.
  Some helper CI scripts, mainly for deploying to different repositories.
 
