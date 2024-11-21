@@ -1,3 +1,9 @@
+myci (0.1.170) unstable; urgency=medium
+
+  * vcpkg: set committer name and email
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 21 Nov 2024 16:59:31 +0200
+
 myci (0.1.169) unstable; urgency=medium
 
   * add vcpkg scripts
