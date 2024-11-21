@@ -94,8 +94,10 @@ for i in $infiles; do
 		# substitute the rest of variables
 		for k in ${!key[@]}; do
 			[ "$k" != 0 ] || continue
-			${subst_cmd[$k]} -i $outfile
+			# macos sed requires backup suffix to be given with -i
+			${subst_cmd[$k]} -i'.bak' $outfile
 		done
+		rm -f "${outfile}.bak"
 	else
 		cp $i $outfile
 	fi
