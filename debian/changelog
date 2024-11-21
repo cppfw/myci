@@ -1,3 +1,9 @@
+myci (0.1.169) unstable; urgency=medium
+
+  * add vcpkg scripts
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 21 Nov 2024 14:47:38 +0200
+
 myci (0.1.168) unstable; urgency=medium
 
   * test
