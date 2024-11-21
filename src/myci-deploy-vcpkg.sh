@@ -66,6 +66,10 @@ cp -r $port_dir $repo/ports
 
 echo "commit port to the git repo"
 cd $repo
+
+git config user.email "unknown@unknown.com"
+git config user.name "MYCI vcpkg deploy script"
+
 git add ports/
 git commit --message="add new port"
 
