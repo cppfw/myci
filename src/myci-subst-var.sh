@@ -94,7 +94,7 @@ for i in $infiles; do
 		# substitute the rest of variables
 		for k in ${!key[@]}; do
 			[ "$k" != 0 ] || continue
-			${subst_cmd[$k]} --in-place $outfile
+			${subst_cmd[$k]} -i $outfile
 		done
 	else
 		cp $i $outfile
