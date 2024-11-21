@@ -8,7 +8,7 @@ testname=${testname##*/}
 ../../src/myci-running-test.sh $testname
 
 rm -f *.txt
-../../src/myci-subst-var.sh --var varname --val varval ./*.in
+../../src/myci-subst-var.sh --var varname --val varval --var 1 --val 11 ./*.in
 if [ ! -f test-varval.txt ]; then
 	../../src/myci-error.sh "test-varval.txt file not found";
 fi

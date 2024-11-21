@@ -9,7 +9,7 @@ source ${script_dir}myci-common.sh
 while [[ $# > 0 ]] ; do
 	case "$1" in
 		--help)
-			echo "myci substitute variable utility. Replaces all occurrences of '\$(variable)' in a file with given string."
+			echo "Substitute variable utility. Replaces all occurrences of '\$(variable_key)' in a file with given value."
             echo "Also does the substitution in the file name."
 			echo ""
 			echo "usage:"
@@ -18,19 +18,21 @@ while [[ $# > 0 ]] ; do
 			echo "input files must have '.in' suffix"
 			echo ""
 			echo "options:"
-            echo "  --var <variable>  variable name to substitute."
-			echo "  --val <value>     version string to apply"
-			echo "  --filename-only   substitute only in file name, not in file contents"
-			echo "  --out-dir <dir>   directory where to put resulting files, if not specified, the files are placed next to input files"
+            echo "  --var <variable>  variable name to substitute. Can appear several times."
+			echo "  --val <value>     version string to apply. Can appear several times, must match number of --var keys."
+			echo "  --filename-only   substitute only in file name, not in file contents."
+			echo "  --out-dir <dir>   directory where to put output files. If not specified, the files are placed next to input files."
 			exit 0
 			;;
 		--var)
 			shift
-			variable=$1
+			# append key to array of keys
+			key+=($1)
 			;;
 		--val)
 			shift
-			value=$1
+			# append value to array of values
+			value+=($1)
 			;;
 		--filename-only)
 			filenameonly="true"
@@ -46,9 +48,9 @@ while [[ $# > 0 ]] ; do
 	[[ $# > 0 ]] && shift;
 done
 
-if [ -z "$variable" ]; then
-	error "variable name is not given"
-fi
+[ "${#key[@]}" != 0 ] || error "no variables given with --var option"
+
+[ "${#key[@]}" == "${#value[@]}" ] || error "number of given variable keys doesn't match number of given values"
 
 # make sure the out_dir ends with slash
 if [ ! -z "$out_dir" ]; then
@@ -57,10 +59,27 @@ if [ ! -z "$out_dir" ]; then
 	fi
 fi
 
-echo "substituting variable '$variable' = '$value' in files:"
+# construct sed commands
+for i in ${!key[@]}; do
+	subst_cmd+=("sed -e s/\$(${key[$i]})/${value[$i]}/g")
+done
+
+# echo "subst_cmd = ${subst_cmd[@]}"
+
+echo "substituting variables:"
+for i in ${!key[@]}; do
+	echo "  ${key[$i]} = ${value[$i]}"
+done
+
+echo "in files:"
 
 for i in $infiles; do
-	outfile=$(echo $i | sed -e "s/\(.*\)\.in$/\1/" | sed -e "s/\$($variable)/$value/g")
+	outfile=$(echo $i | sed -e "s/\(.*\)\.in\$/\1/")
+
+	for k in ${!key[@]}; do
+		# echo "subst_cmd[$k] = ${subst_cmd[$k]}"
+		outfile=$(echo $outfile | ${subst_cmd[$k]})
+	done
 
 	if [ ! -z "$out_dir" ]; then
 		outfile="${out_dir}$(basename $outfile)"
@@ -69,7 +88,14 @@ for i in $infiles; do
 	echo "	$i -> $outfile"
 
 	if [ -z "$filenameonly" ]; then
-		sed -e "s/\$($variable)/$value/g" $i > $outfile
+		# substitute the first variable
+		${subst_cmd[0]} $i > $outfile
+
+		# substitute the rest of variables
+		for k in ${!key[@]}; do
+			[ "$k" != 0 ] || continue
+			${subst_cmd[$k]} --in-place $outfile
+		done
 	else
 		cp $i $outfile
 	fi
