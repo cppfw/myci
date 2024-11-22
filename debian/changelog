@@ -1,3 +1,9 @@
+myci (0.1.172) unstable; urgency=medium
+
+  * vcpkg: workaround of strange vcpkg bug
+
+ -- Ivan Gagis <igagis@gmail.com>  Fri, 22 Nov 2024 23:41:41 +0200
+
 myci (0.1.171) unstable; urgency=medium
 
   * vcpkg: do not install package after preparing
