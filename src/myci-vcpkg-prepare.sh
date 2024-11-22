@@ -72,7 +72,7 @@ mkdir -p $overlay_package_dir
 ${script_dir}myci-subst-var.sh --var archive_hash --val $sha512 --var git_ref --val $git_ref --out-dir $overlay_package_dir $vcpkgization_dir/portfile.cmake.in
 
 echo "format vcpkg.json"
-vcpkg format-manifest $vcpkgization_dir/vcpkg.json
+(cd $vcpkgization_dir; vcpkg format-manifest ./vcpkg.json)
 
 mv $vcpkgization_dir/vcpkg.json $overlay_package_dir
 cp $vcpkgization_dir/usage $overlay_package_dir
