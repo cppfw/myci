@@ -78,7 +78,3 @@ mv $vcpkgization_dir/vcpkg.json $overlay_package_dir
 cp $vcpkgization_dir/usage $overlay_package_dir
 
 echo "vcpkg package prepared"
-
-echo "trying to install the package"
-
-vcpkg install $package_name --overlay-ports=$vcpkgization_dir/overlay
