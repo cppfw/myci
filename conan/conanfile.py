@@ -13,9 +13,6 @@ class MyciConan(ConanFile):
 	settings = "os", "compiler", "build_type", "arch"
 	package_type = "build-scripts"
 
-	# def requirements(self):
-	# 	self.tool_requires("make/[>=4.4.1]")
-
 	# save commit and remote URL to conandata.yml for packaging
 	def export(self):
 		git = Git(self)
@@ -38,11 +35,7 @@ class MyciConan(ConanFile):
 	def package(self):
 		src_dir = os.path.join(self.build_folder, "src")
 		dst_dir = os.path.join(self.package_folder, "bin")
-
 		copy(conanfile=self, pattern="*.sh", dst=dst_dir, src=src_dir, keep_path=True)
-
-	# def package_info(self):
-	# 	self.buildenv_info.append("MAKE_INCLUDE_DIRS_ARG", "--include-dir=" + os.path.join(self.package_folder, "include"))
 
 	def package_id(self):
 		# change package id only when minor or major version changes, i.e. when ABI breaks
