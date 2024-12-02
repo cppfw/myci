@@ -1,3 +1,9 @@
+myci (0.1.173) unstable; urgency=medium
+
+  * conan
+
+ -- Ivan Gagis <igagis@gmail.com>  Mon, 02 Dec 2024 23:02:41 +0200
+
 myci (0.1.172) unstable; urgency=medium
 
   * vcpkg: workaround of strange vcpkg bug
