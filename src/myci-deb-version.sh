@@ -17,7 +17,7 @@ if [ -z "$changelog_file" ]; then
 fi
 
 if [ ! -f "$changelog_file" ]; then
-    error "no '$changelog_file' found"
+    $script_dir/myci-error.sh "no changelog file found: $changelog_file"
 fi
 
 head -1 $changelog_file | sed -n -e 's/.*(\([\.0-9]*\)\(-[0-9]*\)\{0,1\}).*/\1/p'
