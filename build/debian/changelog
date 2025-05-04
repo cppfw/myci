@@ -1,3 +1,9 @@
+myci (0.1.174) unstable; urgency=medium
+
+  * move debian to build/debian
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 04 May 2025 18:04:16 +0300
+
 myci (0.1.173) unstable; urgency=medium
 
   * conan
