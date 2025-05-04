@@ -14,7 +14,7 @@ while [[ $# > 0 ]] ; do
             echo "	$(basename $0) [--soname <soname> --debian-dir <path-to-debianization-dir>]"
             echo " "
             echo "If '--soname' parameter is not given the script tries to read soname from src/soname.txt file."
-			echo "If '--debian-dir' parameter is not given the script tries to locate debianization files in 'debian' directory."
+			echo "If '--debian-dir' parameter is not given the script tries to locate debianization files first in 'debian' or then in 'build/debian' directory."
             echo " "
             echo "Example:"
             echo "	$(basename $0) --soname 4 --debian-dir debian"
@@ -36,7 +36,19 @@ done
 echo "preparing debian package for building"
 
 if [ -z "$debianization_dir" ]; then
-	debianization_dir=debian
+	if [ -d debian ]; then
+		echo "debianization directory found at 'debian'"
+		debianization_dir=debian
+	fi
+
+	if [ -d build/debian ]; then
+		echo "debianization directory found at 'build/debian'"
+		debianization_dir=build/debian
+	fi
+fi
+
+if [ -z "$debianization_dir" ]; then
+	$script_dir/myci-error.sh "debianization directory not specified and not found"
 fi
 
 if [ -z "$soname" ]; then
@@ -44,15 +56,15 @@ if [ -z "$soname" ]; then
 fi
 
 if [ -z "$soname" ]; then
-	echo "no soname found, using empty soname"
+	$script_dir/myci-warning.sh "no soname found, using empty soname"
 	soname=
 else
 	echo "detected soname = $soname"
 fi
 
-listOfInstalls=$(ls $debianization_dir/*.install.in 2>/dev/null || true) # allow package without *.install.in
+list_of_installs=$(ls $debianization_dir/*.install.in 2>/dev/null || true) # allow package without *.install.in
 
-for i in $listOfInstalls; do
+for i in $list_of_installs; do
 	echo "applying soname to $i"
 
 	# BACKWARDS COMPATIBILITY: in case file name does not contain $ sign, then do not

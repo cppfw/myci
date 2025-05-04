@@ -17,25 +17,25 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {os: debian, codename: buster, image_owner: }
+          # - {os: debian, codename: buster, image_owner: }
           # - {os: debian, codename: buster, image_owner: i386/, labels: [i386,docker]}
-          - {os: debian, codename: buster, image_owner: , labels: [arm32,docker]}
+          # - {os: debian, codename: buster, image_owner: , labels: [ubuntu-24.04-arm]}
           - {os: debian, codename: bullseye, image_owner: }
-          - {os: debian, codename: bullseye, image_owner: , labels: [arm32,docker]}
-          - {os: debian, codename: bullseye, image_owner: , labels: [arm64,docker]}
+          - {os: debian, codename: bullseye, image_owner: arm32v7/, labels: [ubuntu-24.04-arm]}
+          - {os: debian, codename: bullseye, image_owner: arm64v8/, labels: [ubuntu-24.04-arm]}
           - {os: debian, codename: bookworm, image_owner: }
-          - {os: debian, codename: bookworm, image_owner: , labels: [arm32,docker]}
-          - {os: debian, codename: bookworm, image_owner: , labels: [arm64,docker]}
+          - {os: debian, codename: bookworm, image_owner: arm32v7/, labels: [ubuntu-24.04-arm]}
+          - {os: debian, codename: bookworm, image_owner: arm64v8/, labels: [ubuntu-24.04-arm]}
           # - {os: debian, codename: bookworm, image_owner: , labels: [riscv64,docker]}
           - {os: ubuntu, codename: bionic, image_owner: }
           - {os: ubuntu, codename: focal, image_owner: }
           - {os: ubuntu, codename: jammy, image_owner: }
           - {os: ubuntu, codename: noble, image_owner: }
-          - {os: raspbian, codename: bullseye, image_owner: igagis/, labels: [arm32,docker]}
-          - {os: raspbian, codename: bookworm, image_owner: igagis/, labels: [arm32,docker]}
+          # - {os: raspbian, codename: bullseye, image_owner: igagis/, labels: [ubuntu-24.04-arm]}
+          # - {os: raspbian, codename: bookworm, image_owner: igagis/, labels: [ubuntu-24.04-arm]}
     runs-on: ${{ (matrix.labels == '' && 'ubuntu-latest') || matrix.labels }}
     container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
-    name: linux - ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }} | ${{ matrix.labels[0] }}
+    name: linux - ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
     steps:
       - name: install ci tools
         run: |
@@ -50,15 +50,17 @@ jobs:
         run: make install
       - name: set PACKAGE_VERSION
         uses: myci-actions/export-env-var@main
-        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
+        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh build/debian/changelog)}
       - name: prepare debian package
         run: myci-deb-prepare.sh
       - name: install deps
-        run: myci-deb-install-build-deps.sh
+        run: |
+          cd build
+          myci-deb-install-build-deps.sh
       - name: build
         run: |
+          cd build
           dpkg-buildpackage --unsigned-source --unsigned-changes
-          mv ../*.*deb .
       # - name: upload deb packages to artifacts
       #   uses: actions/upload-artifact@v4
       #   with:
@@ -77,7 +79,7 @@ jobs:
         include:
           - {image: "archlinux:latest", arch: amd64}
           # - {image: "lopsided/archlinux-arm32v7:latest", arch: arm32, labels: [arm,docker]}
-          - {image: "lopsided/archlinux-arm64v8:latest", arch: arm64, labels: [arm64,docker]}
+          - {image: "lopsided/archlinux-arm64v8:latest", arch: arm64, labels: [ubuntu-24.04-arm]}
     runs-on: ${{ (matrix.labels == '' && 'ubuntu-latest') || matrix.labels }}
     container: ${{ matrix.image }}
     name: linux - archlinux | ${{ matrix.arch }}
@@ -91,7 +93,7 @@ jobs:
         run: make install
       - name: set PACKAGE_VERSION
         uses: myci-actions/export-env-var@main
-        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
+        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh build/debian/changelog)}
       # makepkg needs to install dependency packages, so nobody user needs sudo rights
       - name: add nobody to sudoers
         run: |
@@ -144,7 +146,7 @@ jobs:
     - name: install myci
       run: make install
     - name: prepare pacman package
-      run: myci-apply-version.sh --version $(myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in
+      run: myci-apply-version.sh --version $(myci-deb-version.sh build/debian/changelog) msys2/PKGBUILD.in
     - name: build
       run: |
         cd msys2
@@ -189,7 +191,7 @@ jobs:
     - name: install myci
       run: make install
     - name: prepare pacman package
-      run: myci-apply-version.sh --version $(myci-deb-version.sh debian/changelog) msys2/PKGBUILD.in
+      run: myci-apply-version.sh --version $(myci-deb-version.sh build/debian/changelog) msys2/PKGBUILD.in
     - name: build
       # to make makepkg-mingw build only one architecture we need to set the MINGW_ARCH
       env: {MINGW_ARCH: '${{ matrix.repo }}'}
@@ -204,11 +206,11 @@ jobs:
         include:
           - {os: debian, codename: bookworm, image_owner: }
           # - {os: debian, codename: bookworm, image_owner: i386/, labels: [i386,docker]}
-          # - {os: debian, codename: bookworm, image_owner: , labels: [arm32,docker]}
-          # - {os: debian, codename: bookworm, image_owner: , labels: [arm64,docker]}
+          # - {os: debian, codename: bookworm, image_owner: arm32v7/, labels: [ubuntu-24.04-arm]}
+          # - {os: debian, codename: bookworm, image_owner: arm64v8/, labels: [ubuntu-24.04-arm]}
     runs-on: ${{ (matrix.labels == '' && 'ubuntu-latest') || matrix.labels }}
     container: ${{ matrix.image_owner }}${{ matrix.os }}:${{ matrix.codename }}
-    name: conan - linux | ${{ matrix.labels[0] }}
+    name: conan - linux | ${{ matrix.image_owner }}
     steps:
       - name: add cppfw deb repo
         uses: myci-actions/add-deb-repo@main
@@ -232,7 +234,7 @@ jobs:
         run: make install
       - name: set PACKAGE_VERSION
         uses: myci-actions/export-env-var@main
-        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh debian/changelog)}
+        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh build/debian/changelog)}
         if: startsWith(github.ref, 'refs/tags/')
       - name: build
         run: |

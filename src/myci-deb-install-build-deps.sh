@@ -11,7 +11,7 @@ while [[ $# > 0 ]] ; do
 			echo "Usage:"
 			echo "	$(basename $0)"
 			echo " "
-			echo "The script shuld be run from within the directory containing the debian/control."
+			echo "The script should be run from within the directory containing the debian/control."
 			echo " "
 			echo "Example:"
 			echo "	$(basename $0)"
