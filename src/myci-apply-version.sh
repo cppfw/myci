@@ -49,4 +49,8 @@ if [ -z "$version" ]; then
 	version="$(${script_dir}myci-deb-version.sh)"
 fi
 
+echo "applying version = $version"
+
 ${script_dir}myci-subst-var.sh --var version --val $version $args $infiles
+
+echo "done applying version"
