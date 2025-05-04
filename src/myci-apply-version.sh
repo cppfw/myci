@@ -46,7 +46,7 @@ done
 
 if [ -z "$version" ]; then
 	echo "version is not given, trying to extract it from debian/changelog"
-	version="$(${script_dir}myci-deb-version.sh)"
+	version=$(${script_dir}myci-deb-version.sh)
 fi
 
 echo "applying version = $version"

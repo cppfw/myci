@@ -59,6 +59,10 @@ if [ ! -z "$out_dir" ]; then
 	fi
 fi
 
+if [ ! -d $out_dir ]; then
+	${script_dir}myci-error.sh "specified output directory '$out_dir' does not exist"
+fi
+
 # construct sed commands
 for i in ${!key[@]}; do
 	subst_cmd+=("sed -e s/\$(${key[$i]})/${value[$i]}/g")
