@@ -9,10 +9,10 @@ source ${script_dir}myci-common.sh
 changelog_file=$1
 
 if [ -z "$changelog_file" ]; then
-    if [ -d debian ]; then
-        changelog_file=debian/changelog
-    elif [ -d build/debian ]; then
+    if [ -d build/debian ]; then
         changelog_file=build/debian/changelog
+    elif [ -d debian ]; then
+        changelog_file=debian/changelog
     fi
 fi
 

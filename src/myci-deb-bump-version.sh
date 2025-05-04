@@ -67,10 +67,10 @@ fi
 
 echo new version = $newver
 
-if [ -d debian ]; then
-	deb_root_dir=.
-elif [ -d build/debian ]; then
+if [ -d build/debian ]; then
 	deb_root_dir=build
+elif [ -d debian ]; then
+	deb_root_dir=.
 fi
 
 (cd $deb_root_dir; dch --newversion="$newver" "$comment" || source ${script_dir}myci-error.sh "updating debian/changelog failed")

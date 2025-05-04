@@ -36,14 +36,14 @@ done
 echo "preparing debian package for building"
 
 if [ -z "$debianization_dir" ]; then
-	if [ -d debian ]; then
-		echo "debianization directory found at 'debian'"
-		debianization_dir=debian
-	fi
-
 	if [ -d build/debian ]; then
 		echo "debianization directory found at 'build/debian'"
 		debianization_dir=build/debian
+	fi
+
+	if [ -d debian ]; then
+		echo "debianization directory found at 'debian'"
+		debianization_dir=debian
 	fi
 fi
 

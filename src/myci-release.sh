@@ -42,10 +42,10 @@ version=$(${script_dir}myci-deb-version.sh)
 
 # echo $version
 
-if [ -d debian ]; then
-	deb_root_dir=.
-elif [ -d build/debian ]; then
+if [ -d build/debian ]; then
 	deb_root_dir=build
+elif [ -d debian ]; then
+	deb_root_dir=.
 fi
 
 (cd $deb_root_dir; dch --release --distribution=unstable "" || source ${script_dir}myci-error.sh "dch --release failed")
