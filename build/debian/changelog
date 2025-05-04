@@ -1,3 +1,9 @@
+myci (0.1.176) unstable; urgency=medium
+
+  * mabe build/debian more priority than just debian dir
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 04 May 2025 18:23:38 +0300
+
 myci (0.1.175) unstable; urgency=medium
 
   * add build dir support
