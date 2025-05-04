@@ -52,7 +52,7 @@ echo "username: ${username}, tapname: ${tapname}"
 
 # update version numbers
 echo "getting version from Debian changelog"
-version=$(myci-deb-version.sh debian/changelog)
+version=$(myci-deb-version.sh)
 
 # echo $version
 myci-apply-version.sh --version $version $infiles

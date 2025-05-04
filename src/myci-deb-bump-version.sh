@@ -44,7 +44,7 @@ done
 
 [ ! -z "$comment" ] || source ${script_dir}myci-error.sh "comment as argument expected"
 
-version=$(${script_dir}myci-deb-version.sh debian/changelog)
+version=$(${script_dir}myci-deb-version.sh)
 
 # echo $version
 

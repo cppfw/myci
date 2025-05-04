@@ -38,11 +38,17 @@ done
 
 [ "$no_release_checks" == "true" ] || source ${script_dir}myci-release-check.sh
 
-version=$(${script_dir}myci-deb-version.sh debian/changelog)
+version=$(${script_dir}myci-deb-version.sh)
 
 # echo $version
 
-dch --release --distribution=unstable "" || source ${script_dir}myci-error.sh "dch --release failed"
+if [ -d debian ]; then
+	deb_root_dir=.
+elif [ -d build/debian ]; then
+	deb_root_dir=build
+fi
+
+(cd $deb_root_dir; dch --release --distribution=unstable "" || source ${script_dir}myci-error.sh "dch --release failed")
 
 git commit --all --message="release $version" || source ${script_dir}myci-error.sh "git commit failed"
 

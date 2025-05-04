@@ -50,7 +50,7 @@ jobs:
         run: make install
       - name: set PACKAGE_VERSION
         uses: myci-actions/export-env-var@main
-        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh build/debian/changelog)}
+        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh)}
       - name: prepare debian package
         run: myci-deb-prepare.sh
       - name: install deps
@@ -93,7 +93,7 @@ jobs:
         run: make install
       - name: set PACKAGE_VERSION
         uses: myci-actions/export-env-var@main
-        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh build/debian/changelog)}
+        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh)}
       # makepkg needs to install dependency packages, so nobody user needs sudo rights
       - name: add nobody to sudoers
         run: |
@@ -146,7 +146,7 @@ jobs:
     - name: install myci
       run: make install
     - name: prepare pacman package
-      run: myci-apply-version.sh --version $(myci-deb-version.sh build/debian/changelog) msys2/PKGBUILD.in
+      run: myci-apply-version.sh --version $(myci-deb-version.sh) msys2/PKGBUILD.in
     - name: build
       run: |
         cd msys2
@@ -191,7 +191,7 @@ jobs:
     - name: install myci
       run: make install
     - name: prepare pacman package
-      run: myci-apply-version.sh --version $(myci-deb-version.sh build/debian/changelog) msys2/PKGBUILD.in
+      run: myci-apply-version.sh --version $(myci-deb-version.sh) msys2/PKGBUILD.in
     - name: build
       # to make makepkg-mingw build only one architecture we need to set the MINGW_ARCH
       env: {MINGW_ARCH: '${{ matrix.repo }}'}
@@ -234,7 +234,7 @@ jobs:
         run: make install
       - name: set PACKAGE_VERSION
         uses: myci-actions/export-env-var@main
-        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh build/debian/changelog)}
+        with: {name: PACKAGE_VERSION, value: $(myci-deb-version.sh)}
         if: startsWith(github.ref, 'refs/tags/')
       - name: build
         run: |
