@@ -73,6 +73,7 @@ for i in $list_of_installs; do
 	if [ "$(echo "$i" | sed -n -e "s/.*\$.*/true/p")" == "true" ]; then
 		${script_dir}myci-subst-var.sh --var soname --val $soname $i
 	else
+		${script_dir}myci-warning.sh "DEPRECATED: package.install.in file without \$(soname)"
 		sed -e "s/\$(soname)/$soname/g" $i > ${i%.install.in}$soname.install
 	fi
 done
