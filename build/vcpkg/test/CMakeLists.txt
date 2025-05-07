@@ -9,6 +9,5 @@ find_package(myci CONFIG REQUIRED)
 include(myci-common)
 
 message("exe_output_dir = ${exe_output_dir}")
-message("")
-message("  PASSED: myci vcpkg package test")
-message("")
+
+message("\n  PASSED: myci vcpkg package test\n")
