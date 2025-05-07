@@ -9,4 +9,4 @@ endif
 
 install:
 	@install -d $(DESTDIR)$(PREFIX)/bin
-	@install src/*.sh $(DESTDIR)$(PREFIX)/bin
+	@install src/bash/*.sh $(DESTDIR)$(PREFIX)/bin

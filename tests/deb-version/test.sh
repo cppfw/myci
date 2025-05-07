@@ -5,12 +5,12 @@ set -eo pipefail
 
 testname=$(pwd)
 testname=${testname##*/}
-../../src/myci-running-test.sh $testname
+../../src/bash/myci-running-test.sh $testname
 
-version=$(../../src/myci-deb-version.sh)
+version=$(../../src/bash/myci-deb-version.sh)
 
 echo "version = $version"
 
-[ "$version" == "1.2.3" ] || ../../src/myci-error.sh "version is not as expected: $version != 1.2.3"
+[ "$version" == "1.2.3" ] || ../../src/bash/myci-error.sh "version is not as expected: $version != 1.2.3"
 
-../../src/myci-passed.sh
+../../src/bash/myci-passed.sh

@@ -5,11 +5,11 @@ set -eo pipefail
 
 testname=$(pwd)
 testname=${testname##*/}
-../../src/myci-running-test.sh $testname
+../../src/bash/myci-running-test.sh $testname
 
 rm -rf tmp
 cp -r src tmp
 
-../../src/myci-license.sh --license LICENSE --dir tmp
+../../src/bash/myci-license.sh --license LICENSE --dir tmp
 
-../../src/myci-license.sh --license LICENSE --dir tmp --check src/main_with_license.cpp
+../../src/bash/myci-license.sh --license LICENSE --dir tmp --check src/main_with_license.cpp

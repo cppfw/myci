@@ -5,13 +5,13 @@ set -eo pipefail
 
 testname=$(pwd)
 testname=${testname##*/}
-../../src/myci-running-test.sh $testname
+../../src/bash/myci-running-test.sh $testname
 
 rm -f debian/libtest*.install
 rm -f debian/control
-../../src/myci-deb-prepare.sh
-if [ ! -f debian/control ]; then ../../src/myci-error.sh "debian/control file not found"; fi
-if [ ! -f debian/libtesta4.install ]; then ../../src/myci-error.sh "debian/libtesta4.install file not found"; fi
-if [ ! -f debian/libtestb4.install ]; then ../../src/myci-error.sh "debian/libtestb4.install file not found"; fi
-cmp debian/control samples/control || ../../src/myci-error.sh "debian/control contents are not as expected";
-../../src/myci-passed.sh
+../../src/bash/myci-deb-prepare.sh
+if [ ! -f debian/control ]; then ../../src/bash/myci-error.sh "debian/control file not found"; fi
+if [ ! -f debian/libtesta4.install ]; then ../../src/bash/myci-error.sh "debian/libtesta4.install file not found"; fi
+if [ ! -f debian/libtestb4.install ]; then ../../src/bash/myci-error.sh "debian/libtestb4.install file not found"; fi
+cmp debian/control samples/control || ../../src/bash/myci-error.sh "debian/control contents are not as expected";
+../../src/bash/myci-passed.sh
