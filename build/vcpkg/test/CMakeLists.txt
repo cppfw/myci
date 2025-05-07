@@ -10,4 +10,4 @@ include(myci-common)
 
 message("exe_output_dir = ${exe_output_dir}")
 
-message("\n  PASSED: myci vcpkg package test\n")
+message("!!!  PASSED: myci vcpkg package test  !!!")
