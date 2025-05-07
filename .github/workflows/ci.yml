@@ -218,7 +218,7 @@ jobs:
           TZ=Europe/Helsinki ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
           apt --quiet update --assume-yes
-          apt --quiet install --assume-yes cmake git curl zip unzip tar nodejs pkg-config
+          apt --quiet install --assume-yes cmake git curl zip unzip tar nodejs pkg-config jq
       - name: git clone
         uses: myci-actions/checkout@main
       - name: install myci
