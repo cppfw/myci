@@ -6,7 +6,7 @@ project(test)
 
 find_package(myci CONFIG REQUIRED)
 
-include(myci-common)
+include(myci)
 
 message("exe_output_dir = ${exe_output_dir}")
 
