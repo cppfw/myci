@@ -1,8 +1,7 @@
-# TODO: rename include guard to MYCI_COMMON_CMAKE_INCLUDED
-if(IGAGIS_CMAKE_COMMON_INCLUDED)
+if(MYCI_COMMON_CMAKE_INCLUDED)
     return()
 endif()
-set(IGAGIS_CMAKE_COMMON_INCLUDED TRUE)
+set(MYCI_COMMON_CMAKE_INCLUDED TRUE)
 
 include(GNUInstallDirs)
 
@@ -18,7 +17,7 @@ if(MSVC)
     )
 endif()
 
-macro(add_source_directory out srcdir)
+macro(myci_add_source_directory out srcdir)
     set(options RECURSIVE)
     set(single)
     set(multiple PATTERNS)
@@ -43,7 +42,7 @@ macro(add_source_directory out srcdir)
     endforeach()
 endmacro()
 
-macro(install_resource_file out srcfile dstfile)
+macro(myci_install_resource_file out srcfile dstfile)
     set(outfile "${exe_output_dir}/${dstfile}")
 
     get_filename_component(path "${dstfile}" DIRECTORY)
@@ -63,7 +62,7 @@ macro(install_resource_file out srcfile dstfile)
     )
 endmacro()
 
-macro(add_resource_directory out srcdir)
+macro(myci_add_resource_directory out srcdir)
     get_filename_component(dirname "${srcdir}" NAME)
 
     file(GLOB_RECURSE globresult RELATIVE "${srcdir}" CONFIGURE_DEPENDS "${srcdir}/*")
@@ -75,10 +74,10 @@ macro(add_resource_directory out srcdir)
         list(APPEND ${out} "${srcdir}/${file}")
 
         if(NOT ${generator_is_multi_config})
-            install_resource_file(${out} "${srcdir}/${file}" "${dirname}/${file}")
+            myci_install_resource_file(${out} "${srcdir}/${file}" "${dirname}/${file}")
         else()
             foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
-                install_resource_file(${out} "${srcdir}/${file}" "${cfg}/${dirname}/${file}")
+                myci_install_resource_file(${out} "${srcdir}/${file}" "${cfg}/${dirname}/${file}")
             endforeach()
         endif()
 
@@ -93,7 +92,7 @@ macro(add_resource_directory out srcdir)
     endforeach()
 endmacro()
 
-macro(add_target_dependencies target visibility)
+macro(myci_add_target_dependencies target visibility)
     foreach(dep ${ARGN})
         if(NOT TARGET ${dep}::${dep})
             find_package(${dep} CONFIG REQUIRED)
@@ -102,7 +101,8 @@ macro(add_target_dependencies target visibility)
     endforeach()
 endmacro()
 
-macro(add_target_external_dependencies target visibility)
+# TODO: rename to myci_add_target_non_config_dependencies?
+macro(myci_add_target_external_dependencies target visibility)
     foreach(dep ${dl_EXTERNAL_DEPENDENCIES})
         if(NOT TARGET ${dep}::${dep})
             find_package(${dep} REQUIRED)
@@ -111,13 +111,14 @@ macro(add_target_external_dependencies target visibility)
     endforeach()
 endmacro()
 
-macro(declare_library name)
+macro(myci_declare_library name)
     set(options)
     set(single INSTALL)
     set(multiple SOURCES RESOURCES DEPENDENCIES EXTERNAL_DEPENDENCIES
         PRIVATE_INCLUDE_DIRECTORIES PUBLIC_INCLUDE_DIRECTORIES INSTALL_INCLUDE_DIRECTORIES)
     cmake_parse_arguments(dl "${options}" "${single}" "${multiple}" ${ARGN})
 
+    # TODO: Why do we need disabling install?
     # Check if {NAME}_DISABLE_INSTALL variable is set and act accordingly
     string(TOUPPER "${name}" nameupper)
     string(REPLACE "-" "_" nameupper "${nameupper}")
@@ -131,7 +132,9 @@ macro(declare_library name)
     set(public INTERFACE)
     set(static INTERFACE)
     foreach(src ${dl_SOURCES})
+        # TODO: set(ext) ?
         get_filename_component(ext "${src}" LAST_EXT)
+        # TODO: why support .cc?
         if("${ext}" STREQUAL ".c" OR "${ext}" STREQUAL ".cpp" OR "${ext}" STREQUAL ".cc")
             set(public PUBLIC)
             set(static STATIC)
@@ -141,6 +144,7 @@ macro(declare_library name)
 
     add_library(${name} ${static} ${dl_SOURCES} ${dl_RESOURCES})
 
+    # TODO: allow specifying the C++ standard as argument
     target_compile_features(${name} ${public} cxx_std_20)
     set_target_properties(${name} PROPERTIES CXX_STANDARD_REQUIRED ON)
     set_target_properties(${name} PROPERTIES CXX_EXTENSIONS OFF)
@@ -153,8 +157,8 @@ macro(declare_library name)
         target_include_directories(${name} PRIVATE $<BUILD_INTERFACE:${dir}>)
     endforeach()
 
-    add_target_dependencies(${name} ${public} ${dl_DEPENDENCIES})
-    add_target_external_dependencies(${name} ${public} ${dl_EXTERNAL_DEPENDENCIES})
+    myci_add_target_dependencies(${name} ${public} ${dl_DEPENDENCIES})
+    myci_add_target_external_dependencies(${name} ${public} ${dl_EXTERNAL_DEPENDENCIES})
 
     if(${install})
         target_include_directories(${name} ${public} $<INSTALL_INTERFACE:include>)
@@ -192,7 +196,8 @@ macro(declare_library name)
     endif()
 endmacro()
 
-macro(declare_executable name)
+# TODO: rename to declare_application
+macro(myci_declare_executable name)
     set(options)
     set(single)
     set(multiple SOURCES INCLUDE_DIRECTORIES LINK_LIBRARIES DEPENDENCIES EXTERNAL_DEPENDENCIES)
@@ -216,6 +221,6 @@ macro(declare_executable name)
         target_link_libraries(${name} PRIVATE "${lib}")
     endforeach()
 
-    add_target_dependencies(${name} PRIVATE ${dl_DEPENDENCIES})
-    add_target_external_dependencies(${name} PRIVATE ${dl_EXTERNAL_DEPENDENCIES})
+    myci_add_target_dependencies(${name} PRIVATE ${dl_DEPENDENCIES})
+    myci_add_target_external_dependencies(${name} PRIVATE ${dl_EXTERNAL_DEPENDENCIES})
 endmacro()
