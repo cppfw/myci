@@ -1,3 +1,9 @@
+myci (0.1.182) unstable; urgency=medium
+
+  * cmake: rename module to myci
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 08 May 2025 22:03:20 +0300
+
 myci (0.1.181) unstable; urgency=medium
 
   * vcpkg
