@@ -7,8 +7,7 @@ include(GNUInstallDirs)
 
 get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG SET)
 
-# TODO: remove the _ prefix?
-set(exe_output_dir "${CMAKE_BINARY_DIR}/_exe")
+set(myci_exe_output_dir "${CMAKE_BINARY_DIR}/out")
 
 # TODO: why disabling this warning?
 if(MSVC)
@@ -16,6 +15,8 @@ if(MSVC)
         /wd5055 # operator '*': deprecated between enumerations and floating-point types
     )
 endif()
+
+# TODO: change macros to functions?
 
 macro(myci_add_source_directory out srcdir)
     set(options RECURSIVE)
@@ -43,7 +44,7 @@ macro(myci_add_source_directory out srcdir)
 endmacro()
 
 macro(myci_install_resource_file out srcfile dstfile)
-    set(outfile "${exe_output_dir}/${dstfile}")
+    set(outfile "${myci_exe_output_dir}/${dstfile}")
 
     get_filename_component(path "${dstfile}" DIRECTORY)
     string(REPLACE "/" "\\" path "Generated Files/${path}")
@@ -209,8 +210,8 @@ macro(myci_declare_executable name)
     set_target_properties(${name} PROPERTIES
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
-        VS_DEBUGGER_WORKING_DIRECTORY "${exe_output_dir}/$<CONFIG>"
-        RUNTIME_OUTPUT_DIRECTORY "${exe_output_dir}"
+        VS_DEBUGGER_WORKING_DIRECTORY "${myci_exe_output_dir}/$<CONFIG>"
+        RUNTIME_OUTPUT_DIRECTORY "${myci_exe_output_dir}"
     )
 
     foreach(dir ${dl_INCLUDE_DIRECTORIES})
