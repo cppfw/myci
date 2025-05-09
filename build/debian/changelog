@@ -1,3 +1,9 @@
+myci (0.1.183) unstable; urgency=medium
+
+  * cmake: add myci_ prefix to a variable
+
+ -- Ivan Gagis <igagis@gmail.com>  Fri, 09 May 2025 13:36:36 +0300
+
 myci (0.1.182) unstable; urgency=medium
 
   * cmake: rename module to myci
