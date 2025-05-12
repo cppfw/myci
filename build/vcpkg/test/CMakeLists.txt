@@ -6,8 +6,6 @@ project(test)
 
 find_package(myci CONFIG REQUIRED)
 
-include(myci)
-
 message("exe_output_dir = ${exe_output_dir}")
 
 message("!!!  PASSED: myci vcpkg package test  !!!")

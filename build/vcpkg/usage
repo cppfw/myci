@@ -2,4 +2,4 @@ myci provides CMake modules:
 
 find_package(myci CONFIG REQUIRED)
 
-include(myci)
+# use myci_* macros
