@@ -19,7 +19,14 @@ project(${name})
 # install cmake modules
 install(
     DIRECTORY
-        ../../src/cmake
+        ../../src/cmake/cmake_modules
+    DESTINATION
+        ${CMAKE_INSTALL_DATAROOTDIR}/${name}
+)
+
+install(
+    FILES
+        ../../src/cmake/${name}-config.cmake
     DESTINATION
         ${CMAKE_INSTALL_DATAROOTDIR}/${name}
 )
