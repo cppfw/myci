@@ -1,5 +1,8 @@
 {
   "dependencies": [
-      "myci"
+      {
+        "name": "myci",
+        "host": true
+      }
   ]
 }
