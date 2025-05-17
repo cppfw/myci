@@ -9,14 +9,22 @@ get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG
 
 set(myci_exe_output_dir "${CMAKE_BINARY_DIR}/out")
 
-# TODO: why disabling this warning?
-if(MSVC)
-    add_definitions(
-        /wd5055 # operator '*': deprecated between enumerations and floating-point types
-    )
-endif()
+# TODO: warnings in agg are fixed. Remove this warning suppression when sure.
+#if(MSVC)
+#    add_definitions(
+#        /wd5055 # operator '*': deprecated between enumerations and floating-point types
+#    )
+#endif()
 
-# TODO: change macros to functions?
+macro(myci_get_install_flag var)
+    # Check if {CMAKE_PROJECT_NAME}_DISABLE_INSTALL variable is set and act accordingly
+    string(TOUPPER "${CMAKE_PROJECT_NAME}" nameupper)
+    string(REPLACE "-" "_" nameupper "${nameupper}")
+    set(${var} TRUE)
+    if(${nameupper}_DISABLE_INSTALL)
+        set(${var} FALSE)
+    endif()
+endmacro()
 
 macro(myci_add_source_directory out srcdir)
     set(options RECURSIVE)
@@ -82,9 +90,10 @@ macro(myci_add_resource_directory out srcdir)
             endforeach()
         endif()
 
+        myci_get_install_flag(install)
         if(${install})
             install(
-                FILE
+                FILES
                     "${srcdir}/${file}"
                 DESTINATION
                     "${CMAKE_INSTALL_DATADIR}/${dirname}"
@@ -102,9 +111,34 @@ macro(myci_add_target_dependencies target visibility)
     endforeach()
 endmacro()
 
-# TODO: rename to myci_add_target_non_config_dependencies?
+macro(myci_add_angle_component target visibility component)
+    if(NOT TARGET unofficial::angle::${component})
+        find_package(unofficial-angle REQUIRED CONFIG)
+    endif()
+    target_link_libraries(${target} ${visibility} unofficial::angle::${component})
+    # For some stupid reason, ANGLE package puts GLES2 headers into ANGLE subdirectory. Add it to include paths.
+    get_target_property(${component}_INCLUDE_DIRS unofficial::angle::${component} INTERFACE_INCLUDE_DIRECTORIES)
+    foreach(dir ${${component}_INCLUDE_DIRS})
+        target_include_directories(${target} PRIVATE "${dir}/ANGLE")
+    endforeach()
+    # For some another stupid reason, ANGLE package is missing KHR/khrplatform.h. Get it from another package.
+    if(EGL_INCLUDE_DIR)
+        target_include_directories(${target} PRIVATE "${EGL_INCLUDE_DIR}")
+    endif()
+endmacro()
+
+# TODO: rename to myci_add_target_non_config_dependencies
 macro(myci_add_target_external_dependencies target visibility)
     foreach(dep ${dl_EXTERNAL_DEPENDENCIES})
+        # special case to use ANGLE on Win32 for GLESv2
+        if(WIN32 AND "${dep}" STREQUAL "GLESv2")
+            myci_add_angle_component(${target} ${visibility} libGLESv2)
+            continue()
+        elseif(WIN32 AND "${dep}" STREQUAL "EGL")
+            myci_add_angle_component(${target} ${visibility} libEGL)
+            continue()
+        endif()
+        # default case
         if(NOT TARGET ${dep}::${dep})
             find_package(${dep} REQUIRED)
         endif()
@@ -115,18 +149,11 @@ endmacro()
 macro(myci_declare_library name)
     set(options)
     set(single INSTALL)
-    set(multiple SOURCES RESOURCES DEPENDENCIES EXTERNAL_DEPENDENCIES
+    set(multiple SOURCES RESOURCES DEPENDENCIES EXTERNAL_DEPENDENCIES PUBLIC_COMPILE_DEFINITIONS
         PRIVATE_INCLUDE_DIRECTORIES PUBLIC_INCLUDE_DIRECTORIES INSTALL_INCLUDE_DIRECTORIES)
     cmake_parse_arguments(dl "${options}" "${single}" "${multiple}" ${ARGN})
 
-    # TODO: Why do we need disabling install?
-    # Check if {NAME}_DISABLE_INSTALL variable is set and act accordingly
-    string(TOUPPER "${name}" nameupper)
-    string(REPLACE "-" "_" nameupper "${nameupper}")
-    set(install TRUE)
-    if(${nameupper}_DISABLE_INSTALL)
-        set(install FALSE)
-    endif()
+    myci_get_install_flag(install)
 
     # Normally we create STATIC libraries and specify PUBLIC includes and dependencies.
     # For libraries with no source files this won't work, so use INTERFACE/INTERFACE instead.
@@ -149,6 +176,10 @@ macro(myci_declare_library name)
     target_compile_features(${name} ${public} cxx_std_20)
     set_target_properties(${name} PROPERTIES CXX_STANDARD_REQUIRED ON)
     set_target_properties(${name} PROPERTIES CXX_EXTENSIONS OFF)
+
+    foreach(def ${dl_PUBLIC_COMPILE_DEFINITIONS})
+        target_compile_definitions(${name} ${public} ${def})
+    endforeach()
 
     foreach(dir ${dl_PUBLIC_INCLUDE_DIRECTORIES})
         target_include_directories(${name} ${public} $<BUILD_INTERFACE:${dir}>)
@@ -197,8 +228,7 @@ macro(myci_declare_library name)
     endif()
 endmacro()
 
-# TODO: rename to declare_application
-macro(myci_declare_executable name)
+macro(myci_declare_application name)
     set(options)
     set(single)
     set(multiple SOURCES INCLUDE_DIRECTORIES LINK_LIBRARIES DEPENDENCIES EXTERNAL_DEPENDENCIES)
