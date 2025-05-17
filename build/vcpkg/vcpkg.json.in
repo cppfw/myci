@@ -2,7 +2,7 @@
     "name": "myci",
     "version": "$(version)",
     "homepage": "https://github.com/cppfw/myci",
-    "description": "TODO: library short description",
+    "description": "myci build tools",
     "license": "MIT",
     "dependencies": [
       {
