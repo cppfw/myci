@@ -20,8 +20,6 @@ install(
         ../../src/cmake
     DESTINATION
         ${CMAKE_INSTALL_DATAROOTDIR}/${name}
-    CONFIGURATIONS
-        Release
 )
 
 # install cmake config
