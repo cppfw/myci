@@ -1,3 +1,5 @@
+set(VCPKG_POLICY_EMPTY_INCLUDE_FOLDER enabled)
+
 vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 
 vcpkg_from_github(
@@ -14,9 +16,7 @@ vcpkg_cmake_configure(
 
 vcpkg_cmake_install()
 
-vcpkg_cmake_config_fixup(
-    CONFIG_PATH share/${PORT}/cmake
-)
+vcpkg_cmake_config_fixup()
 
 # Delete the include directory from the debug installation to prevent overlap.
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")

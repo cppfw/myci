@@ -14,10 +14,26 @@ project(${name})
 #   COMPATIBILITY SameMinorVersion
 # )
 
-# install cmake files
+# install cmake modules
+if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+    install(
+        DIRECTORY
+            ../../src/cmake/modules
+        DESTINATION
+            ${CMAKE_INSTALL_DATAROOTDIR}/${name}/modules
+        CONFIGURATIONS
+            Release
+    )
+endif()
+
+# install cmake config
 install(
-    DIRECTORY
-        ../../src/cmake
+    EXPORT
+        ${name}-config
+    FILE
+        ../../src/cmake/${name}-config.cmake
     DESTINATION
         ${CMAKE_INSTALL_DATAROOTDIR}/${name}
+    NAMESPACE
+        ${name}::
 )
