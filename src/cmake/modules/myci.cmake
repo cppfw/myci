@@ -28,8 +28,9 @@ endmacro()
 
 ####
 # @brief Add source files from a directory to a list variable.
-# @param DIRECTORY <dir> - directory to look for source files in. Mandatory.
-# @param RECURSIVE - if present, will look for source files recursively.
+# @param out - list variable name to which to append source files.
+# @param DIRECTORY <dir> - directory to look for source files in. Required.
+# @param RECURSIVE - look for source files recursively. Optional.
 # @param PATTERNS <pattern1> [<pattern2> ...] - list of file patterns to include. Example: '*.cpp *.c'.
 #                                               Defaults to '*.cpp *.c *.hpp *.h'.
 function(myci_add_source_files out)
@@ -175,8 +176,8 @@ macro(myci_add_angle_component target visibility component)
     endif()
 endmacro()
 
-# TODO: rename to myci_add_target_non_config_dependencies
-macro(myci_add_target_external_dependencies target visibility)
+macro(myci_add_target_non_config_dependencies target visibility)
+    # TODO: why not foreach(ARGN)?
     foreach(dep ${dl_EXTERNAL_DEPENDENCIES})
         # special case to use ANGLE on Win32 for GLESv2
         if(WIN32 AND "${dep}" STREQUAL "GLESv2")
@@ -230,15 +231,35 @@ macro(myci_declare_library name)
     endforeach()
 
     foreach(dir ${dl_PUBLIC_INCLUDE_DIRECTORIES})
-        target_include_directories(${name} ${public} $<BUILD_INTERFACE:${dir}>)
+        # absolute path is needed by target_include_directories()
+        file(REAL_PATH
+            # PATH
+                "${dir}"
+            # OUTPUT
+                abs_path_directory
+            BASE_DIRECTORY
+                ${CMAKE_CURRENT_LIST_DIR}
+            EXPAND_TILDE
+        )
+        target_include_directories(${name} ${public} $<BUILD_INTERFACE:${abs_path_directory}>)
     endforeach()
 
     foreach(dir ${dl_PRIVATE_INCLUDE_DIRECTORIES})
-        target_include_directories(${name} PRIVATE $<BUILD_INTERFACE:${dir}>)
+        # absolute path is needed by target_include_directories()
+        file(REAL_PATH
+            # PATH
+                "${dir}"
+            # OUTPUT
+                abs_path_directory
+            BASE_DIRECTORY
+                ${CMAKE_CURRENT_LIST_DIR}
+            EXPAND_TILDE
+        )
+        target_include_directories(${name} PRIVATE $<BUILD_INTERFACE:${abs_path_directory}>)
     endforeach()
 
     myci_add_target_dependencies(${name} ${public} ${dl_DEPENDENCIES})
-    myci_add_target_external_dependencies(${name} ${public} ${dl_EXTERNAL_DEPENDENCIES})
+    myci_add_target_non_config_dependencies(${name} ${public} ${dl_EXTERNAL_DEPENDENCIES})
 
     if(${install})
         target_include_directories(${name} ${public} $<INSTALL_INTERFACE:include>)
@@ -301,5 +322,5 @@ macro(myci_declare_application name)
     endforeach()
 
     myci_add_target_dependencies(${name} PRIVATE ${dl_DEPENDENCIES})
-    myci_add_target_external_dependencies(${name} PRIVATE ${dl_EXTERNAL_DEPENDENCIES})
+    myci_add_target_non_config_dependencies(${name} PRIVATE ${dl_EXTERNAL_DEPENDENCIES})
 endmacro()
