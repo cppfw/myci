@@ -176,9 +176,8 @@ macro(myci_add_angle_component target visibility component)
     endif()
 endmacro()
 
-macro(myci_add_target_non_config_dependencies target visibility)
-    # TODO: why not foreach(ARGN)?
-    foreach(dep ${dl_EXTERNAL_DEPENDENCIES})
+macro(myci_add_target_external_dependencies target visibility)
+    foreach(dep ${ARGN})
         # special case to use ANGLE on Win32 for GLESv2
         if(WIN32 AND "${dep}" STREQUAL "GLESv2")
             myci_add_angle_component(${target} ${visibility} libGLESv2)
@@ -209,7 +208,6 @@ macro(myci_declare_library name)
     set(public INTERFACE)
     set(static INTERFACE)
     foreach(src ${dl_SOURCES})
-        # TODO: set(ext) ?
         get_filename_component(ext "${src}" LAST_EXT)
         # TODO: why support .cc?
         if("${ext}" STREQUAL ".c" OR "${ext}" STREQUAL ".cpp" OR "${ext}" STREQUAL ".cc")
@@ -259,7 +257,7 @@ macro(myci_declare_library name)
     endforeach()
 
     myci_add_target_dependencies(${name} ${public} ${dl_DEPENDENCIES})
-    myci_add_target_non_config_dependencies(${name} ${public} ${dl_EXTERNAL_DEPENDENCIES})
+    myci_add_target_external_dependencies(${name} ${public} ${dl_EXTERNAL_DEPENDENCIES})
 
     if(${install})
         target_include_directories(${name} ${public} $<INSTALL_INTERFACE:include>)
@@ -322,5 +320,5 @@ macro(myci_declare_application name)
     endforeach()
 
     myci_add_target_dependencies(${name} PRIVATE ${dl_DEPENDENCIES})
-    myci_add_target_non_config_dependencies(${name} PRIVATE ${dl_EXTERNAL_DEPENDENCIES})
+    myci_add_target_external_dependencies(${name} PRIVATE ${dl_EXTERNAL_DEPENDENCIES})
 endmacro()
