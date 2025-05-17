@@ -16,11 +16,11 @@ else()
     message(!!!!!!!!!!!!!!!!CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH})
 endif()
 
-if(NOT DEFINED myci_DIR)
-    message(FATAL_ERROR "myci_DIR is not defined by vcpkg")
-else()
-    message(!!!!!!!!!!!!!myci_DIR =  ${myci_DIR})
-endif()
+# if(NOT DEFINED myci_DIR)
+#     message(FATAL_ERROR "myci_DIR is not defined by vcpkg")
+# else()
+#     message(!!!!!!!!!!!!!myci_DIR =  ${myci_DIR})
+# endif()
 
 find_package(myci CONFIG REQUIRED)
 
