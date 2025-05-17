@@ -16,15 +16,30 @@ set(myci_exe_output_dir "${CMAKE_BINARY_DIR}/out")
 #    )
 #endif()
 
-macro(myci_get_install_flag var)
+####
+# @brief Get install flag for current project.
+# Checks if <UPPERCASE_PROJECT_NAME>_DISABLE_INSTALL variable is defined and if it is TRUE then sets ${var} to FALSE,
+# otherwise sets ${var} to TRUE.
+# In case the <UPPERCASE_PROJECT_NAME>_DISABLE_INSTALL is not defined, then checks value of MYCI_GLOBAL_DISABLE_INSTALL
+# variable, if it is true then sets ${var} to FALSE, otherwise sets ${var} to TRUE.
+# @param var - variable name to store the flag value to.
+function(myci_get_install_flag var)
     # Check if {CMAKE_PROJECT_NAME}_DISABLE_INSTALL variable is set and act accordingly
     string(TOUPPER "${CMAKE_PROJECT_NAME}" nameupper)
     string(REPLACE "-" "_" nameupper "${nameupper}")
-    set(${var} TRUE)
-    if(${nameupper}_DISABLE_INSTALL)
-        set(${var} FALSE)
+
+    set(${var} TRUE PARENT_SCOPE)
+
+    if(DEFINED ${nameupper}_DISABLE_INSTALL)
+        if(${nameupper}_DISABLE_INSTALL)
+            set(${var} FALSE PARENT_SCOPE)
+        endif()
+    else()
+        if(MYCI_GLOBAL_DISABLE_INSTALL)
+            set(${var} FALSE PARENT_SCOPE)
+        endif()
     endif()
-endmacro()
+endfunction()
 
 ####
 # @brief Add source files from a directory to a list variable.
@@ -32,7 +47,7 @@ endmacro()
 # @param DIRECTORY <dir> - directory to look for source files in. Required.
 # @param RECURSIVE - look for source files recursively. Optional.
 # @param PATTERNS <pattern1> [<pattern2> ...] - list of file patterns to include. Example: '*.cpp *.c'.
-#                                               Defaults to '*.cpp *.c *.hpp *.h'.
+#                 Defaults to '*.cpp *.c *.hpp *.h'.
 function(myci_add_source_files out)
     set(options RECURSIVE)
     set(single DIRECTORY)
@@ -100,6 +115,7 @@ function(myci_add_source_files out)
     set(${out} ${result_files} PARENT_SCOPE)
 endfunction()
 
+# TODO: make function
 macro(myci_install_resource_file out srcfile dstfile)
     set(outfile "${myci_exe_output_dir}/${dstfile}")
 
@@ -120,6 +136,7 @@ macro(myci_install_resource_file out srcfile dstfile)
     )
 endmacro()
 
+# TODO: make function
 macro(myci_add_resource_directory out srcdir)
     get_filename_component(dirname "${srcdir}" NAME)
 
@@ -151,6 +168,7 @@ macro(myci_add_resource_directory out srcdir)
     endforeach()
 endmacro()
 
+# TODO: make function
 macro(myci_add_target_dependencies target visibility)
     foreach(dep ${ARGN})
         if(NOT TARGET ${dep}::${dep})
@@ -160,6 +178,7 @@ macro(myci_add_target_dependencies target visibility)
     endforeach()
 endmacro()
 
+# TODO: remove ANGLE-related stuff when the ANGLE lib is packaged properly.
 macro(myci_add_angle_component target visibility component)
     if(NOT TARGET unofficial::angle::${component})
         find_package(unofficial-angle REQUIRED CONFIG)
@@ -176,6 +195,7 @@ macro(myci_add_angle_component target visibility component)
     endif()
 endmacro()
 
+# TODO: make function
 macro(myci_add_target_external_dependencies target visibility)
     foreach(dep ${ARGN})
         # special case to use ANGLE on Win32 for GLESv2
@@ -194,9 +214,27 @@ macro(myci_add_target_external_dependencies target visibility)
     endforeach()
 endmacro()
 
-macro(myci_declare_library name)
+####
+# @brief Declare library.
+# @param name - library name.
+# @param SOURCES <file1> [<file2> ...] - list of source files. Required.
+# @param RESOURCES <file1> [<file2> ...] - TODO: write description. Optional.
+# @param DEPENDENCIES <package1> [<package2> ...] - list of dependency packages. Optional.
+#                     These will be searched with find_package(<package> CONFIG REQUIRED).
+# @param EXTERNAL_DEPENDENCIES <package1> [<package2> ...] - list of external dependency packages. Optional.
+#                              These will be searched with find_package(<package> REQUIRED).
+# @param PUBLIC_COMPILE_DEFINITIONS <def1> [<def2> ...] - TODO: write description. Optional.
+# @param PRIVATE_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - private include directories. Optional.
+#                                    These directories will not be propagated to the library users.
+# @param PUBLIC_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - public include directories. Optional.
+#                                    These directories will be propagated to the library users.
+# @param INSTALL_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - directories to install headers from. Optional.
+#                                    Hierarchy of subdirectories is preserved during isntallation.
+#                                    The last directory level will be included in the installation,
+#                                    e.g. for '../src/mylib' the destination will be '<system-include-dir>/mylib/'.
+function(myci_declare_library name)
     set(options)
-    set(single INSTALL)
+    # set(single INSTALL)
     set(multiple SOURCES RESOURCES DEPENDENCIES EXTERNAL_DEPENDENCIES PUBLIC_COMPILE_DEFINITIONS
         PRIVATE_INCLUDE_DIRECTORIES PUBLIC_INCLUDE_DIRECTORIES INSTALL_INCLUDE_DIRECTORIES)
     cmake_parse_arguments(dl "${options}" "${single}" "${multiple}" ${ARGN})
@@ -293,9 +331,9 @@ macro(myci_declare_library name)
                 "${name}::"
         )
     endif()
-endmacro()
+endfunction()
 
-macro(myci_declare_application name)
+function(myci_declare_application name)
     set(options)
     set(single)
     set(multiple SOURCES INCLUDE_DIRECTORIES LINK_LIBRARIES DEPENDENCIES EXTERNAL_DEPENDENCIES)
@@ -321,4 +359,4 @@ macro(myci_declare_application name)
 
     myci_add_target_dependencies(${name} PRIVATE ${dl_DEPENDENCIES})
     myci_add_target_external_dependencies(${name} PRIVATE ${dl_EXTERNAL_DEPENDENCIES})
-endmacro()
+endfunction()
