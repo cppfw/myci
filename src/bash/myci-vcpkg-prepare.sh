@@ -44,7 +44,12 @@ done
 echo "preparing vcpkg package"
 
 if [ -z "$vcpkgization_dir" ]; then
-	vcpkgization_dir=vcpkg
+	if [ -d "vcpkg" ]; then
+		vcpkgization_dir=vcpkg
+	else
+		vcpkgization_dir=build/vcpkg
+	fi
+	echo "--vcpkg-dir is not specified, using default vcpkg dir: $vcpkgization_dir"
 fi
 
 if [ ! -z "$version" ]; then
