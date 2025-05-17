@@ -26,6 +26,12 @@ macro(myci_get_install_flag var)
     endif()
 endmacro()
 
+####
+# @brief Add source files from a directory to a list variable.
+# @param DIRECTORY <dir> - directory to look for source files in. Mandatory.
+# @param RECURSIVE - if present, will look for source files recursively.
+# @param PATTERNS <pattern1> [<pattern2> ...] - list of file patterns to include. Example: '*.cpp *.c'.
+#                                               Defaults to '*.cpp *.c *.hpp *.h'.
 function(myci_add_source_files out)
     set(options RECURSIVE)
     set(single DIRECTORY)
@@ -36,9 +42,9 @@ function(myci_add_source_files out)
         message(FATAL_ERROR "myci_add_source_files(): required argument DIRECTORY is empty")
     endif()
 
-    set(glob GLOB)
-    if(arg_RECURSIVE)
-        set(glob GLOB_RECURSE)
+    if(NOT arg_PATTERNS)
+        # TODO: why append headers to sources?
+        list(APPEND arg_PATTERNS "*.cpp" "*.c" "*.hpp" "*.h")
     endif()
 
     set(patterns)
@@ -46,14 +52,51 @@ function(myci_add_source_files out)
         list(APPEND patterns "${arg_DIRECTORY}/${pattern}")
     endforeach()
 
-    file(${glob} globresult RELATIVE "${arg_DIRECTORY}" CONFIGURE_DEPENDS ${patterns})
+    file(REAL_PATH
+        # PATH
+            "${arg_DIRECTORY}"
+        # OUTPUT
+            abs_path_directory
+        BASE_DIRECTORY
+            ${CMAKE_CURRENT_LIST_DIR}
+        EXPAND_TILDE
+    )
+
+    if(arg_RECURSIVE)
+        set(glob GLOB_RECURSE)
+    else()
+        set(glob GLOB)
+    endif()
+
+    file(
+        ${glob}
+        globresult
+        FOLLOW_SYMLINKS
+        CONFIGURE_DEPENDS
+        LIST_DIRECTORIES
+            false
+        # If arg_DIRECTORY is relative and has '..' in front then this does not work.
+        # So, use absoulte directory path.
+        RELATIVE
+            "${abs_path_directory}"
+        ${patterns}
+    )
+
+    if(NOT globresult)
+        message(WARNING "myci_add_source_files(): no source files found")
+    endif()
+
+    set(result_files)
     foreach(file ${globresult})
+        # stuff for Visual Studio
         get_filename_component(path "${file}" DIRECTORY)
         string(REPLACE "/" "\\" path "Source Files/${path}")
         source_group("${path}" FILES "${arg_DIRECTORY}/${file}")
-        list(APPEND ${out} "${arg_DIRECTORY}/${file}")
+
+        list(APPEND result_files "${arg_DIRECTORY}/${file}")
     endforeach()
-    set(${out} ${${out}} PARENT_SCOPE)
+
+    set(${out} ${result_files} PARENT_SCOPE)
 endfunction()
 
 macro(myci_install_resource_file out srcfile dstfile)
