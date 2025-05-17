@@ -23,13 +23,13 @@ install(
 )
 
 # install cmake config
-# install(
-#     EXPORT
-#         ${name}-config
-#     FILE
-#         ${name}-config.cmake
-#     DESTINATION
-#         ${CMAKE_INSTALL_DATAROOTDIR}/${name}
-#     NAMESPACE
-#         ${name}::
-# )
+install(
+    EXPORT
+        ${name}-config
+    FILE
+        ${name}-config.cmake
+    DESTINATION
+        ${CMAKE_INSTALL_DATAROOTDIR}/${name}/cmake
+    NAMESPACE
+        ${name}::
+)
