@@ -4,24 +4,6 @@ set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
 
 project(test)
 
-get_cmake_property(_variableNames VARIABLES)
-list (SORT _variableNames)
-foreach (_variableName ${_variableNames})
-    message(STATUS "${_variableName}=${${_variableName}}")
-endforeach()
-
-if(NOT DEFINED CMAKE_PREFIX_PATH)
-    message(FATAL_ERROR "CMAKE_PREFIX_PATH is not defined by vcpkg")
-else()
-    message(!!!!!!!!!!!!!!!!CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH})
-endif()
-
-# if(NOT DEFINED myci_DIR)
-#     message(FATAL_ERROR "myci_DIR is not defined by vcpkg")
-# else()
-#     message(!!!!!!!!!!!!!myci_DIR =  ${myci_DIR})
-# endif()
-
 find_package(myci CONFIG REQUIRED)
 
 message("exe_output_dir = ${exe_output_dir}")
