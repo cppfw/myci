@@ -1,3 +1,4 @@
+# myci doesn't install any header files
 set(VCPKG_POLICY_EMPTY_INCLUDE_FOLDER enabled)
 
 vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
@@ -18,8 +19,9 @@ vcpkg_cmake_install()
 
 vcpkg_cmake_config_fixup()
 
+# TODO: remove
 # Delete the debug directory since the package doesn't provide debug files.
-file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug")
+# file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug")
 
 # Install the LICENSE file to the package's share directory and rename it to copyright.
 file(INSTALL "${SOURCE_PATH}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)

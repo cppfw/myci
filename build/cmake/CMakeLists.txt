@@ -14,38 +14,12 @@ project(${name})
 #   COMPATIBILITY SameMinorVersion
 # )
 
-# add_custom_target(${name} ALL)
-
 # install cmake modules
 install(
     DIRECTORY
-        ../../src/cmake/cmake_modules
+        ../../src/cmake/
     DESTINATION
         ${CMAKE_INSTALL_DATAROOTDIR}/${name}
+    CONFIGURATIONS
+        Release
 )
-
-install(
-    FILES
-        ../../src/cmake/${name}-config.cmake
-    DESTINATION
-        ${CMAKE_INSTALL_DATAROOTDIR}/${name}
-)
-
-# install(
-#     TARGETS
-#         ${name}
-#     EXPORT # generate cmake configs
-#         ${name}-config
-# )
-
-# install cmake config
-# install(
-#     EXPORT
-#         ${name}-config
-#     FILE
-#         ${name}-config.cmake
-#     DESTINATION
-#         ${CMAKE_INSTALL_DATAROOTDIR}/${name}/cmake
-#     NAMESPACE
-#         ${name}::
-# )
