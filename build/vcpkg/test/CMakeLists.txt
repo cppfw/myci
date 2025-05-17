@@ -10,6 +10,10 @@ foreach (_variableName ${_variableNames})
     message(STATUS "${_variableName}=${${_variableName}}")
 endforeach()
 
+if(NOT DEFINED CMAKE_PREFIX_PATH)
+    message(FATAL_ERROR "CMAKE_PREFIX_PATH is not defined by vcpkg")
+endif()
+
 if(NOT DEFINED myci_DIR)
     message(FATAL_ERROR "myci_DIR is not defined by vcpkg")
 endif()
