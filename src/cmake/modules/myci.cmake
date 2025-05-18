@@ -5,7 +5,7 @@ set(MYCI_MODULE_INCLUDED TRUE)
 
 include(GNUInstallDirs)
 
-get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG SET)
+get_property(myci_generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG SET)
 
 set(myci_exe_output_dir "${CMAKE_BINARY_DIR}/out")
 
@@ -119,9 +119,11 @@ endfunction()
 macro(myci_install_resource_file out srcfile dstfile)
     set(outfile "${myci_exe_output_dir}/${dstfile}")
 
+    # stuff for Visual Studio
     get_filename_component(path "${dstfile}" DIRECTORY)
     string(REPLACE "/" "\\" path "Generated Files/${path}")
     source_group("${path}" FILES "${outfile}")
+
     list(APPEND ${out} "${outfile}")
 
     add_custom_command(
@@ -136,37 +138,73 @@ macro(myci_install_resource_file out srcfile dstfile)
     )
 endmacro()
 
-# TODO: make function
-macro(myci_add_resource_directory out srcdir)
-    get_filename_component(dirname "${srcdir}" NAME)
+# TODO: refactor
+function(myci_add_resource_files out)
+    set(options RECURSIVE)
+    set(single DIRECTORY)
+    set(multiple PATTERNS)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
-    file(GLOB_RECURSE globresult RELATIVE "${srcdir}" CONFIGURE_DEPENDS "${srcdir}/*")
+    if(NOT arg_DIRECTORY)
+        message(FATAL_ERROR "myci_add_resource_files(): required argument DIRECTORY is empty")
+    endif()
 
+    get_filename_component(dirname "${arg_DIRECTORY}" NAME)
+
+    file(REAL_PATH
+        # PATH
+            "${arg_DIRECTORY}"
+        # OUTPUT
+            abs_path_directory
+        BASE_DIRECTORY
+            ${CMAKE_CURRENT_LIST_DIR}
+        EXPAND_TILDE
+    )
+
+    file(
+        GLOB_RECURSE
+            globresult
+        # If arg_DIRECTORY is relative and has '..' in front then this does not work.
+        # So, use absoulte directory path.
+        RELATIVE
+            ${abs_path_directory}
+        FOLLOW_SYMLINKS
+        CONFIGURE_DEPENDS
+        LIST_DIRECTORIES
+            false
+        "${arg_DIRECTORY}/*"
+    )
+
+    set(result_files)
     foreach(file ${globresult})
+        # stuff for Visual Studio
         get_filename_component(path "${file}" DIRECTORY)
         string(REPLACE "/" "\\" path "Resource Files/${path}")
-        source_group("${path}" FILES "${srcdir}/${file}")
-        list(APPEND ${out} "${srcdir}/${file}")
+        source_group("${path}" FILES "${arg_DIRECTORY}/${file}")
 
-        if(NOT ${generator_is_multi_config})
-            myci_install_resource_file(${out} "${srcdir}/${file}" "${dirname}/${file}")
-        else()
+        list(APPEND result_files "${arg_DIRECTORY}/${file}")
+
+        if(${myci_generator_is_multi_config})
             foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
-                myci_install_resource_file(${out} "${srcdir}/${file}" "${cfg}/${dirname}/${file}")
+                myci_install_resource_file(${out} "${arg_DIRECTORY}/${file}" "${cfg}/${dirname}/${file}")
             endforeach()
+        else()
+            myci_install_resource_file(${out} "${arg_DIRECTORY}/${file}" "${dirname}/${file}")
         endif()
 
         myci_get_install_flag(install)
         if(${install})
             install(
                 FILES
-                    "${srcdir}/${file}"
+                    "${arg_DIRECTORY}/${file}"
                 DESTINATION
                     "${CMAKE_INSTALL_DATADIR}/${dirname}"
             )
         endif()
     endforeach()
-endmacro()
+
+    set(${out} ${result_files} PARENT_SCOPE)
+endfunction()
 
 # TODO: make function
 macro(myci_add_target_dependencies target visibility)
