@@ -1,3 +1,9 @@
+myci (0.1.191) unstable; urgency=medium
+
+  * cmake: myci ext deps
+
+ -- Ivan Gagis <igagis@gmail.com>  Tue, 20 May 2025 23:02:15 +0300
+
 myci (0.1.190) unstable; urgency=medium
 
   * some refactoring
