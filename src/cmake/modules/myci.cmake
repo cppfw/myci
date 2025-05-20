@@ -115,8 +115,7 @@ function(myci_add_source_files out)
     set(${out} ${result_files} PARENT_SCOPE)
 endfunction()
 
-# TODO: make function
-macro(myci_install_resource_file out srcfile dstfile)
+function(myci_install_resource_file out srcfile dstfile)
     set(outfile "${myci_exe_output_dir}/${dstfile}")
 
     # stuff for Visual Studio
@@ -136,7 +135,7 @@ macro(myci_install_resource_file out srcfile dstfile)
         MAIN_DEPENDENCY
             "${srcfile}"
     )
-endmacro()
+endfunction()
 
 # TODO: refactor
 function(myci_add_resource_files out)
@@ -206,51 +205,51 @@ function(myci_add_resource_files out)
     set(${out} ${result_files} PARENT_SCOPE)
 endfunction()
 
-# TODO: make function
-macro(myci_add_target_dependencies target visibility)
+function(myci_add_target_dependencies target visibility)
     foreach(dep ${ARGN})
         if(NOT TARGET ${dep}::${dep})
             find_package(${dep} CONFIG REQUIRED)
         endif()
         target_link_libraries(${target} ${visibility} ${dep}::${dep})
     endforeach()
-endmacro()
+endfunction()
 
 # TODO: remove ANGLE-related stuff when the ANGLE lib is packaged properly.
-macro(myci_add_angle_component target visibility component)
-    if(NOT TARGET unofficial::angle::${component})
-        find_package(unofficial-angle REQUIRED CONFIG)
-    endif()
-    target_link_libraries(${target} ${visibility} unofficial::angle::${component})
-    # For some stupid reason, ANGLE package puts GLES2 headers into ANGLE subdirectory. Add it to include paths.
-    get_target_property(${component}_INCLUDE_DIRS unofficial::angle::${component} INTERFACE_INCLUDE_DIRECTORIES)
-    foreach(dir ${${component}_INCLUDE_DIRS})
-        target_include_directories(${target} PRIVATE "${dir}/ANGLE")
-    endforeach()
-    # For some another stupid reason, ANGLE package is missing KHR/khrplatform.h. Get it from another package.
-    if(EGL_INCLUDE_DIR)
-        target_include_directories(${target} PRIVATE "${EGL_INCLUDE_DIR}")
-    endif()
-endmacro()
+# macro(myci_add_angle_component target visibility component)
+#     if(NOT TARGET unofficial::angle::${component})
+#         find_package(unofficial-angle REQUIRED CONFIG)
+#     endif()
+#     target_link_libraries(${target} ${visibility} unofficial::angle::${component})
+#     # For some stupid reason, ANGLE package puts GLES2 headers into ANGLE subdirectory. Add it to include paths.
+#     get_target_property(${component}_INCLUDE_DIRS unofficial::angle::${component} INTERFACE_INCLUDE_DIRECTORIES)
+#     foreach(dir ${${component}_INCLUDE_DIRS})
+#         target_include_directories(${target} PRIVATE "${dir}/ANGLE")
+#     endforeach()
+#     # For some another stupid reason, ANGLE package is missing KHR/khrplatform.h. Get it from another package.
+#     if(EGL_INCLUDE_DIR)
+#         target_include_directories(${target} PRIVATE "${EGL_INCLUDE_DIR}")
+#     endif()
+# endmacro()
 
-# TODO: make function
-macro(myci_add_target_external_dependencies target visibility)
+function(myci_add_target_external_dependencies target visibility)
     foreach(dep ${ARGN})
-        # special case to use ANGLE on Win32 for GLESv2
-        if(WIN32 AND "${dep}" STREQUAL "GLESv2")
-            myci_add_angle_component(${target} ${visibility} libGLESv2)
-            continue()
-        elseif(WIN32 AND "${dep}" STREQUAL "EGL")
-            myci_add_angle_component(${target} ${visibility} libEGL)
-            continue()
-        endif()
-        # default case
-        if(NOT TARGET ${dep}::${dep})
-            find_package(${dep} REQUIRED)
-        endif()
-        target_link_libraries(${target} ${visibility} ${dep}::${dep})
+        # TODO: remove commented code
+        # # special case to use ANGLE on Win32 for GLESv2
+        # if(WIN32 AND "${dep}" STREQUAL "GLESv2")
+        #     myci_add_angle_component(${target} ${visibility} libGLESv2)
+        #     continue()
+        # elseif(WIN32 AND "${dep}" STREQUAL "EGL")
+        #     myci_add_angle_component(${target} ${visibility} libEGL)
+        #     continue()
+        # endif()
+        # # default case
+        # if(NOT TARGET ${dep}::${dep})
+        #     find_package(${dep} REQUIRED)
+        # endif()
+        # target_link_libraries(${target} ${visibility} ${dep}::${dep})
+        target_link_libraries(${target} ${visibility} ${dep})
     endforeach()
-endmacro()
+endfunction()
 
 ####
 # @brief Declare library.
