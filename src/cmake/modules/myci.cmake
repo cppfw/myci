@@ -258,8 +258,10 @@ endfunction()
 # @param RESOURCES <file1> [<file2> ...] - TODO: write description. Optional.
 # @param DEPENDENCIES <package1> [<package2> ...] - list of dependency packages. Optional.
 #                     These will be searched with find_package(<package> CONFIG REQUIRED).
-# @param EXTERNAL_DEPENDENCIES <package1> [<package2> ...] - list of external dependency packages. Optional.
-#                              These will be searched with find_package(<package> REQUIRED).
+#                     Passed to target_link_libraries() as <package>::<package>.
+# @param EXTERNAL_DEPENDENCIES <target1> [<target2> ...] - list of external dependency targets. Optional.
+#                              These will NOT be searched with find_package().
+#                              Passed to target_link_libraries() as is.
 # @param PUBLIC_COMPILE_DEFINITIONS <def1> [<def2> ...] - TODO: write description. Optional.
 # @param PRIVATE_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - private include directories. Optional.
 #                                    These directories will not be propagated to the library users.
