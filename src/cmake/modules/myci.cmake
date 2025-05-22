@@ -207,7 +207,12 @@ endfunction()
 
 function(myci_add_target_dependencies target visibility)
     foreach(dep ${ARGN})
-        # TODO: check for if(NOT ${dep}_FOUND) instead of checking for target
+        # TODO: if dep is in format <pkg>::<name> then
+        #     if(NOT TARGET <pkg>::<name>)
+        #         find_package(<pkg> CONFIG REQUIRED)
+        #     endif
+        #     target_link_libraries(${target} ${visibility} <pkg>::<name>)
+        # Otherwise as before.
         if(NOT TARGET ${dep}::${dep})
             find_package(${dep} CONFIG REQUIRED)
         endif()
