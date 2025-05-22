@@ -252,8 +252,11 @@ function(myci_add_target_external_dependencies target visibility)
     endforeach()
 endfunction()
 
+# TODO: add myci_export(TARGETS <target1> [<target2> ...] [PACKAGE <pkg-name>])
+
 ####
 # @brief Declare library.
+# TODO: By default it will also export the library as package with same name. Exporting can be suppressed using NO_EXPORT option.
 # @param name - library name.
 # @param SOURCES <file1> [<file2> ...] - list of source files. Required.
 # @param RESOURCES <file1> [<file2> ...] - TODO: write description. Optional.
@@ -276,6 +279,7 @@ endfunction()
 #                                    Hierarchy of subdirectories is preserved during isntallation.
 #                                    The last directory level will be included in the installation,
 #                                    e.g. for '../src/mylib' the destination will be '<system-include-dir>/mylib/'.
+# TODO: @param NO_EXPORT - do not export library as package. This option is useful if exporting will be done separately using myci_export() function.
 function(myci_declare_library name)
     set(options)
     # set(single INSTALL)
