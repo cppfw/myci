@@ -123,7 +123,7 @@ function(myci_install_resource_file out srcfile dstfile)
     string(REPLACE "/" "\\" path "Generated Files/${path}")
     source_group("${path}" FILES "${outfile}")
 
-    list(APPEND ${out} "${outfile}")
+    list(APPEND result_files "${outfile}")
 
     add_custom_command(
         OUTPUT
@@ -135,6 +135,7 @@ function(myci_install_resource_file out srcfile dstfile)
         MAIN_DEPENDENCY
             "${srcfile}"
     )
+    set(${out} ${result_files} PARENT_SCOPE)
 endfunction()
 
 # TODO: refactor
@@ -275,7 +276,7 @@ endfunction()
 # @param EXTERNAL_DEPENDENCIES <target1> [<target2> ...] - list of external dependency targets. Optional.
 #                              These will NOT be searched with find_package().
 #                              Passed to target_link_libraries() as is.
-# @param PUBLIC_COMPILE_DEFINITIONS <def1> [<def2> ...] - TODO: write description. Optional.
+# @param PUBLIC_COMPILE_DEFINITIONS <def1> [<def2> ...] - preprocessor macro definitions. Optional.
 # @param PRIVATE_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - private include directories. Optional.
 #                                    These directories will not be propagated to the library users.
 # @param PUBLIC_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - public include directories. Optional.
