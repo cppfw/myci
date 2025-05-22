@@ -207,6 +207,7 @@ endfunction()
 
 function(myci_add_target_dependencies target visibility)
     foreach(dep ${ARGN})
+        # TODO: check for if(NOT ${dep}_FOUND) instead of checking for target
         if(NOT TARGET ${dep}::${dep})
             find_package(${dep} CONFIG REQUIRED)
         endif()
@@ -256,9 +257,13 @@ endfunction()
 # @param name - library name.
 # @param SOURCES <file1> [<file2> ...] - list of source files. Required.
 # @param RESOURCES <file1> [<file2> ...] - TODO: write description. Optional.
-# @param DEPENDENCIES <package1> [<package2> ...] - list of dependency packages. Optional.
+# @param DEPENDENCIES <dep1> [<dep2> ...] - list of dependencies. Optional.
 #                     These will be searched with find_package(<package> CONFIG REQUIRED).
-#                     Passed to target_link_libraries() as <package>::<package>.
+#                     Passed to target_link_libraries() as <depX>::<depX>.
+#                     TODO:
+#                     If <depX> is in format '<pkg>::<name>' then the <pkg> namespace is treated as package name.
+#                     In that case the package will be searched with find_package(<pkg> CONFIG REQUIRED) and
+#                     the target will be passed to target_link_libraries() as <pkg>::<name>.
 # @param EXTERNAL_DEPENDENCIES <target1> [<target2> ...] - list of external dependency targets. Optional.
 #                              These will NOT be searched with find_package().
 #                              Passed to target_link_libraries() as is.
