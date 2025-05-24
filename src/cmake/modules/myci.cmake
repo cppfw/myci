@@ -267,17 +267,18 @@ endfunction()
 
 ####
 # @brief Declare library.
+# A target alias will be added as add_library(${PROJECT_NAME}::${name} ALIAS ${name}).
 # TODO: By default it will also export the library as package with same name. Exporting can be suppressed using NO_EXPORT option.
 # @param name - library name.
 # @param SOURCES <file1> [<file2> ...] - list of source files. Required.
 # @param RESOURCES <file1> [<file2> ...] - TODO: write description. Optional.
 # @param DEPENDENCIES <dep1> [<dep2> ...] - list of dependencies. Optional.
-#                     These will be searched with find_package(<package> CONFIG REQUIRED).
-#                     Passed to target_link_libraries() as <depX>::<depX>.
-#                     TODO:
-#                     If <depX> is in format '<pkg>::<name>' then the <pkg> namespace is treated as package name.
-#                     In that case the package will be searched with find_package(<pkg> CONFIG REQUIRED) and
-#                     the target will be passed to target_link_libraries() as <pkg>::<name>.
+#                     If <depX> does not have any '::' in its name, then
+#                     it will be searched with find_package(<depX> CONFIG REQUIRED) and
+#                     passed to target_link_libraries() as <depX>::<depX>.
+#                     If <depX> is in format '<pkg>::<name>' then the <pkg> namespace is treated as package name,
+#                     it will be searched with find_package(<pkg> CONFIG REQUIRED) and
+#                     the target will be passed to target_link_libraries() as <depX>.
 # @param EXTERNAL_DEPENDENCIES <target1> [<target2> ...] - list of external dependency targets. Optional.
 #                              These will NOT be searched with find_package().
 #                              Passed to target_link_libraries() as is.
