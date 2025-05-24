@@ -263,12 +263,44 @@ function(myci_private_add_target_external_dependencies target visibility)
     endforeach()
 endfunction()
 
-# TODO: add myci_export(TARGETS <target1> [<target2> ...] [PACKAGE <pkg-name>])
+####
+# @brief Export targets.
+# Generates and installs ${PROJECT_NAME}-config.cmake file for given targets.
+# Exported targets are appended with ${PROJECT_NAME}:: namespace.
+# @param TARGETS <targte1> [<target2> ...] - list of targets to export.
+function(myci_export)
+    set(options)
+    set(single)
+    set(multiple TARGETS)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    myci_get_install_flag(install)
+    if(${install})
+        # assign targets to export name
+        install(
+            TARGETS
+                ${arg_TARGETS}
+            EXPORT
+                ${PROJECT_NAME}-config
+        )
+        # generate and install cmake configs
+        install(
+            EXPORT
+                ${PROJECT_NAME}-config
+            FILE
+                ${PROJECT_NAME}-config.cmake
+            DESTINATION
+                "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
+            NAMESPACE
+                "${PROJECT_NAME}::"
+        )
+    endif()
+endfunction()
 
 ####
 # @brief Declare library.
 # A target alias will be added as add_library(${PROJECT_NAME}::${name} ALIAS ${name}).
-# TODO: By default it will also export the library as package with same name. Exporting can be suppressed using NO_EXPORT option.
+# By default it will also export the library as package with same name. Exporting can be suppressed using NO_EXPORT option.
 # @param name - library name.
 # @param SOURCES <file1> [<file2> ...] - list of source files. Required.
 # @param RESOURCES <file1> [<file2> ...] - TODO: write description. Optional.
@@ -293,13 +325,11 @@ endfunction()
 #                                    e.g. for '../src/mylib' the destination will be '<system-include-dir>/mylib/'.
 # TODO: @param NO_EXPORT - do not export library as package. This option is useful if exporting will be done separately using myci_export() function.
 function(myci_declare_library name)
-    set(options)
+    set(options NO_EXPORT)
     # set(single INSTALL)
     set(multiple SOURCES RESOURCES DEPENDENCIES EXTERNAL_DEPENDENCIES PUBLIC_COMPILE_DEFINITIONS
         PRIVATE_INCLUDE_DIRECTORIES PUBLIC_INCLUDE_DIRECTORIES INSTALL_INCLUDE_DIRECTORIES)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
-
-    myci_get_install_flag(install)
 
     # Normally we create STATIC libraries and specify PUBLIC includes and dependencies.
     # For libraries with no source files this won't work, so use INTERFACE/INTERFACE instead.
@@ -358,6 +388,7 @@ function(myci_declare_library name)
     myci_private_add_target_dependencies(${name} ${public} ${arg_DEPENDENCIES})
     myci_private_add_target_external_dependencies(${name} ${public} ${arg_EXTERNAL_DEPENDENCIES})
 
+    myci_get_install_flag(install)
     if(${install})
         target_include_directories(${name} ${public} $<INSTALL_INTERFACE:include>)
         # install library header files preserving directory hierarchy
@@ -373,24 +404,13 @@ function(myci_declare_library name)
                     PATTERN "*.hh" # TODO: why support this extension?
             )
         endforeach()
-        # generate cmake configs
-        install(
-            TARGETS
-                ${name}
-            EXPORT
-                ${PROJECT_NAME}-config
-        )
-        # install cmake configs
-        install(
-            EXPORT
-                ${PROJECT_NAME}-config
-            FILE
-                ${PROJECT_NAME}-config.cmake
-            DESTINATION
-                "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
-            NAMESPACE
-                "${PROJECT_NAME}::"
-        )
+
+        if(NOT arg_NO_EXPORT)
+            myci_export(
+                TARGETS
+                    ${name}
+            )
+        endif()
     endif()
 endfunction()
 
