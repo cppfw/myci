@@ -323,7 +323,6 @@ endfunction()
 #                                    Hierarchy of subdirectories is preserved during isntallation.
 #                                    The last directory level will be included in the installation,
 #                                    e.g. for '../src/mylib' the destination will be '<system-include-dir>/mylib/'.
-# TODO: @param NO_EXPORT - do not export library as package. This option is useful if exporting will be done separately using myci_export() function.
 function(myci_declare_library name)
     set(options NO_EXPORT)
     # set(single INSTALL)
@@ -414,6 +413,21 @@ function(myci_declare_library name)
     endif()
 endfunction()
 
+####
+# @brief Declare application.
+# @param name - application name.
+# @param SOURCES <file1> [<file2> ...] - list of source files. Required.
+# @param DEPENDENCIES <dep1> [<dep2> ...] - list of dependencies. Optional.
+#                     If <depX> does not have any '::' in its name, then
+#                     it will be searched with find_package(<depX> CONFIG REQUIRED) and
+#                     passed to target_link_libraries() as <depX>::<depX>.
+#                     If <depX> is in format '<pkg>::<name>' then the <pkg> namespace is treated as package name,
+#                     it will be searched with find_package(<pkg> CONFIG REQUIRED) and
+#                     the target will be passed to target_link_libraries() as <depX>.
+# @param EXTERNAL_DEPENDENCIES <target1> [<target2> ...] - list of external dependency targets. Optional.
+#                              These will NOT be searched with find_package().
+#                              Passed to target_link_libraries() as is.
+# @param INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - include directories. Optional.
 function(myci_declare_application name)
     set(options GUI)
     set(single)
