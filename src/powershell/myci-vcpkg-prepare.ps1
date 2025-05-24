@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory=$True)]
+    [Parameter(Mandatory=$False)]
     [String]
     $version,
 
@@ -12,11 +12,15 @@ param(
     $vcpkgdir
 )
 
-$scriptdir = Split-Path $MyInvocation.MyCommand.Path
-
 If(!$vcpkgdir){
     $vcpkgdir = "build/vcpkg/"
     echo "vcpkgdir is not given, using default location: $vcpkgdir"
+}
+
+If(!$version){
+    echo "version is not given, trying to get it from debian changelog"
+    $version = (Invoke-Expression -Command "$PSScriptRoot/myci-deb-version.ps1")
+    echo "  version = $version"
 }
 
 echo "apply version $version to vcpkg.json.in -> vcpkg.json"

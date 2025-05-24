@@ -4,8 +4,6 @@ param(
     $debdir
 )
 
-$scriptdir = Split-Path $MyInvocation.MyCommand.Path
-
 If(!$debdir){
     $debdir = "build/debian/"
     if(!(Test-Path -Path $debdir)){
@@ -14,4 +12,4 @@ If(!$debdir){
 }
 
 $ver = (Get-Content $debdir/changelog -Head 1) -replace ".*\((\d*\.\d*\.\d*)(\-\d+){0,1}\).*",'$1'
-Write-Host "$ver"
+echo "$ver"
