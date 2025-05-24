@@ -1,3 +1,9 @@
+myci (0.1.192) unstable; urgency=medium
+
+  * cmake: add myci_export()
+
+ -- Ivan Gagis <igagis@gmail.com>  Sat, 24 May 2025 15:39:46 +0300
+
 myci (0.1.191) unstable; urgency=medium
 
   * cmake: myci ext deps
