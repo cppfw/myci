@@ -1,3 +1,9 @@
+myci (0.1.193) unstable; urgency=medium
+
+  * powershell
+
+ -- Ivan Gagis <igagis@gmail.com>  Sat, 24 May 2025 19:57:58 +0300
+
 myci (0.1.192) unstable; urgency=medium
 
   * cmake: add myci_export()
