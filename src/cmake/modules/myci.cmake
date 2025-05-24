@@ -415,12 +415,19 @@ function(myci_declare_library name)
 endfunction()
 
 function(myci_declare_application name)
-    set(options)
+    set(options GUI)
     set(single)
     set(multiple SOURCES INCLUDE_DIRECTORIES DEPENDENCIES EXTERNAL_DEPENDENCIES)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
-    add_executable(${name} ${arg_SOURCES})
+    set(win32)
+    if(WIN32)
+        if(arg_GUI)
+            set(win32 WIN32)
+        endif()
+    endif()
+
+    add_executable(${name} ${win32} ${arg_SOURCES})
     target_compile_features(${name} PRIVATE cxx_std_20)
 
     set_target_properties(${name} PROPERTIES
