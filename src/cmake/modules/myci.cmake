@@ -206,18 +206,23 @@ function(myci_add_resource_files out)
     set(${out} ${result_files} PARENT_SCOPE)
 endfunction()
 
-function(myci_add_target_dependencies target visibility)
+function(myci_private_add_target_dependencies target visibility)
     foreach(dep ${ARGN})
-        # TODO: if dep is in format <pkg>::<name> then
-        #     if(NOT TARGET <pkg>::<name>)
-        #         find_package(<pkg> CONFIG REQUIRED)
-        #     endif
-        #     target_link_libraries(${target} ${visibility} <pkg>::<name>)
-        # Otherwise as before.
-        if(NOT TARGET ${dep}::${dep})
-            find_package(${dep} CONFIG REQUIRED)
+        string(FIND ${dep} "::" colon_colon_pos)
+        if(colon_colon_pos EQUAL -1)
+            # package name same as target name
+            if(NOT TARGET ${dep}::${dep})
+                find_package(${dep} CONFIG REQUIRED)
+            endif()
+            target_link_libraries(${target} ${visibility} ${dep}::${dep})
+        else()
+            # dep is in <pkg>::<target> format
+            if(NOT TARGET ${dep})
+                string(SUBSTRING ${dep} 0 ${colon_colon_pos} package_name)
+                find_package(${package_name} CONFIG REQUIRED)
+            endif()
+            target_link_libraries(${target} ${visibility} ${dep})
         endif()
-        target_link_libraries(${target} ${visibility} ${dep}::${dep})
     endforeach()
 endfunction()
 
@@ -238,7 +243,7 @@ endfunction()
 #     endif()
 # endmacro()
 
-function(myci_add_target_external_dependencies target visibility)
+function(myci_private_add_target_external_dependencies target visibility)
     foreach(dep ${ARGN})
         # TODO: remove commented code
         # # special case to use ANGLE on Win32 for GLESv2
@@ -291,7 +296,7 @@ function(myci_declare_library name)
     # set(single INSTALL)
     set(multiple SOURCES RESOURCES DEPENDENCIES EXTERNAL_DEPENDENCIES PUBLIC_COMPILE_DEFINITIONS
         PRIVATE_INCLUDE_DIRECTORIES PUBLIC_INCLUDE_DIRECTORIES INSTALL_INCLUDE_DIRECTORIES)
-    cmake_parse_arguments(dl "${options}" "${single}" "${multiple}" ${ARGN})
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
     myci_get_install_flag(install)
 
@@ -299,7 +304,7 @@ function(myci_declare_library name)
     # For libraries with no source files this won't work, so use INTERFACE/INTERFACE instead.
     set(public INTERFACE)
     set(static INTERFACE)
-    foreach(src ${dl_SOURCES})
+    foreach(src ${arg_SOURCES})
         get_filename_component(ext "${src}" LAST_EXT)
         # TODO: why support .cc?
         if("${ext}" STREQUAL ".c" OR "${ext}" STREQUAL ".cpp" OR "${ext}" STREQUAL ".cc")
@@ -309,18 +314,19 @@ function(myci_declare_library name)
         endif()
     endforeach()
 
-    add_library(${name} ${static} ${dl_SOURCES} ${dl_RESOURCES})
+    add_library(${name} ${static} ${arg_SOURCES} ${arg_RESOURCES})
+    add_library(${PROJECT_NAME}::${name} ALIAS ${name})
 
     # TODO: allow specifying the C++ standard as argument
     target_compile_features(${name} ${public} cxx_std_20)
     set_target_properties(${name} PROPERTIES CXX_STANDARD_REQUIRED ON)
     set_target_properties(${name} PROPERTIES CXX_EXTENSIONS OFF)
 
-    foreach(def ${dl_PUBLIC_COMPILE_DEFINITIONS})
+    foreach(def ${arg_PUBLIC_COMPILE_DEFINITIONS})
         target_compile_definitions(${name} ${public} ${def})
     endforeach()
 
-    foreach(dir ${dl_PUBLIC_INCLUDE_DIRECTORIES})
+    foreach(dir ${arg_PUBLIC_INCLUDE_DIRECTORIES})
         # absolute path is needed by target_include_directories()
         file(REAL_PATH
             # PATH
@@ -334,7 +340,7 @@ function(myci_declare_library name)
         target_include_directories(${name} ${public} $<BUILD_INTERFACE:${abs_path_directory}>)
     endforeach()
 
-    foreach(dir ${dl_PRIVATE_INCLUDE_DIRECTORIES})
+    foreach(dir ${arg_PRIVATE_INCLUDE_DIRECTORIES})
         # absolute path is needed by target_include_directories()
         file(REAL_PATH
             # PATH
@@ -348,13 +354,13 @@ function(myci_declare_library name)
         target_include_directories(${name} PRIVATE $<BUILD_INTERFACE:${abs_path_directory}>)
     endforeach()
 
-    myci_add_target_dependencies(${name} ${public} ${dl_DEPENDENCIES})
-    myci_add_target_external_dependencies(${name} ${public} ${dl_EXTERNAL_DEPENDENCIES})
+    myci_private_add_target_dependencies(${name} ${public} ${arg_DEPENDENCIES})
+    myci_private_add_target_external_dependencies(${name} ${public} ${arg_EXTERNAL_DEPENDENCIES})
 
     if(${install})
         target_include_directories(${name} ${public} $<INSTALL_INTERFACE:include>)
         # install library header files preserving directory hierarchy
-        foreach(dir ${dl_INSTALL_INCLUDE_DIRECTORIES})
+        foreach(dir ${arg_INSTALL_INCLUDE_DIRECTORIES})
             install(
                 DIRECTORY
                     "${dir}"
@@ -371,18 +377,18 @@ function(myci_declare_library name)
             TARGETS
                 ${name}
             EXPORT
-                ${name}-config
+                ${PROJECT_NAME}-config
         )
         # install cmake configs
         install(
             EXPORT
-                ${name}-config
+                ${PROJECT_NAME}-config
             FILE
-                ${name}-config.cmake
+                ${PROJECT_NAME}-config.cmake
             DESTINATION
-                "${CMAKE_INSTALL_DATAROOTDIR}/${name}"
+                "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
             NAMESPACE
-                "${name}::"
+                "${PROJECT_NAME}::"
         )
     endif()
 endfunction()
@@ -390,10 +396,10 @@ endfunction()
 function(myci_declare_application name)
     set(options)
     set(single)
-    set(multiple SOURCES INCLUDE_DIRECTORIES LINK_LIBRARIES DEPENDENCIES EXTERNAL_DEPENDENCIES)
-    cmake_parse_arguments(dl "${options}" "${single}" "${multiple}" ${ARGN})
+    set(multiple SOURCES INCLUDE_DIRECTORIES DEPENDENCIES EXTERNAL_DEPENDENCIES)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
-    add_executable(${name} ${dl_SOURCES})
+    add_executable(${name} ${arg_SOURCES})
     target_compile_features(${name} PRIVATE cxx_std_20)
 
     set_target_properties(${name} PROPERTIES
@@ -403,14 +409,14 @@ function(myci_declare_application name)
         RUNTIME_OUTPUT_DIRECTORY "${myci_exe_output_dir}"
     )
 
-    foreach(dir ${dl_INCLUDE_DIRECTORIES})
+    foreach(dir ${arg_INCLUDE_DIRECTORIES})
         target_include_directories(${name} PRIVATE "${dir}")
     endforeach()
 
-    foreach(lib ${dl_LINK_LIBRARIES})
+    foreach(lib ${arg_LINK_LIBRARIES})
         target_link_libraries(${name} PRIVATE "${lib}")
     endforeach()
 
-    myci_add_target_dependencies(${name} PRIVATE ${dl_DEPENDENCIES})
-    myci_add_target_external_dependencies(${name} PRIVATE ${dl_EXTERNAL_DEPENDENCIES})
+    myci_private_add_target_dependencies(${name} PRIVATE ${arg_DEPENDENCIES})
+    myci_private_add_target_external_dependencies(${name} PRIVATE ${arg_EXTERNAL_DEPENDENCIES})
 endfunction()
