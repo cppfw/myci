@@ -276,7 +276,7 @@ function(myci_private_copy_resource_file_command out src_dir dst_dir file)
 
     set(src_file
         "$<BUILD_INTERFACE:${src_dir}/${file}>"
-        "$<INSTALL_INTERFACE:${CMAKE_INSTALL_DATADIR}/${dirname}/${file}>"
+        "$<INSTALL_INTERFACE:${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/${dirname}/${file}>"
     )
 
     add_custom_command(
@@ -337,12 +337,10 @@ function(myci_declare_resource_pack target_name)
     get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG SET)
 
     foreach(file ${res_files})
-        set(res_file "${arg_DIRECTORY}/${file}")
-
         # stuff for Visual Studio
         get_filename_component(path "${file}" DIRECTORY)
         string(REPLACE "/" "\\" path "Resource Files/${path}")
-        source_group("${path}" FILES "${res_file}")
+        source_group("${path}" FILES "${arg_DIRECTORY}/${file}")
 
         if(${generator_is_multi_config})
             foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
@@ -361,7 +359,7 @@ function(myci_declare_resource_pack target_name)
             DIRECTORY
                 "${arg_DIRECTORY}"
             DESTINATION
-                "${CMAKE_INSTALL_DATADIR}"
+                "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}"
         )
     endif()
 endfunction()
