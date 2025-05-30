@@ -5,9 +5,10 @@ set(MYCI_MODULE_INCLUDED TRUE)
 
 include(GNUInstallDirs)
 
+# TODO: remove from here
 get_property(myci_generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG SET)
 
-set(myci_exe_output_dir "${CMAKE_BINARY_DIR}/out")
+set(myci_private_output_dir "${CMAKE_BINARY_DIR}/out")
 
 # TODO: warnings in agg are fixed. Remove this warning suppression when sure.
 #if(MSVC)
@@ -116,7 +117,7 @@ function(myci_add_source_files out)
 endfunction()
 
 function(myci_install_resource_file out srcfile dstfile)
-    set(outfile "${myci_exe_output_dir}/${dstfile}")
+    set(outfile "${myci_private_output_dir}/${dstfile}")
 
     # stuff for Visual Studio
     get_filename_component(path "${dstfile}" DIRECTORY)
@@ -263,6 +264,108 @@ function(myci_private_add_target_external_dependencies target visibility)
     endforeach()
 endfunction()
 
+function(myci_private_copy_resource_file_command out src_dir dst_dir file)
+    get_filename_component(dirname "${src_dir}" NAME)
+
+    set(outfile "${myci_private_output_dir}/${dst_dir}/${dirname}/${file}")
+
+    # stuff for Visual Studio
+    get_filename_component(path "${dst_dir}/${dirname}/${file}" DIRECTORY)
+    string(REPLACE "/" "\\" path "Generated Files/${path}")
+    source_group("${path}" FILES "${outfile}")
+
+    set(src_file
+        "$<BUILD_INTERFACE:${src_dir}/${file}>"
+        "$<INSTALL_INTERFACE:${CMAKE_INSTALL_DATADIR}/${dirname}/${file}>"
+    )
+
+    add_custom_command(
+        OUTPUT
+            "${outfile}"
+        COMMAND
+            "${CMAKE_COMMAND}" -E copy "${src_file}" "${outfile}"
+        DEPENDS
+            "${src_file}"
+        MAIN_DEPENDENCY
+            "${src_file}"
+    )
+
+    set(${out} ${outfile} PARENT_SCOPE)
+endfunction()
+
+####
+# @brief Declare resource pack.
+# Declare a resource pack target which will copy the resources directory to an application output directory.
+# @param target_name - resource pack target name.
+# @param DIRECTORY <dir> - directory containing the resources pack. The directory will be installed and copied to application output directory.
+function(myci_declare_resource_pack target_name)
+    set(options)
+    set(single DIRECTORY)
+    set(multiple)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    if(NOT arg_DIRECTORY)
+        message(FATAL_ERROR "myci_declare_resource_pack(): required argument DIRECTORY is empty")
+    endif()
+
+    file(REAL_PATH
+        # PATH
+            "${arg_DIRECTORY}"
+        # OUTPUT
+            abs_path_directory
+        BASE_DIRECTORY
+            ${CMAKE_CURRENT_LIST_DIR}
+        EXPAND_TILDE
+    )
+
+    file(
+        GLOB_RECURSE
+            res_files
+        # If arg_DIRECTORY is relative and has '..' in front then this does not work.
+        # So, use absoulte directory path.
+        RELATIVE
+            ${abs_path_directory}
+        FOLLOW_SYMLINKS
+        CONFIGURE_DEPENDS
+        LIST_DIRECTORIES
+            false
+        "${arg_DIRECTORY}/*"
+    )
+
+    add_custom_target(${target_name})
+
+    get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG SET)
+
+    foreach(file ${res_files})
+        set(res_file "${arg_DIRECTORY}/${file}")
+
+        # stuff for Visual Studio
+        get_filename_component(path "${file}" DIRECTORY)
+        string(REPLACE "/" "\\" path "Resource Files/${path}")
+        source_group("${path}" FILES "${res_file}")
+
+        if(${generator_is_multi_config})
+            foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
+                myci_private_copy_resource_file_command(outfile "${arg_DIRECTORY}" "${cfg}" "${file}")
+            endforeach()
+        else()
+            myci_private_copy_resource_file_command(outfile "${arg_DIRECTORY}" "" "${file}")
+        endif()
+
+        add_dependencies(${target_name} "${outfile}")
+    endforeach()
+
+    myci_get_install_flag(install)
+    if(${install})
+        install(
+            DIRECTORY
+                "${arg_DIRECTORY}"
+            DESTINATION
+                "${CMAKE_INSTALL_DATADIR}"
+        )
+    endif()
+endfunction()
+
 ####
 # @brief Export targets.
 # Generates and installs ${PROJECT_NAME}-config.cmake file for given targets.
@@ -389,7 +492,7 @@ function(myci_declare_library name)
 
     myci_get_install_flag(install)
     if(${install})
-        target_include_directories(${name} ${public} $<INSTALL_INTERFACE:include>)
+        target_include_directories(${name} ${public} $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
         # install library header files preserving directory hierarchy
         foreach(dir ${arg_INSTALL_INCLUDE_DIRECTORIES})
             install(
@@ -447,8 +550,8 @@ function(myci_declare_application name)
     set_target_properties(${name} PROPERTIES
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
-        VS_DEBUGGER_WORKING_DIRECTORY "${myci_exe_output_dir}/$<CONFIG>"
-        RUNTIME_OUTPUT_DIRECTORY "${myci_exe_output_dir}"
+        VS_DEBUGGER_WORKING_DIRECTORY "${myci_private_output_dir}/$<CONFIG>"
+        RUNTIME_OUTPUT_DIRECTORY "${myci_private_output_dir}"
     )
 
     foreach(dir ${arg_INCLUDE_DIRECTORIES})
