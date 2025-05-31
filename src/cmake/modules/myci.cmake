@@ -10,13 +10,6 @@ get_property(myci_generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_C
 
 set(myci_private_output_dir "${CMAKE_BINARY_DIR}/out")
 
-# TODO: warnings in agg are fixed. Remove this warning suppression when sure.
-#if(MSVC)
-#    add_definitions(
-#        /wd5055 # operator '*': deprecated between enumerations and floating-point types
-#    )
-#endif()
-
 ####
 # @brief Get install flag for current project.
 # Checks if <UPPERCASE_PROJECT_NAME>_DISABLE_INSTALL variable is defined and if it is TRUE then sets ${var} to FALSE,
@@ -139,7 +132,7 @@ function(myci_install_resource_file out srcfile dstfile)
     set(${out} ${result_files} PARENT_SCOPE)
 endfunction()
 
-# TODO: refactor
+# TODO: remove
 function(myci_add_resource_files out)
     set(options RECURSIVE)
     set(single DIRECTORY)
@@ -274,16 +267,28 @@ function(myci_private_copy_resource_file_command out src_dir dst_dir file)
     string(REPLACE "/" "\\" path "Generated Files/${path}")
     source_group("${path}" FILES "${outfile}")
 
-    set(src_file
-        "$<BUILD_INTERFACE:${src_dir}/${file}>"
-        "$<INSTALL_INTERFACE:${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/${dirname}/${file}>"
+    file(REAL_PATH
+        # PATH
+            "${src_dir}/${file}"
+        # OUTPUT
+            abs_src_file
+        BASE_DIRECTORY
+            ${CMAKE_CURRENT_LIST_DIR}
+        EXPAND_TILDE
     )
+
+    # set(src_file
+        # $<BUILD_INTERFACE:${abs_src_file}>
+        # $<INSTALL_INTERFACE:${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/${dirname}/${file}>
+    # )
+
+    # message(src_file = ${src_file})
 
     add_custom_command(
         OUTPUT
             "${outfile}"
         COMMAND
-            "${CMAKE_COMMAND}" -E copy "${src_file}" "${outfile}"
+            "${CMAKE_COMMAND}" -E copy ${abs_src_file} "${outfile}"
         DEPENDS
             "${src_file}"
         MAIN_DEPENDENCY
@@ -332,10 +337,13 @@ function(myci_declare_resource_pack target_name)
         "${arg_DIRECTORY}/*"
     )
 
-    add_custom_target(${target_name})
-
     get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG SET)
 
+    if(NOT CMAKE_CONFIGURATION_TYPES)
+        set(generator_is_multi_config)
+    endif()
+
+    set(out_files)
     foreach(file ${res_files})
         # stuff for Visual Studio
         get_filename_component(path "${file}" DIRECTORY)
@@ -345,13 +353,19 @@ function(myci_declare_resource_pack target_name)
         if(${generator_is_multi_config})
             foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
                 myci_private_copy_resource_file_command(outfile "${arg_DIRECTORY}" "${cfg}" "${file}")
+                # add_dependencies(${target_name} "${outfile}")
+                list(APPEND out_files ${outfile})
+                message(outfile = ${outfile})
             endforeach()
         else()
             myci_private_copy_resource_file_command(outfile "${arg_DIRECTORY}" "" "${file}")
+            # add_dependencies(${target_name} "${outfile}")
+            list(APPEND out_files ${outfile})
+            message(outfile = ${outfile})
         endif()
-
-        add_dependencies(${target_name} "${outfile}")
     endforeach()
+
+    add_custom_target(${target_name} DEPENDS ${out_files})
 
     myci_get_install_flag(install)
     if(${install})
@@ -363,6 +377,61 @@ function(myci_declare_resource_pack target_name)
         )
     endif()
 endfunction()
+
+####
+# @brief Generate .cmake file which sets cusotom properties on specified targets.
+# The generated .cmake file will have ${PROJECT_NAME}-properties.cmake name.
+# @param TARGETS - list of targets to export properties for. The targets will be searched in ${PROJECT_NAME} namespace.
+# @param PROPERTIES - list of custom properties to export.
+function(myci_private_export_custom_target_properties)
+    set(options)
+    set(single)
+    set(multiple
+        TARGETS
+        PROPERTIES
+    )
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    set(filename "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-properties.cmake")
+
+    file(WRITE "${filename}" "# Auto-generated: sets custom properties on imported targets\n")
+
+    foreach(target ${arg_TARGETS})
+        foreach(prop ${arg_PROPERTIES})
+            get_target_property(val "${target}" "${prop}")
+            if(NOT val STREQUAL "val-NOTFOUND")
+                file(APPEND "${filename}" 
+                    "set_target_properties(${PROJECT_NAME}::${target} PROPERTIES ${prop} \"${val}\")\n"
+                )
+            endif()
+        endforeach()
+    endforeach()
+
+    install(
+        FILES
+            "${filename}"
+        DESTINATION
+            "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
+    )
+endfunction()
+
+function(myci_private_generate_config_file)
+    set(filename "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake")
+
+    file(WRITE "${filename}"
+        "# Auto-generated\n"
+        "include(\"${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}-targets.cmake\")\n"
+        "include(\"${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}-properties.cmake\")\n"
+    )
+
+    install(
+        FILES
+            "${filename}"
+        DESTINATION
+            "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
+    )
+endfunction()
+
 
 ####
 # @brief Export targets.
@@ -382,19 +451,28 @@ function(myci_export)
             TARGETS
                 ${arg_TARGETS}
             EXPORT
-                ${PROJECT_NAME}-config
+                ${PROJECT_NAME}-export
         )
-        # generate and install cmake configs
+        # generate and install cmake import targets file
         install(
             EXPORT
-                ${PROJECT_NAME}-config
+                ${PROJECT_NAME}-export
             FILE
-                ${PROJECT_NAME}-config.cmake
+                ${PROJECT_NAME}-targets.cmake
             DESTINATION
                 "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
             NAMESPACE
                 "${PROJECT_NAME}::"
         )
+
+        myci_private_export_custom_target_properties(
+            TARGETS
+                ${arg_TARGETS}
+            PROPERTIES
+                installed_resource_dir
+        )
+
+        myci_private_generate_config_file()
     endif()
 endfunction()
 
@@ -427,8 +505,16 @@ endfunction()
 function(myci_declare_library name)
     set(options NO_EXPORT)
     # set(single INSTALL)
-    set(multiple SOURCES RESOURCES DEPENDENCIES EXTERNAL_DEPENDENCIES PUBLIC_COMPILE_DEFINITIONS
-        PRIVATE_INCLUDE_DIRECTORIES PUBLIC_INCLUDE_DIRECTORIES INSTALL_INCLUDE_DIRECTORIES)
+    set(multiple
+        SOURCES
+        RESOURCES
+        DEPENDENCIES
+        EXTERNAL_DEPENDENCIES
+        PUBLIC_COMPILE_DEFINITIONS
+        PRIVATE_INCLUDE_DIRECTORIES
+        PUBLIC_INCLUDE_DIRECTORIES
+        INSTALL_INCLUDE_DIRECTORIES
+    )
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
     # Normally we create STATIC libraries and specify PUBLIC includes and dependencies.
@@ -529,10 +615,18 @@ endfunction()
 #                              These will NOT be searched with find_package().
 #                              Passed to target_link_libraries() as is.
 # @param INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - include directories. Optional.
+# @param GUI - the application is a GUI application, i.e. not a console application.
+#              This option only has effect on Windows, on other systems it has no effect.
+#              On Windows, inidcates that a generated application will provide WinMain() function instead of main() as entry point.
 function(myci_declare_application name)
     set(options GUI)
     set(single)
-    set(multiple SOURCES INCLUDE_DIRECTORIES DEPENDENCIES EXTERNAL_DEPENDENCIES)
+    set(multiple
+        SOURCES
+        INCLUDE_DIRECTORIES
+        DEPENDENCIES
+        EXTERNAL_DEPENDENCIES
+    )
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
     set(win32)
