@@ -1,3 +1,9 @@
+myci (0.1.197) unstable; urgency=medium
+
+  * cmake: no byproducts
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 01 Jun 2025 19:31:26 +0300
+
 myci (0.1.196) unstable; urgency=medium
 
   * cmake: full dataroot dir
