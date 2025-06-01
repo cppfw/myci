@@ -132,13 +132,13 @@ function(myci_private_add_target_external_dependencies target visibility)
     endforeach()
 endfunction()
 
-function(myci_private_copy_resource_file_command out src_dir dst_dir file)
+function(myci_private_copy_resource_file_command out src_dir file)
     get_filename_component(dirname "${src_dir}" NAME)
 
-    set(outfile "${myci_private_output_dir}/${dst_dir}/${dirname}/${file}")
+    set(outfile "${myci_private_output_dir}/${dirname}/${file}")
 
     # stuff for Visual Studio
-    get_filename_component(path "${dst_dir}/${dirname}/${file}" DIRECTORY)
+    get_filename_component(path "${dirname}/${file}" DIRECTORY)
     string(REPLACE "/" "\\" path "Generated Files/${path}")
     source_group("${path}" FILES "${outfile}")
 
@@ -199,11 +199,6 @@ function(myci_private_declare_resource_pack target_name)
         "${arg_DIRECTORY}/*"
     )
 
-    get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG SET)
-    if(NOT CMAKE_CONFIGURATION_TYPES)
-        set(generator_is_multi_config)
-    endif()
-
     set(out_files)
     foreach(file ${res_files})
         # stuff for Visual Studio
@@ -211,15 +206,8 @@ function(myci_private_declare_resource_pack target_name)
         string(REPLACE "/" "\\" path "Resource Files/${path}")
         source_group("${path}" FILES "${arg_DIRECTORY}/${file}")
 
-        if(${generator_is_multi_config})
-            foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
-                myci_private_copy_resource_file_command(outfile "${arg_DIRECTORY}" "${cfg}" "${file}")
-                list(APPEND out_files ${outfile})
-            endforeach()
-        else()
-            myci_private_copy_resource_file_command(outfile "${arg_DIRECTORY}" "" "${file}")
-            list(APPEND out_files ${outfile})
-        endif()
+        myci_private_copy_resource_file_command(outfile "${arg_DIRECTORY}" "${file}")
+        list(APPEND out_files ${outfile})
     endforeach()
 
     add_custom_target(${target_name}
@@ -528,7 +516,7 @@ function(myci_private_add_resource_pack_deps)
 
     foreach(dep ${arg_DEPENDENCIES})
         string(REPLACE "::" "___" res_target_name "${dep}")
-        set(res_target_name ${res_target_name}__resource_directory)
+        set(res_target_name ${res_target_name}__copy_resources)
 
         if(TARGET ${res_target_name})
             add_dependencies(${arg_TARGET} ${res_target_name})
@@ -614,7 +602,7 @@ function(myci_declare_application name)
     set_target_properties(${name} PROPERTIES
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
-        VS_DEBUGGER_WORKING_DIRECTORY "${myci_private_output_dir}/$<CONFIG>"
+        VS_DEBUGGER_WORKING_DIRECTORY "${myci_private_output_dir}"
         RUNTIME_OUTPUT_DIRECTORY "${myci_private_output_dir}"
     )
 
@@ -631,7 +619,7 @@ function(myci_declare_application name)
 
     # copy direct application resources
     if(arg_RESOURCE_DIRECTORY)
-        set(res_target_name ${name}__resource_directory)
+        set(res_target_name ${name}__copy_resources)
 
         file(REAL_PATH
             # PATH
