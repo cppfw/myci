@@ -558,7 +558,7 @@ function(myci_private_add_resource_pack_deps)
                     # OUTPUT
                         abs_path_directory
                     BASE_DIRECTORY
-                        "${CMAKE_INSTALL_DATAROOTDIR}"
+                        "${CMAKE_INSTALL_FULL_DATAROOTDIR}"
                     EXPAND_TILDE
                 )
 
