@@ -152,8 +152,6 @@ function(myci_private_copy_resource_file_command out src_dir dst_dir file)
         EXPAND_TILDE
     )
 
-    # message(src_file = ${src_file})
-
     add_custom_command(
         OUTPUT
             "${outfile}"
@@ -249,7 +247,7 @@ function(myci_private_export_custom_target_properties)
 
     set(filename "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-properties.cmake")
 
-    file(WRITE "${filename}" "# Auto-generated: sets custom properties on imported targets\n")
+    file(WRITE "${filename}" "# Set exported custom properties on imported targets\n")
 
     foreach(target ${arg_TARGETS})
         foreach(prop ${arg_PROPERTIES})
@@ -275,8 +273,8 @@ function(myci_private_generate_config_file)
 
     file(WRITE "${filename}"
         "# Auto-generated\n"
-        "include(\"${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}-targets.cmake\")\n"
-        "include(\"${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}-properties.cmake\")\n"
+        "include(\"\${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}-targets.cmake\")\n"
+        "include(\"\${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}-properties.cmake\")\n"
     )
 
     install(
@@ -337,7 +335,6 @@ endfunction()
 # By default it will also export the library as package with same name. Exporting can be suppressed using NO_EXPORT option.
 # @param name - library name.
 # @param SOURCES <file1> [<file2> ...] - list of source files. Required.
-# @param RESOURCES <file1> [<file2> ...] - TODO: write description. Optional. TODO: obsolete, remove.
 # @param RESOURCE_DIRECTORY <dir> - directory with resource files. Optional. The directory will be installed.
 #                                   Application linking to the library will also copy the resources directory to the
 #                                   application binary output directory.
@@ -365,7 +362,6 @@ function(myci_declare_library name)
     # set(single INSTALL)
     set(multiple
         SOURCES
-        RESOURCES
         RESOURCE_DIRECTORY
         DEPENDENCIES
         EXTERNAL_DEPENDENCIES
@@ -390,7 +386,7 @@ function(myci_declare_library name)
         endif()
     endforeach()
 
-    add_library(${name} ${static} ${arg_SOURCES} ${arg_RESOURCES})
+    add_library(${name} ${static} ${arg_SOURCES})
     add_library(${PROJECT_NAME}::${name} ALIAS ${name})
 
     # TODO: allow specifying the C++ standard as argument
@@ -433,7 +429,7 @@ function(myci_declare_library name)
     myci_private_add_target_dependencies(${name} ${public} ${arg_DEPENDENCIES})
     myci_private_add_target_external_dependencies(${name} ${public} ${arg_EXTERNAL_DEPENDENCIES})
 
-    if(${arg_RESOURCE_DIRECTORY})
+    if(arg_RESOURCE_DIRECTORY)
         file(REAL_PATH
             # PATH
                 "${arg_RESOURCE_DIRECTORY}"
@@ -475,7 +471,7 @@ function(myci_declare_library name)
                 DIRECTORY
                     "${arg_RESOURCE_DIRECTORY}"
                 DESTINATION
-                    "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}"
+                    "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
             )
         endif()
 
@@ -487,6 +483,95 @@ function(myci_declare_library name)
         endif()
     endif()
 endfunction()
+
+function(myci_private_get_all_dependencies out)
+    set(options)
+    set(single TARGET)
+    set(multiple)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    get_target_property(interface_deps ${arg_TARGET} INTERFACE_LINK_LIBRARIES)
+    get_target_property(link_deps ${arg_TARGET} LINK_LIBRARIES)
+
+    set(all_deps)
+    if(NOT interface_deps STREQUAL "interface_deps-NOTFOUND")
+        list(APPEND all_deps ${interface_deps})
+    endif()
+    if(NOT link_deps STREQUAL "link_deps-NOTFOUND")
+        list(APPEND all_deps ${link_deps})
+    endif()
+
+    foreach(dep ${all_deps})
+        if(NOT TARGET ${dep})
+            continue()
+        endif()
+
+        myci_private_get_all_dependencies(out_deps
+            TARGET
+                ${dep}
+        )
+        foreach(out_dep ${out_deps})
+            if(NOT "${out_dep}" IN_LIST all_deps)
+                if(TARGET ${out_dep})
+                    list(APPEND all_deps ${out_dep})
+                endif()
+            endif()
+        endforeach()
+    endforeach()
+    set(${out} ${all_deps} PARENT_SCOPE)
+endfunction()
+
+# Generate a resouce copying target for each target from DEPENDENCIES
+# and add the generated target as dependency to the TARGET.
+function(myci_private_add_resource_pack_deps)
+    set(options)
+    set(single TARGET)
+    set(multiple DEPENDENCIES)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    foreach(dep ${arg_DEPENDENCIES})
+        string(REPLACE "::" "___" res_target_name "${dep}")
+        set(res_target_name ${res_target_name}__resource_directory)
+
+        if(TARGET ${res_target_name})
+            add_dependencies(${arg_TARGET} ${res_target_name})
+            continue()
+        endif()
+
+        get_target_property(res_dir "${dep}" myci_resource_directory)
+        if(NOT res_dir STREQUAL "res_dir-NOTFOUND")
+            if(NOT IS_ABSOLUTE ${res_dir})
+                message(FATAL_ERROR "myci_private_add_resource_pack_deps(): myci_resource_directory property must be an absolute path, got ${res_dir}")
+            endif()
+
+            myci_private_declare_resource_pack(${res_target_name}
+                DIRECTORY
+                    ${res_dir}
+            )
+            add_dependencies(${arg_TARGET} ${res_target_name})
+        else()
+            get_target_property(res_dir "${dep}" myci_installed_resource_directory_within_datadir)
+            if(NOT res_dir STREQUAL "res_dir-NOTFOUND")
+                file(REAL_PATH
+                    # PATH
+                        "${res_dir}"
+                    # OUTPUT
+                        abs_path_directory
+                    BASE_DIRECTORY
+                        "${CMAKE_INSTALL_DATAROOTDIR}"
+                    EXPAND_TILDE
+                )
+
+                myci_private_declare_resource_pack(${res_target_name}
+                    DIRECTORY
+                        ${abs_path_directory}
+                )
+                add_dependencies(${arg_TARGET} ${res_target_name})
+            endif()
+        endif()
+    endforeach()
+endfunction()
+
 
 ####
 # @brief Declare application.
@@ -547,6 +632,7 @@ function(myci_declare_application name)
     myci_private_add_target_dependencies(${name} PRIVATE ${arg_DEPENDENCIES})
     myci_private_add_target_external_dependencies(${name} PRIVATE ${arg_EXTERNAL_DEPENDENCIES})
 
+    # copy direct application resources
     if(arg_RESOURCE_DIRECTORY)
         set(res_target_name ${name}__resource_directory)
 
@@ -566,4 +652,16 @@ function(myci_declare_application name)
         )
         add_dependencies(${name} ${res_target_name})
     endif()
+
+    # copy resources of linked libraries
+    myci_private_get_all_dependencies(all_deps
+        TARGET
+            ${name}
+    )
+    myci_private_add_resource_pack_deps(
+        TARGET
+            ${name}
+        DEPENDENCIES
+            ${all_deps}
+    )
 endfunction()
