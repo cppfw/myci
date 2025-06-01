@@ -1,3 +1,9 @@
+myci (0.1.195) unstable; urgency=medium
+
+  * cmake: copy resources
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 01 Jun 2025 17:17:59 +0300
+
 myci (0.1.194) unstable; urgency=medium
 
   * cmake: add GUI option
