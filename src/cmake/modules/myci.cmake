@@ -110,11 +110,17 @@ function(myci_private_add_target_dependencies target visibility)
     foreach(dep ${ARGN})
         string(FIND ${dep} "::" colon_colon_pos)
         if(colon_colon_pos EQUAL -1)
-            # package name same as target name
-            if(NOT TARGET ${dep}::${dep})
-                find_package(${dep} CONFIG REQUIRED)
+            # prefer non-namespaced dependency
+            if(TARGET ${dep})
+                set(actual_dep ${dep})
+            else()
+                # package name same as target name
+                if(NOT TARGET ${dep}::${dep})
+                    find_package(${dep} CONFIG REQUIRED)
+                endif()
+                set(actual_dep ${dep}::${dep})
             endif()
-            target_link_libraries(${target} ${visibility} ${dep}::${dep})
+            target_link_libraries(${target} ${visibility} ${actual_dep})
         else()
             # dep is in <pkg>::<target> format
             if(NOT TARGET ${dep})
