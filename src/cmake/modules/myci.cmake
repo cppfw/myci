@@ -5,9 +5,6 @@ set(MYCI_MODULE_INCLUDED TRUE)
 
 include(GNUInstallDirs)
 
-# TODO: remove from here
-get_property(myci_generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG SET)
-
 set(myci_private_output_dir "${CMAKE_BINARY_DIR}/out")
 
 ####
@@ -17,7 +14,7 @@ set(myci_private_output_dir "${CMAKE_BINARY_DIR}/out")
 # In case the <UPPERCASE_PROJECT_NAME>_DISABLE_INSTALL is not defined, then checks value of MYCI_GLOBAL_DISABLE_INSTALL
 # variable, if it is true then sets ${var} to FALSE, otherwise sets ${var} to TRUE.
 # @param var - variable name to store the flag value to.
-function(myci_get_install_flag var)
+function(myci_private_get_install_flag var)
     # Check if {CMAKE_PROJECT_NAME}_DISABLE_INSTALL variable is set and act accordingly
     string(TOUPPER "${CMAKE_PROJECT_NAME}" nameupper)
     string(REPLACE "-" "_" nameupper "${nameupper}")
@@ -109,97 +106,6 @@ function(myci_add_source_files out)
     set(${out} ${result_files} PARENT_SCOPE)
 endfunction()
 
-function(myci_install_resource_file out srcfile dstfile)
-    set(outfile "${myci_private_output_dir}/${dstfile}")
-
-    # stuff for Visual Studio
-    get_filename_component(path "${dstfile}" DIRECTORY)
-    string(REPLACE "/" "\\" path "Generated Files/${path}")
-    source_group("${path}" FILES "${outfile}")
-
-    list(APPEND result_files "${outfile}")
-
-    add_custom_command(
-        OUTPUT
-            "${outfile}"
-        COMMAND
-            "${CMAKE_COMMAND}" -E copy "${srcfile}" "${outfile}"
-        DEPENDS
-            "${srcfile}"
-        MAIN_DEPENDENCY
-            "${srcfile}"
-    )
-    set(${out} ${result_files} PARENT_SCOPE)
-endfunction()
-
-# TODO: remove
-function(myci_add_resource_files out)
-    set(options RECURSIVE)
-    set(single DIRECTORY)
-    set(multiple PATTERNS)
-    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
-
-    if(NOT arg_DIRECTORY)
-        message(FATAL_ERROR "myci_add_resource_files(): required argument DIRECTORY is empty")
-    endif()
-
-    get_filename_component(dirname "${arg_DIRECTORY}" NAME)
-
-    file(REAL_PATH
-        # PATH
-            "${arg_DIRECTORY}"
-        # OUTPUT
-            abs_path_directory
-        BASE_DIRECTORY
-            ${CMAKE_CURRENT_LIST_DIR}
-        EXPAND_TILDE
-    )
-
-    file(
-        GLOB_RECURSE
-            globresult
-        # If arg_DIRECTORY is relative and has '..' in front then this does not work.
-        # So, use absoulte directory path.
-        RELATIVE
-            ${abs_path_directory}
-        FOLLOW_SYMLINKS
-        CONFIGURE_DEPENDS
-        LIST_DIRECTORIES
-            false
-        "${arg_DIRECTORY}/*"
-    )
-
-    set(result_files)
-    foreach(file ${globresult})
-        # stuff for Visual Studio
-        get_filename_component(path "${file}" DIRECTORY)
-        string(REPLACE "/" "\\" path "Resource Files/${path}")
-        source_group("${path}" FILES "${arg_DIRECTORY}/${file}")
-
-        list(APPEND result_files "${arg_DIRECTORY}/${file}")
-
-        if(${myci_generator_is_multi_config})
-            foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
-                myci_install_resource_file(${out} "${arg_DIRECTORY}/${file}" "${cfg}/${dirname}/${file}")
-            endforeach()
-        else()
-            myci_install_resource_file(${out} "${arg_DIRECTORY}/${file}" "${dirname}/${file}")
-        endif()
-
-        myci_get_install_flag(install)
-        if(${install})
-            install(
-                FILES
-                    "${arg_DIRECTORY}/${file}"
-                DESTINATION
-                    "${CMAKE_INSTALL_DATADIR}/${dirname}"
-            )
-        endif()
-    endforeach()
-
-    set(${out} ${result_files} PARENT_SCOPE)
-endfunction()
-
 function(myci_private_add_target_dependencies target visibility)
     foreach(dep ${ARGN})
         string(FIND ${dep} "::" colon_colon_pos)
@@ -220,39 +126,8 @@ function(myci_private_add_target_dependencies target visibility)
     endforeach()
 endfunction()
 
-# TODO: remove ANGLE-related stuff when the ANGLE lib is packaged properly.
-# macro(myci_add_angle_component target visibility component)
-#     if(NOT TARGET unofficial::angle::${component})
-#         find_package(unofficial-angle REQUIRED CONFIG)
-#     endif()
-#     target_link_libraries(${target} ${visibility} unofficial::angle::${component})
-#     # For some stupid reason, ANGLE package puts GLES2 headers into ANGLE subdirectory. Add it to include paths.
-#     get_target_property(${component}_INCLUDE_DIRS unofficial::angle::${component} INTERFACE_INCLUDE_DIRECTORIES)
-#     foreach(dir ${${component}_INCLUDE_DIRS})
-#         target_include_directories(${target} PRIVATE "${dir}/ANGLE")
-#     endforeach()
-#     # For some another stupid reason, ANGLE package is missing KHR/khrplatform.h. Get it from another package.
-#     if(EGL_INCLUDE_DIR)
-#         target_include_directories(${target} PRIVATE "${EGL_INCLUDE_DIR}")
-#     endif()
-# endmacro()
-
 function(myci_private_add_target_external_dependencies target visibility)
     foreach(dep ${ARGN})
-        # TODO: remove commented code
-        # # special case to use ANGLE on Win32 for GLESv2
-        # if(WIN32 AND "${dep}" STREQUAL "GLESv2")
-        #     myci_add_angle_component(${target} ${visibility} libGLESv2)
-        #     continue()
-        # elseif(WIN32 AND "${dep}" STREQUAL "EGL")
-        #     myci_add_angle_component(${target} ${visibility} libEGL)
-        #     continue()
-        # endif()
-        # # default case
-        # if(NOT TARGET ${dep}::${dep})
-        #     find_package(${dep} REQUIRED)
-        # endif()
-        # target_link_libraries(${target} ${visibility} ${dep}::${dep})
         target_link_libraries(${target} ${visibility} ${dep})
     endforeach()
 endfunction()
@@ -277,15 +152,13 @@ function(myci_private_copy_resource_file_command out src_dir dst_dir file)
         EXPAND_TILDE
     )
 
-    # set(src_file
-        # $<BUILD_INTERFACE:${abs_src_file}>
-        # $<INSTALL_INTERFACE:${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/${dirname}/${file}>
-    # )
-
     # message(src_file = ${src_file})
 
     add_custom_command(
         OUTPUT
+            "${outfile}"
+        # tell cmake to clean copied files when clean target is executed
+        BYPRODUCTS
             "${outfile}"
         COMMAND
             "${CMAKE_COMMAND}" -E copy ${abs_src_file} "${outfile}"
@@ -302,26 +175,20 @@ endfunction()
 # @brief Declare resource pack.
 # Declare a resource pack target which will copy the resources directory to an application output directory.
 # @param target_name - resource pack target name.
-# @param DIRECTORY <dir> - directory containing the resources pack. The directory will be installed and copied to application output directory.
-function(myci_declare_resource_pack target_name)
+# @param DIRECTORY <dir> - directory containing the resources pack. The directory will be copied to application output directory.
+function(myci_private_declare_resource_pack target_name)
     set(options)
     set(single DIRECTORY)
     set(multiple)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
     if(NOT arg_DIRECTORY)
-        message(FATAL_ERROR "myci_declare_resource_pack(): required argument DIRECTORY is empty")
+        message(FATAL_ERROR "myci_private_declare_resource_pack(): required argument DIRECTORY is empty")
     endif()
 
-    file(REAL_PATH
-        # PATH
-            "${arg_DIRECTORY}"
-        # OUTPUT
-            abs_path_directory
-        BASE_DIRECTORY
-            ${CMAKE_CURRENT_LIST_DIR}
-        EXPAND_TILDE
-    )
+    if(NOT IS_ABSOLUTE ${arg_DIRECTORY})
+        message(FATAL_ERROR "myci_private_declare_resource_pack(): DIRECTORY must be an absolute path, got ${arg_DIRECTORY}")
+    endif()
 
     file(
         GLOB_RECURSE
@@ -329,7 +196,7 @@ function(myci_declare_resource_pack target_name)
         # If arg_DIRECTORY is relative and has '..' in front then this does not work.
         # So, use absoulte directory path.
         RELATIVE
-            ${abs_path_directory}
+            ${arg_DIRECTORY}
         FOLLOW_SYMLINKS
         CONFIGURE_DEPENDS
         LIST_DIRECTORIES
@@ -338,7 +205,6 @@ function(myci_declare_resource_pack target_name)
     )
 
     get_property(generator_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG SET)
-
     if(NOT CMAKE_CONFIGURATION_TYPES)
         set(generator_is_multi_config)
     endif()
@@ -353,29 +219,18 @@ function(myci_declare_resource_pack target_name)
         if(${generator_is_multi_config})
             foreach(cfg ${CMAKE_CONFIGURATION_TYPES})
                 myci_private_copy_resource_file_command(outfile "${arg_DIRECTORY}" "${cfg}" "${file}")
-                # add_dependencies(${target_name} "${outfile}")
                 list(APPEND out_files ${outfile})
-                message(outfile = ${outfile})
             endforeach()
         else()
             myci_private_copy_resource_file_command(outfile "${arg_DIRECTORY}" "" "${file}")
-            # add_dependencies(${target_name} "${outfile}")
             list(APPEND out_files ${outfile})
-            message(outfile = ${outfile})
         endif()
     endforeach()
 
-    add_custom_target(${target_name} DEPENDS ${out_files})
-
-    myci_get_install_flag(install)
-    if(${install})
-        install(
-            DIRECTORY
-                "${arg_DIRECTORY}"
-            DESTINATION
-                "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}"
-        )
-    endif()
+    add_custom_target(${target_name}
+        DEPENDS
+            ${out_files}
+    )
 endfunction()
 
 ####
@@ -444,7 +299,7 @@ function(myci_export)
     set(multiple TARGETS)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
-    myci_get_install_flag(install)
+    myci_private_get_install_flag(install)
     if(${install})
         # assign targets to export name
         install(
@@ -469,7 +324,7 @@ function(myci_export)
             TARGETS
                 ${arg_TARGETS}
             PROPERTIES
-                installed_resource_dir
+                myci_installed_resource_directory_within_datadir
         )
 
         myci_private_generate_config_file()
@@ -482,7 +337,10 @@ endfunction()
 # By default it will also export the library as package with same name. Exporting can be suppressed using NO_EXPORT option.
 # @param name - library name.
 # @param SOURCES <file1> [<file2> ...] - list of source files. Required.
-# @param RESOURCES <file1> [<file2> ...] - TODO: write description. Optional.
+# @param RESOURCES <file1> [<file2> ...] - TODO: write description. Optional. TODO: obsolete, remove.
+# @param RESOURCE_DIRECTORY <dir> - directory with resource files. Optional. The directory will be installed.
+#                                   Application linking to the library will also copy the resources directory to the
+#                                   application binary output directory.
 # @param DEPENDENCIES <dep1> [<dep2> ...] - list of dependencies. Optional.
 #                     If <depX> does not have any '::' in its name, then
 #                     it will be searched with find_package(<depX> CONFIG REQUIRED) and
@@ -508,6 +366,7 @@ function(myci_declare_library name)
     set(multiple
         SOURCES
         RESOURCES
+        RESOURCE_DIRECTORY
         DEPENDENCIES
         EXTERNAL_DEPENDENCIES
         PUBLIC_COMPILE_DEFINITIONS
@@ -574,7 +433,27 @@ function(myci_declare_library name)
     myci_private_add_target_dependencies(${name} ${public} ${arg_DEPENDENCIES})
     myci_private_add_target_external_dependencies(${name} ${public} ${arg_EXTERNAL_DEPENDENCIES})
 
-    myci_get_install_flag(install)
+    if(${arg_RESOURCE_DIRECTORY})
+        file(REAL_PATH
+            # PATH
+                "${arg_RESOURCE_DIRECTORY}"
+            # OUTPUT
+                abs_path_directory
+            BASE_DIRECTORY
+                ${CMAKE_CURRENT_LIST_DIR}
+            EXPAND_TILDE
+        )
+
+        get_filename_component(dirname "${arg_RESOURCE_DIRECTORY}" NAME)
+
+        set_target_properties(${name}
+            PROPERTIES
+                myci_resource_directory "${abs_path_directory}"
+                myci_installed_resource_directory_within_datadir "${PROJECT_NAME}/${dirname}"
+        )
+    endif()
+
+    myci_private_get_install_flag(install)
     if(${install})
         target_include_directories(${name} ${public} $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
         # install library header files preserving directory hierarchy
@@ -591,6 +470,15 @@ function(myci_declare_library name)
             )
         endforeach()
 
+        if(${arg_RESOURCE_DIRECTORY})
+            install(
+                DIRECTORY
+                    "${arg_RESOURCE_DIRECTORY}"
+                DESTINATION
+                    "${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}"
+            )
+        endif()
+
         if(NOT arg_NO_EXPORT)
             myci_export(
                 TARGETS
@@ -604,6 +492,8 @@ endfunction()
 # @brief Declare application.
 # @param name - application name.
 # @param SOURCES <file1> [<file2> ...] - list of source files. Required.
+# @param RESOURCE_DIRECTORY <dir> - application resource directory. The resource directory will be copied to the
+#                                   application binary output directory.
 # @param DEPENDENCIES <dep1> [<dep2> ...] - list of dependencies. Optional.
 #                     If <depX> does not have any '::' in its name, then
 #                     it will be searched with find_package(<depX> CONFIG REQUIRED) and
@@ -620,7 +510,7 @@ endfunction()
 #              On Windows, inidcates that a generated application will provide WinMain() function instead of main() as entry point.
 function(myci_declare_application name)
     set(options GUI)
-    set(single)
+    set(single RESOURCE_DIRECTORY)
     set(multiple
         SOURCES
         INCLUDE_DIRECTORIES
@@ -656,4 +546,24 @@ function(myci_declare_application name)
 
     myci_private_add_target_dependencies(${name} PRIVATE ${arg_DEPENDENCIES})
     myci_private_add_target_external_dependencies(${name} PRIVATE ${arg_EXTERNAL_DEPENDENCIES})
+
+    if(arg_RESOURCE_DIRECTORY)
+        set(res_target_name ${name}__resource_directory)
+
+        file(REAL_PATH
+            # PATH
+                "${arg_RESOURCE_DIRECTORY}"
+            # OUTPUT
+                abs_path_directory
+            BASE_DIRECTORY
+                ${CMAKE_CURRENT_LIST_DIR}
+            EXPAND_TILDE
+        )
+
+        myci_private_declare_resource_pack(${res_target_name}
+            DIRECTORY
+                ${abs_path_directory}
+        )
+        add_dependencies(${name} ${res_target_name})
+    endif()
 endfunction()
