@@ -1,3 +1,9 @@
+myci (0.1.196) unstable; urgency=medium
+
+  * cmake: full dataroot dir
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 01 Jun 2025 18:34:43 +0300
+
 myci (0.1.195) unstable; urgency=medium
 
   * cmake: copy resources
