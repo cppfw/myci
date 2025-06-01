@@ -155,9 +155,6 @@ function(myci_private_copy_resource_file_command out src_dir dst_dir file)
     add_custom_command(
         OUTPUT
             "${outfile}"
-        # tell cmake to clean copied files when clean target is executed
-        BYPRODUCTS
-            "${outfile}"
         COMMAND
             "${CMAKE_COMMAND}" -E copy ${abs_src_file} "${outfile}"
         DEPENDS
