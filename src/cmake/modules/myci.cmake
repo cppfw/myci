@@ -38,7 +38,7 @@ endfunction()
 # @param DIRECTORY <dir> - directory to look for source files in. Required.
 # @param RECURSIVE - look for source files recursively. Optional.
 # @param PATTERNS <pattern1> [<pattern2> ...] - list of file patterns to include. Example: '*.cpp *.c'.
-#                 Defaults to '*.cpp *.c *.hpp *.h'.
+#                 Defaults to '*.cpp *.c *.hpp *.hxx *.h'.
 function(myci_add_source_files out)
     set(options RECURSIVE)
     set(single DIRECTORY)
@@ -50,8 +50,7 @@ function(myci_add_source_files out)
     endif()
 
     if(NOT arg_PATTERNS)
-        # TODO: why append headers to sources?
-        list(APPEND arg_PATTERNS "*.cpp" "*.c" "*.hpp" "*.h")
+        list(APPEND arg_PATTERNS "*.cpp" "*.c" "*.hpp" "*.hxx" "*.h")
     endif()
 
     set(patterns)
@@ -220,6 +219,7 @@ function(myci_private_declare_resource_pack target_name)
         DEPENDS
             ${out_files}
     )
+    set_target_properties(${target_name} PROPERTIES FOLDER "CMake")
 endfunction()
 
 ####
@@ -348,9 +348,10 @@ endfunction()
 #                                    Hierarchy of subdirectories is preserved during isntallation.
 #                                    The last directory level will be included in the installation,
 #                                    e.g. for '../src/mylib' the destination will be '<system-include-dir>/mylib/'.
+# @param IDE_FOLDER IDE folder for the library (default is "Libs")
 function(myci_declare_library name)
     set(options NO_EXPORT)
-    # set(single INSTALL)
+    set(single IDE_FOLDER)
     set(multiple
         SOURCES
         RESOURCE_DIRECTORY
@@ -379,6 +380,11 @@ function(myci_declare_library name)
 
     add_library(${name} ${static} ${arg_SOURCES})
     add_library(${PROJECT_NAME}::${name} ALIAS ${name})
+
+    if(NOT arg_IDE_FOLDER)
+        set(arg_IDE_FOLDER "Libs")
+    endif()
+    set_target_properties(${name} PROPERTIES FOLDER "${arg_IDE_FOLDER}")
 
     # TODO: allow specifying the C++ standard as argument
     target_compile_features(${name} ${public} cxx_std_20)
