@@ -1,3 +1,9 @@
+myci (0.1.199) unstable; urgency=medium
+
+  * cmake: small improvements
+
+ -- Ivan Gagis <igagis@gmail.com>  Wed, 04 Jun 2025 15:53:35 +0300
+
 myci (0.1.198) unstable; urgency=medium
 
   * cmake: prefer non-namespaced dependency
