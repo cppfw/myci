@@ -503,6 +503,10 @@ function(myci_private_get_all_dependencies out)
     set(multiple)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
+    if(NOT arg_TARGET)
+        message(FATAL_ERROR "myci_private_get_all_dependencies(): missing mandatory parameter TARGET.")
+    endif()
+
     get_target_property(interface_deps ${arg_TARGET} INTERFACE_LINK_LIBRARIES)
     get_target_property(link_deps ${arg_TARGET} LINK_LIBRARIES)
 
@@ -536,15 +540,19 @@ endfunction()
 
 # Generate a resouce copying target for each target from DEPENDENCIES
 # and add the generated target as dependency to the TARGET.
-function(myci_private_add_resource_pack_deps app_target_name)
+function(myci_private_add_resource_pack_deps)
     set(options)
     set(single TARGET)
     set(multiple DEPENDENCIES)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
+    if(NOT arg_TARGET)
+        message(FATAL_ERROR "myci_private_add_resource_pack_deps(): missing mandatory parameter TARGET.")
+    endif()
+
     foreach(dep ${arg_DEPENDENCIES})
         string(REPLACE "::" "___" res_target_name "${dep}")
-        set(res_target_name ${res_target_name}_${app_target_name}__copy_resources)
+        set(res_target_name ${res_target_name}_${arg_TARGET}__copy_resources)
 
         if(TARGET ${res_target_name})
             add_dependencies(${arg_TARGET} ${res_target_name})
@@ -557,7 +565,7 @@ function(myci_private_add_resource_pack_deps app_target_name)
                 message(FATAL_ERROR "myci_private_add_resource_pack_deps(): myci_resource_directory property must be an absolute path, got ${res_dir}")
             endif()
 
-            myci_private_declare_resource_pack(${res_target_name} ${app_target_name}
+            myci_private_declare_resource_pack(${res_target_name} ${arg_TARGET}
                 DIRECTORY
                     ${res_dir}
             )
@@ -575,7 +583,7 @@ function(myci_private_add_resource_pack_deps app_target_name)
                     EXPAND_TILDE
                 )
 
-                myci_private_declare_resource_pack(${res_target_name} ${app_target_name}
+                myci_private_declare_resource_pack(${res_target_name} ${arg_TARGET}
                     DIRECTORY
                         ${abs_path_directory}
                 )
@@ -671,7 +679,7 @@ function(myci_declare_application name)
         TARGET
             ${name}
     )
-    myci_private_add_resource_pack_deps(${name}
+    myci_private_add_resource_pack_deps(
         TARGET
             ${name}
         DEPENDENCIES
