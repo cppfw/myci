@@ -118,7 +118,7 @@ function(myci_add_source_files out)
         list(APPEND result_files "${arg_DIRECTORY}/${file}")
     endforeach()
 
-    set(${out} ${result_files} PARENT_SCOPE)
+    set(${out} ${${out}} ${result_files} PARENT_SCOPE)
 endfunction()
 
 function(myci_private_add_target_dependencies target visibility)
@@ -153,10 +153,10 @@ function(myci_private_add_target_external_dependencies target visibility)
     endforeach()
 endfunction()
 
-function(myci_private_copy_resource_file_command out src_dir file)
+function(myci_private_copy_resource_file_command out target_name src_dir file)
     get_filename_component(dirname "${src_dir}" NAME)
 
-    set(outfile "${myci_private_output_dir}/${dirname}/${file}")
+    set(outfile "${myci_private_output_dir}/${target_name}/${dirname}/${file}")
 
     # stuff for Visual Studio
     get_filename_component(path "${dirname}/${file}" DIRECTORY)
@@ -191,12 +191,17 @@ endfunction()
 # @brief Declare resource pack.
 # Declare a resource pack target which will copy the resources directory to an application output directory.
 # @param target_name - resource pack target name.
+# @param APP_TARGET <name> - application target name.
 # @param DIRECTORY <dir> - directory containing the resources pack. The directory will be copied to application output directory.
 function(myci_private_declare_resource_pack target_name)
     set(options)
-    set(single DIRECTORY)
+    set(single APP_TARGET DIRECTORY)
     set(multiple)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    if(NOT arg_APP_TARGET)
+        message(FATAL_ERROR "myci_private_declare_resource_pack(): required argument APP_TARGET is empty")
+    endif()
 
     if(NOT arg_DIRECTORY)
         message(FATAL_ERROR "myci_private_declare_resource_pack(): required argument DIRECTORY is empty")
@@ -227,7 +232,7 @@ function(myci_private_declare_resource_pack target_name)
         string(REPLACE "/" "\\" path "Resource Files/${path}")
         source_group("${path}" FILES "${arg_DIRECTORY}/${file}")
 
-        myci_private_copy_resource_file_command(outfile "${arg_DIRECTORY}" "${file}")
+        myci_private_copy_resource_file_command(outfile "${arg_APP_TARGET}" "${arg_DIRECTORY}" "${file}")
         list(APPEND out_files ${outfile})
     endforeach()
 
@@ -503,6 +508,10 @@ function(myci_private_get_all_dependencies out)
     set(multiple)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
+    if(NOT arg_TARGET)
+        message(FATAL_ERROR "myci_private_get_all_dependencies(): missing mandatory parameter TARGET.")
+    endif()
+
     get_target_property(interface_deps ${arg_TARGET} INTERFACE_LINK_LIBRARIES)
     get_target_property(link_deps ${arg_TARGET} LINK_LIBRARIES)
 
@@ -542,9 +551,13 @@ function(myci_private_add_resource_pack_deps)
     set(multiple DEPENDENCIES)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
+    if(NOT arg_TARGET)
+        message(FATAL_ERROR "myci_private_add_resource_pack_deps(): missing mandatory parameter TARGET.")
+    endif()
+
     foreach(dep ${arg_DEPENDENCIES})
         string(REPLACE "::" "___" res_target_name "${dep}")
-        set(res_target_name ${res_target_name}__copy_resources)
+        set(res_target_name ${res_target_name}_${arg_TARGET}__copy_resources)
 
         if(TARGET ${res_target_name})
             add_dependencies(${arg_TARGET} ${res_target_name})
@@ -558,6 +571,8 @@ function(myci_private_add_resource_pack_deps)
             endif()
 
             myci_private_declare_resource_pack(${res_target_name}
+                APP_TARGET
+                    ${arg_TARGET}
                 DIRECTORY
                     ${res_dir}
             )
@@ -576,6 +591,8 @@ function(myci_private_add_resource_pack_deps)
                 )
 
                 myci_private_declare_resource_pack(${res_target_name}
+                    APP_TARGET
+                        ${arg_TARGET}
                     DIRECTORY
                         ${abs_path_directory}
                 )
@@ -630,8 +647,8 @@ function(myci_declare_application name)
     set_target_properties(${name} PROPERTIES
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
-        VS_DEBUGGER_WORKING_DIRECTORY "${myci_private_output_dir}"
-        RUNTIME_OUTPUT_DIRECTORY "${myci_private_output_dir}"
+        VS_DEBUGGER_WORKING_DIRECTORY "${myci_private_output_dir}/${name}"
+        RUNTIME_OUTPUT_DIRECTORY "${myci_private_output_dir}/${name}"
     )
 
     foreach(dir ${arg_INCLUDE_DIRECTORIES})
@@ -660,6 +677,8 @@ function(myci_declare_application name)
         )
 
         myci_private_declare_resource_pack(${res_target_name}
+            APP_TARGET
+                ${name}
             DIRECTORY
                 ${abs_path_directory}
         )
