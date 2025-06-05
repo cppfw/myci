@@ -118,7 +118,7 @@ function(myci_add_source_files out)
         list(APPEND result_files "${arg_DIRECTORY}/${file}")
     endforeach()
 
-    set(${out} ${result_files} PARENT_SCOPE)
+    set(${out} ${${out}} ${result_files} PARENT_SCOPE)
 endfunction()
 
 function(myci_private_add_target_dependencies target visibility)
@@ -153,10 +153,10 @@ function(myci_private_add_target_external_dependencies target visibility)
     endforeach()
 endfunction()
 
-function(myci_private_copy_resource_file_command out src_dir file)
+function(myci_private_copy_resource_file_command out target_name src_dir file)
     get_filename_component(dirname "${src_dir}" NAME)
 
-    set(outfile "${myci_private_output_dir}/${dirname}/${file}")
+    set(outfile "${myci_private_output_dir}/${target_name}/${dirname}/${file}")
 
     # stuff for Visual Studio
     get_filename_component(path "${dirname}/${file}" DIRECTORY)
@@ -192,7 +192,7 @@ endfunction()
 # Declare a resource pack target which will copy the resources directory to an application output directory.
 # @param target_name - resource pack target name.
 # @param DIRECTORY <dir> - directory containing the resources pack. The directory will be copied to application output directory.
-function(myci_private_declare_resource_pack target_name)
+function(myci_private_declare_resource_pack target_name app_target_name)
     set(options)
     set(single DIRECTORY)
     set(multiple)
@@ -227,7 +227,7 @@ function(myci_private_declare_resource_pack target_name)
         string(REPLACE "/" "\\" path "Resource Files/${path}")
         source_group("${path}" FILES "${arg_DIRECTORY}/${file}")
 
-        myci_private_copy_resource_file_command(outfile "${arg_DIRECTORY}" "${file}")
+        myci_private_copy_resource_file_command(outfile "${app_target_name}" "${arg_DIRECTORY}" "${file}")
         list(APPEND out_files ${outfile})
     endforeach()
 
@@ -536,7 +536,7 @@ endfunction()
 
 # Generate a resouce copying target for each target from DEPENDENCIES
 # and add the generated target as dependency to the TARGET.
-function(myci_private_add_resource_pack_deps)
+function(myci_private_add_resource_pack_deps app_target_name)
     set(options)
     set(single TARGET)
     set(multiple DEPENDENCIES)
@@ -544,7 +544,7 @@ function(myci_private_add_resource_pack_deps)
 
     foreach(dep ${arg_DEPENDENCIES})
         string(REPLACE "::" "___" res_target_name "${dep}")
-        set(res_target_name ${res_target_name}__copy_resources)
+        set(res_target_name ${res_target_name}_${app_target_name}__copy_resources)
 
         if(TARGET ${res_target_name})
             add_dependencies(${arg_TARGET} ${res_target_name})
@@ -557,7 +557,7 @@ function(myci_private_add_resource_pack_deps)
                 message(FATAL_ERROR "myci_private_add_resource_pack_deps(): myci_resource_directory property must be an absolute path, got ${res_dir}")
             endif()
 
-            myci_private_declare_resource_pack(${res_target_name}
+            myci_private_declare_resource_pack(${res_target_name} ${app_target_name}
                 DIRECTORY
                     ${res_dir}
             )
@@ -575,7 +575,7 @@ function(myci_private_add_resource_pack_deps)
                     EXPAND_TILDE
                 )
 
-                myci_private_declare_resource_pack(${res_target_name}
+                myci_private_declare_resource_pack(${res_target_name} ${app_target_name}
                     DIRECTORY
                         ${abs_path_directory}
                 )
@@ -630,8 +630,8 @@ function(myci_declare_application name)
     set_target_properties(${name} PROPERTIES
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
-        VS_DEBUGGER_WORKING_DIRECTORY "${myci_private_output_dir}"
-        RUNTIME_OUTPUT_DIRECTORY "${myci_private_output_dir}"
+        VS_DEBUGGER_WORKING_DIRECTORY "${myci_private_output_dir}/${name}"
+        RUNTIME_OUTPUT_DIRECTORY "${myci_private_output_dir}/${name}"
     )
 
     foreach(dir ${arg_INCLUDE_DIRECTORIES})
@@ -659,7 +659,7 @@ function(myci_declare_application name)
             EXPAND_TILDE
         )
 
-        myci_private_declare_resource_pack(${res_target_name}
+        myci_private_declare_resource_pack(${res_target_name} ${name}
             DIRECTORY
                 ${abs_path_directory}
         )
@@ -671,7 +671,7 @@ function(myci_declare_application name)
         TARGET
             ${name}
     )
-    myci_private_add_resource_pack_deps(
+    myci_private_add_resource_pack_deps(${name}
         TARGET
             ${name}
         DEPENDENCIES
