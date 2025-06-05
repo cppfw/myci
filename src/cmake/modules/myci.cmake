@@ -39,10 +39,13 @@ endfunction()
 # @param RECURSIVE - look for source files recursively. Optional.
 # @param PATTERNS <pattern1> [<pattern2> ...] - list of file patterns to include. Example: '*.cpp *.c'.
 #                 Defaults to '*.cpp *.c *.hpp *.hxx *.h'.
+# @param ADDITIONAL_SOURCE_FILE_EXTENSIONS <pattern1> [<pattern2> ...] - list of file extensions
+#                 that will be added into generated IDE projects but will not be compiled directly by the compiler.
+#                 Example: '.cxx .hxx'. Defaults to '.cxx'.
 function(myci_add_source_files out)
     set(options RECURSIVE)
     set(single DIRECTORY)
-    set(multiple PATTERNS)
+    set(multiple PATTERNS ADDITIONAL_SOURCE_FILE_EXTENSIONS)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
     if(NOT arg_DIRECTORY)
@@ -53,9 +56,16 @@ function(myci_add_source_files out)
         list(APPEND arg_PATTERNS "*.cpp" "*.c" "*.hpp" "*.hxx" "*.h")
     endif()
 
+    if(NOT arg_ADDITIONAL_SOURCE_FILE_EXTENSIONS)
+        list(APPEND arg_ADDITIONAL_SOURCE_FILE_EXTENSIONS ".cxx")
+    endif()
+
     set(patterns)
     foreach(pattern ${arg_PATTERNS})
         list(APPEND patterns "${arg_DIRECTORY}/${pattern}")
+    endforeach()
+    foreach(pattern ${arg_ADDITIONAL_SOURCE_FILE_EXTENSIONS})
+        list(APPEND patterns "${arg_DIRECTORY}/*${pattern}")
     endforeach()
 
     file(REAL_PATH
@@ -98,6 +108,12 @@ function(myci_add_source_files out)
         get_filename_component(path "${file}" DIRECTORY)
         string(REPLACE "/" "\\" path "Source Files/${path}")
         source_group("${path}" FILES "${arg_DIRECTORY}/${file}")
+
+        get_filename_component(ext "${file}" EXT)
+        list(FIND arg_ADDITIONAL_SOURCE_FILE_EXTENSIONS "${ext}" index)
+        if(NOT index EQUAL -1)
+            set_source_files_properties("${arg_DIRECTORY}/${file}" PROPERTIES HEADER_FILE_ONLY TRUE)
+        endif()
 
         list(APPEND result_files "${arg_DIRECTORY}/${file}")
     endforeach()
