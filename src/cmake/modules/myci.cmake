@@ -191,12 +191,17 @@ endfunction()
 # @brief Declare resource pack.
 # Declare a resource pack target which will copy the resources directory to an application output directory.
 # @param target_name - resource pack target name.
+# @param APP_TARGET <name> - application target name.
 # @param DIRECTORY <dir> - directory containing the resources pack. The directory will be copied to application output directory.
-function(myci_private_declare_resource_pack target_name app_target_name)
+function(myci_private_declare_resource_pack target_name)
     set(options)
-    set(single DIRECTORY)
+    set(single APP_TARGET DIRECTORY)
     set(multiple)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    if(NOT arg_APP_TARGET)
+        message(FATAL_ERROR "myci_private_declare_resource_pack(): required argument APP_TARGET is empty")
+    endif()
 
     if(NOT arg_DIRECTORY)
         message(FATAL_ERROR "myci_private_declare_resource_pack(): required argument DIRECTORY is empty")
@@ -227,7 +232,7 @@ function(myci_private_declare_resource_pack target_name app_target_name)
         string(REPLACE "/" "\\" path "Resource Files/${path}")
         source_group("${path}" FILES "${arg_DIRECTORY}/${file}")
 
-        myci_private_copy_resource_file_command(outfile "${app_target_name}" "${arg_DIRECTORY}" "${file}")
+        myci_private_copy_resource_file_command(outfile "${arg_APP_TARGET}" "${arg_DIRECTORY}" "${file}")
         list(APPEND out_files ${outfile})
     endforeach()
 
@@ -565,7 +570,9 @@ function(myci_private_add_resource_pack_deps)
                 message(FATAL_ERROR "myci_private_add_resource_pack_deps(): myci_resource_directory property must be an absolute path, got ${res_dir}")
             endif()
 
-            myci_private_declare_resource_pack(${res_target_name} ${arg_TARGET}
+            myci_private_declare_resource_pack(${res_target_name}
+                APP_TARGET
+                    ${arg_TARGET}
                 DIRECTORY
                     ${res_dir}
             )
@@ -583,7 +590,9 @@ function(myci_private_add_resource_pack_deps)
                     EXPAND_TILDE
                 )
 
-                myci_private_declare_resource_pack(${res_target_name} ${arg_TARGET}
+                myci_private_declare_resource_pack(${res_target_name}
+                    APP_TARGET
+                        ${arg_TARGET}
                     DIRECTORY
                         ${abs_path_directory}
                 )
@@ -667,7 +676,9 @@ function(myci_declare_application name)
             EXPAND_TILDE
         )
 
-        myci_private_declare_resource_pack(${res_target_name} ${name}
+        myci_private_declare_resource_pack(${res_target_name}
+            APP_TARGET
+                ${name}
             DIRECTORY
                 ${abs_path_directory}
         )
