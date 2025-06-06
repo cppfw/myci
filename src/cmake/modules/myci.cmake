@@ -101,23 +101,35 @@ function(myci_private_add_target_dependencies target visibility)
     foreach(dep ${ARGN})
         set(package_name)
 
-        string(FIND ${dep} "::" colon_colon_pos)
-        if(colon_colon_pos EQUAL -1)
-            # prefer non-namespaced dependency
-            if(TARGET ${dep})
-                set(actual_dep ${dep})
-            else()
-                # package name same as target name
-                set(package_name ${dep})
-                set(actual_dep ${dep}::${dep})
-            endif()
-        else()
-            # dep is in <pkg>::<target> format
+        string(FIND ${dep} "/" slash_pos)
+        if(NOT slash_pos EQUAL -1)
+            # dep is in <package>/<target> format
 
             # set package_name
-            string(SUBSTRING ${dep} 0 ${colon_colon_pos} package_name)
+            string(SUBSTRING ${dep} 0 ${slash_pos} package_name)
 
-            set(actual_dep ${dep})
+            # set target name
+            math(EXPR target_pos "${slash_pos}+1")
+            string(SUBSTRING ${dep} ${target_pos} -1 actual_dep)
+        else()
+            string(FIND ${dep} "::" colon_colon_pos)
+            if(colon_colon_pos EQUAL -1)
+                # prefer non-namespaced dependency
+                if(TARGET ${dep})
+                    set(actual_dep ${dep})
+                else()
+                    # package name same as target name
+                    set(package_name ${dep})
+                    set(actual_dep ${dep}::${dep})
+                endif()
+            else()
+                # dep is in <pkg>::<target> format
+
+                # set package_name
+                string(SUBSTRING ${dep} 0 ${colon_colon_pos} package_name)
+
+                set(actual_dep ${dep})
+            endif()
         endif()
 
         # if dependency taget is not defined, try to find a package providing it
@@ -133,8 +145,8 @@ function(myci_private_add_target_dependencies target visibility)
             # try to find the package using CONFIG method first
             find_package(${package_name} CONFIG)
             if(NOT ${package_name}_FOUND)
-                message("INFO: could not find package '${package_name}' using CONFIG method, trying to find using MODULE method")
-                find_package(${package_name} REQUIRED)
+                # could not find package using CONFIG method, try to find using MODULE method
+                find_package(${package_name} MODULE REQUIRED)
             endif()
         endif()
 
