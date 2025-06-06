@@ -109,6 +109,7 @@ function(myci_add_source_files out)
         string(REPLACE "/" "\\" path "Source Files/${path}")
         source_group("${path}" FILES "${arg_DIRECTORY}/${file}")
 
+        # for additional source files set HEADER_FILE_ONLY property to true to avoid them being picked up by the compiler
         get_filename_component(ext "${file}" EXT)
         list(FIND arg_ADDITIONAL_SOURCE_FILE_EXTENSIONS "${ext}" index)
         if(NOT index EQUAL -1)
@@ -191,7 +192,8 @@ endfunction()
 # @brief Declare resource pack.
 # Declare a resource pack target which will copy the resources directory to an application output directory.
 # @param target_name - resource pack target name.
-# @param APP_TARGET <name> - application target name.
+# @param APP_TARGET <name> - application target name. Resources are copied to the application output directory, so the application
+#                            target name will be used as a subdirectory to which the resources are copied.
 # @param DIRECTORY <dir> - directory containing the resources pack. The directory will be copied to application output directory.
 function(myci_private_declare_resource_pack target_name)
     set(options)
@@ -244,7 +246,7 @@ function(myci_private_declare_resource_pack target_name)
 endfunction()
 
 ####
-# @brief Generate .cmake file which sets cusotom properties on specified targets.
+# @brief Generate .cmake file which sets custom properties on specified targets.
 # The generated .cmake file will have ${PROJECT_NAME}-properties.cmake name.
 # @param TARGETS - list of targets to export properties for. The targets will be searched in ${PROJECT_NAME} namespace.
 # @param PROPERTIES - list of custom properties to export.
@@ -369,7 +371,7 @@ endfunction()
 #                                    Hierarchy of subdirectories is preserved during isntallation.
 #                                    The last directory level will be included in the installation,
 #                                    e.g. for '../src/mylib' the destination will be '<system-include-dir>/mylib/'.
-# @param IDE_FOLDER IDE folder for the library (default is "Libs")
+# @param IDE_FOLDER IDE - folder for the library (default is "Libs")
 function(myci_declare_library name)
     set(options NO_EXPORT)
     set(single IDE_FOLDER)
@@ -502,6 +504,11 @@ function(myci_declare_library name)
     endif()
 endfunction()
 
+####
+# @brief Recursively get all dependencies of a target.
+# Gets only target dependencies, skipping file dependencies.
+# @param out - output variable name listing all the dependencies.
+# @param TARGET - target to get dependencies for.
 function(myci_private_get_all_dependencies out)
     set(options)
     set(single TARGET)
@@ -523,24 +530,31 @@ function(myci_private_get_all_dependencies out)
         list(APPEND all_deps ${link_deps})
     endif()
 
+    set(result_deps)
     foreach(dep ${all_deps})
+        # skip adding transient dependencies for non-target dependencies
         if(NOT TARGET ${dep})
             continue()
         endif()
 
-        myci_private_get_all_dependencies(out_deps
+        list(APPEND result_deps ${dep})
+
+        # recursively get dependencies of a dependency and add them to the resulting list
+        myci_private_get_all_dependencies(dep_deps
             TARGET
                 ${dep}
         )
-        foreach(out_dep ${out_deps})
-            if(NOT "${out_dep}" IN_LIST all_deps)
-                if(TARGET ${out_dep})
-                    list(APPEND all_deps ${out_dep})
-                endif()
+        foreach(dep_dep ${dep_deps})
+            if(NOT TARGET ${dep_dep})
+                continue()
+            endif()
+
+            if(NOT "${dep_dep}" IN_LIST result_deps)
+                list(APPEND result_deps ${dep_dep})
             endif()
         endforeach()
     endforeach()
-    set(${out} ${all_deps} PARENT_SCOPE)
+    set(${out} ${result_deps} PARENT_SCOPE)
 endfunction()
 
 # Generate a resouce copying target for each target from DEPENDENCIES
@@ -557,7 +571,7 @@ function(myci_private_add_resource_pack_deps)
 
     foreach(dep ${arg_DEPENDENCIES})
         string(REPLACE "::" "___" res_target_name "${dep}")
-        set(res_target_name ${res_target_name}_${arg_TARGET}__copy_resources)
+        set(res_target_name ${res_target_name}__${arg_TARGET}__copy_resources)
 
         if(TARGET ${res_target_name})
             add_dependencies(${arg_TARGET} ${res_target_name})
@@ -601,7 +615,6 @@ function(myci_private_add_resource_pack_deps)
         endif()
     endforeach()
 endfunction()
-
 
 ####
 # @brief Declare application.
