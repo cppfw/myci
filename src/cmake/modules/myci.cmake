@@ -5,32 +5,7 @@ set(MYCI_MODULE_INCLUDED TRUE)
 
 include(GNUInstallDirs)
 
-set(myci_private_output_dir "${CMAKE_BINARY_DIR}/out")
-
-####
-# @brief Get install flag for current project.
-# Checks if <UPPERCASE_PROJECT_NAME>_DISABLE_INSTALL variable is defined and if it is TRUE then sets ${var} to FALSE,
-# otherwise sets ${var} to TRUE.
-# In case the <UPPERCASE_PROJECT_NAME>_DISABLE_INSTALL is not defined, then checks value of MYCI_GLOBAL_DISABLE_INSTALL
-# variable, if it is true then sets ${var} to FALSE, otherwise sets ${var} to TRUE.
-# @param var - variable name to store the flag value to.
-function(myci_private_get_install_flag var)
-    # Check if {CMAKE_PROJECT_NAME}_DISABLE_INSTALL variable is set and act accordingly
-    string(TOUPPER "${CMAKE_PROJECT_NAME}" nameupper)
-    string(REPLACE "-" "_" nameupper "${nameupper}")
-
-    set(${var} TRUE PARENT_SCOPE)
-
-    if(DEFINED ${nameupper}_DISABLE_INSTALL)
-        if(${nameupper}_DISABLE_INSTALL)
-            set(${var} FALSE PARENT_SCOPE)
-        endif()
-    else()
-        if(MYCI_GLOBAL_DISABLE_INSTALL)
-            set(${var} FALSE PARENT_SCOPE)
-        endif()
-    endif()
-endfunction()
+set(myci_private_output_dir "${CMAKE_BINARY_DIR}/exe")
 
 ####
 # @brief Add source files from a directory to a list variable.
@@ -109,6 +84,7 @@ function(myci_add_source_files out)
         string(REPLACE "/" "\\" path "Source Files/${path}")
         source_group("${path}" FILES "${arg_DIRECTORY}/${file}")
 
+        # for additional source files set HEADER_FILE_ONLY property to true to avoid them being picked up by the compiler
         get_filename_component(ext "${file}" EXT)
         list(FIND arg_ADDITIONAL_SOURCE_FILE_EXTENSIONS "${ext}" index)
         if(NOT index EQUAL -1)
@@ -123,6 +99,8 @@ endfunction()
 
 function(myci_private_add_target_dependencies target visibility)
     foreach(dep ${ARGN})
+        set(package_name)
+
         string(FIND ${dep} "::" colon_colon_pos)
         if(colon_colon_pos EQUAL -1)
             # prefer non-namespaced dependency
@@ -130,20 +108,37 @@ function(myci_private_add_target_dependencies target visibility)
                 set(actual_dep ${dep})
             else()
                 # package name same as target name
-                if(NOT TARGET ${dep}::${dep})
-                    find_package(${dep} CONFIG REQUIRED)
-                endif()
+                set(package_name ${dep})
                 set(actual_dep ${dep}::${dep})
             endif()
-            target_link_libraries(${target} ${visibility} ${actual_dep})
         else()
             # dep is in <pkg>::<target> format
-            if(NOT TARGET ${dep})
-                string(SUBSTRING ${dep} 0 ${colon_colon_pos} package_name)
-                find_package(${package_name} CONFIG REQUIRED)
-            endif()
-            target_link_libraries(${target} ${visibility} ${dep})
+
+            # set package_name
+            string(SUBSTRING ${dep} 0 ${colon_colon_pos} package_name)
+
+            set(actual_dep ${dep})
         endif()
+
+        # if dependency taget is not defined, try to find a package providing it
+        if(NOT TARGET ${actual_dep})
+            if(NOT package_name)
+                message(FATAL_ERROR "package_name is unexpectedly empty")
+            endif()
+
+            if(${package_name}_FOUND)
+                message(FATAL_ERROR "target '${actual_dep}' is not defined, but package '${package_name}' which should provide it is unexpectedly found")
+            endif()
+
+            # try to find the package using CONFIG method first
+            find_package(${package_name} CONFIG)
+            if(NOT ${package_name}_FOUND)
+                message("INFO: could not find package '${package_name}' using CONFIG method, trying to find using MODULE method")
+                find_package(${package_name} REQUIRED)
+            endif()
+        endif()
+
+        target_link_libraries(${target} ${visibility} ${actual_dep})
     endforeach()
 endfunction()
 
@@ -191,7 +186,8 @@ endfunction()
 # @brief Declare resource pack.
 # Declare a resource pack target which will copy the resources directory to an application output directory.
 # @param target_name - resource pack target name.
-# @param APP_TARGET <name> - application target name.
+# @param APP_TARGET <name> - application target name. Resources are copied to the application output directory, so the application
+#                            target name will be used as a subdirectory to which the resources are copied.
 # @param DIRECTORY <dir> - directory containing the resources pack. The directory will be copied to application output directory.
 function(myci_private_declare_resource_pack target_name)
     set(options)
@@ -244,7 +240,7 @@ function(myci_private_declare_resource_pack target_name)
 endfunction()
 
 ####
-# @brief Generate .cmake file which sets cusotom properties on specified targets.
+# @brief Generate .cmake file which sets custom properties on specified targets.
 # The generated .cmake file will have ${PROJECT_NAME}-properties.cmake name.
 # @param TARGETS - list of targets to export properties for. The targets will be searched in ${PROJECT_NAME} namespace.
 # @param PROPERTIES - list of custom properties to export.
@@ -309,36 +305,33 @@ function(myci_export)
     set(multiple TARGETS)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
-    myci_private_get_install_flag(install)
-    if(${install})
-        # assign targets to export name
-        install(
-            TARGETS
-                ${arg_TARGETS}
-            EXPORT
-                ${PROJECT_NAME}-export
-        )
-        # generate and install cmake import targets file
-        install(
-            EXPORT
-                ${PROJECT_NAME}-export
-            FILE
-                ${PROJECT_NAME}-targets.cmake
-            DESTINATION
-                "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
-            NAMESPACE
-                "${PROJECT_NAME}::"
-        )
+    # assign targets to export name
+    install(
+        TARGETS
+            ${arg_TARGETS}
+        EXPORT
+            ${PROJECT_NAME}-export
+    )
+    # generate and install cmake import targets file
+    install(
+        EXPORT
+            ${PROJECT_NAME}-export
+        FILE
+            ${PROJECT_NAME}-targets.cmake
+        DESTINATION
+            "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
+        NAMESPACE
+            "${PROJECT_NAME}::"
+    )
 
-        myci_private_export_custom_target_properties(
-            TARGETS
-                ${arg_TARGETS}
-            PROPERTIES
-                myci_installed_resource_directory_within_datadir
-        )
+    myci_private_export_custom_target_properties(
+        TARGETS
+            ${arg_TARGETS}
+        PROPERTIES
+            myci_installed_resource_directory_within_datadir
+    )
 
-        myci_private_generate_config_file()
-    endif()
+    myci_private_generate_config_file()
 endfunction()
 
 ####
@@ -369,7 +362,7 @@ endfunction()
 #                                    Hierarchy of subdirectories is preserved during isntallation.
 #                                    The last directory level will be included in the installation,
 #                                    e.g. for '../src/mylib' the destination will be '<system-include-dir>/mylib/'.
-# @param IDE_FOLDER IDE folder for the library (default is "Libs")
+# @param IDE_FOLDER - folder in the generated IDE project for the library. Optional. Defaults to "Libs".
 function(myci_declare_library name)
     set(options NO_EXPORT)
     set(single IDE_FOLDER)
@@ -391,7 +384,6 @@ function(myci_declare_library name)
     set(static INTERFACE)
     foreach(src ${arg_SOURCES})
         get_filename_component(ext "${src}" LAST_EXT)
-        # TODO: why support .cc?
         if("${ext}" STREQUAL ".c" OR "${ext}" STREQUAL ".cpp" OR "${ext}" STREQUAL ".cc")
             set(public PUBLIC)
             set(static STATIC)
@@ -467,41 +459,44 @@ function(myci_declare_library name)
         )
     endif()
 
-    myci_private_get_install_flag(install)
-    if(${install})
-        target_include_directories(${name} ${public} $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-        # install library header files preserving directory hierarchy
-        foreach(dir ${arg_INSTALL_INCLUDE_DIRECTORIES})
-            install(
-                DIRECTORY
-                    "${dir}"
-                DESTINATION
-                    "${CMAKE_INSTALL_INCLUDEDIR}"
-                FILES_MATCHING
-                    PATTERN "*.h"
-                    PATTERN "*.hpp"
-                    PATTERN "*.hh" # TODO: why support this extension?
-            )
-        endforeach()
+    target_include_directories(${name} ${public} $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-        if(${arg_RESOURCE_DIRECTORY})
-            install(
-                DIRECTORY
-                    "${arg_RESOURCE_DIRECTORY}"
-                DESTINATION
-                    "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
-            )
-        endif()
+    # install library header files preserving directory hierarchy
+    foreach(dir ${arg_INSTALL_INCLUDE_DIRECTORIES})
+        install(
+            DIRECTORY
+                "${dir}"
+            DESTINATION
+                "${CMAKE_INSTALL_INCLUDEDIR}"
+            FILES_MATCHING
+                PATTERN "*.h"
+                PATTERN "*.hpp"
+                PATTERN "*.hh"
+        )
+    endforeach()
 
-        if(NOT arg_NO_EXPORT)
-            myci_export(
-                TARGETS
-                    ${name}
-            )
-        endif()
+    if(${arg_RESOURCE_DIRECTORY})
+        install(
+            DIRECTORY
+                "${arg_RESOURCE_DIRECTORY}"
+            DESTINATION
+                "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
+        )
+    endif()
+
+    if(NOT arg_NO_EXPORT)
+        myci_export(
+            TARGETS
+                ${name}
+        )
     endif()
 endfunction()
 
+####
+# @brief Recursively get all dependencies of a target.
+# Gets only target dependencies, skipping file dependencies.
+# @param out - output variable name listing all the dependencies.
+# @param TARGET - target to get dependencies for.
 function(myci_private_get_all_dependencies out)
     set(options)
     set(single TARGET)
@@ -523,24 +518,31 @@ function(myci_private_get_all_dependencies out)
         list(APPEND all_deps ${link_deps})
     endif()
 
+    set(result_deps)
     foreach(dep ${all_deps})
+        # skip adding transient dependencies for non-target dependencies
         if(NOT TARGET ${dep})
             continue()
         endif()
 
-        myci_private_get_all_dependencies(out_deps
+        list(APPEND result_deps ${dep})
+
+        # recursively get dependencies of a dependency and add them to the resulting list
+        myci_private_get_all_dependencies(dep_deps
             TARGET
                 ${dep}
         )
-        foreach(out_dep ${out_deps})
-            if(NOT "${out_dep}" IN_LIST all_deps)
-                if(TARGET ${out_dep})
-                    list(APPEND all_deps ${out_dep})
-                endif()
+        foreach(dep_dep ${dep_deps})
+            if(NOT TARGET ${dep_dep})
+                continue()
+            endif()
+
+            if(NOT "${dep_dep}" IN_LIST result_deps)
+                list(APPEND result_deps ${dep_dep})
             endif()
         endforeach()
     endforeach()
-    set(${out} ${all_deps} PARENT_SCOPE)
+    set(${out} ${result_deps} PARENT_SCOPE)
 endfunction()
 
 # Generate a resouce copying target for each target from DEPENDENCIES
@@ -557,7 +559,7 @@ function(myci_private_add_resource_pack_deps)
 
     foreach(dep ${arg_DEPENDENCIES})
         string(REPLACE "::" "___" res_target_name "${dep}")
-        set(res_target_name ${res_target_name}_${arg_TARGET}__copy_resources)
+        set(res_target_name ${res_target_name}__${arg_TARGET}__copy_resources)
 
         if(TARGET ${res_target_name})
             add_dependencies(${arg_TARGET} ${res_target_name})
@@ -601,7 +603,6 @@ function(myci_private_add_resource_pack_deps)
         endif()
     endforeach()
 endfunction()
-
 
 ####
 # @brief Declare application.
