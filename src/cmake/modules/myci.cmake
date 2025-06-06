@@ -5,32 +5,7 @@ set(MYCI_MODULE_INCLUDED TRUE)
 
 include(GNUInstallDirs)
 
-set(myci_private_output_dir "${CMAKE_BINARY_DIR}/out")
-
-####
-# @brief Get install flag for current project.
-# Checks if <UPPERCASE_PROJECT_NAME>_DISABLE_INSTALL variable is defined and if it is TRUE then sets ${var} to FALSE,
-# otherwise sets ${var} to TRUE.
-# In case the <UPPERCASE_PROJECT_NAME>_DISABLE_INSTALL is not defined, then checks value of MYCI_GLOBAL_DISABLE_INSTALL
-# variable, if it is true then sets ${var} to FALSE, otherwise sets ${var} to TRUE.
-# @param var - variable name to store the flag value to.
-function(myci_private_get_install_flag var)
-    # Check if {CMAKE_PROJECT_NAME}_DISABLE_INSTALL variable is set and act accordingly
-    string(TOUPPER "${CMAKE_PROJECT_NAME}" nameupper)
-    string(REPLACE "-" "_" nameupper "${nameupper}")
-
-    set(${var} TRUE PARENT_SCOPE)
-
-    if(DEFINED ${nameupper}_DISABLE_INSTALL)
-        if(${nameupper}_DISABLE_INSTALL)
-            set(${var} FALSE PARENT_SCOPE)
-        endif()
-    else()
-        if(MYCI_GLOBAL_DISABLE_INSTALL)
-            set(${var} FALSE PARENT_SCOPE)
-        endif()
-    endif()
-endfunction()
+set(myci_private_output_dir "${CMAKE_BINARY_DIR}/exe")
 
 ####
 # @brief Add source files from a directory to a list variable.
@@ -311,36 +286,33 @@ function(myci_export)
     set(multiple TARGETS)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
-    myci_private_get_install_flag(install)
-    if(${install})
-        # assign targets to export name
-        install(
-            TARGETS
-                ${arg_TARGETS}
-            EXPORT
-                ${PROJECT_NAME}-export
-        )
-        # generate and install cmake import targets file
-        install(
-            EXPORT
-                ${PROJECT_NAME}-export
-            FILE
-                ${PROJECT_NAME}-targets.cmake
-            DESTINATION
-                "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
-            NAMESPACE
-                "${PROJECT_NAME}::"
-        )
+    # assign targets to export name
+    install(
+        TARGETS
+            ${arg_TARGETS}
+        EXPORT
+            ${PROJECT_NAME}-export
+    )
+    # generate and install cmake import targets file
+    install(
+        EXPORT
+            ${PROJECT_NAME}-export
+        FILE
+            ${PROJECT_NAME}-targets.cmake
+        DESTINATION
+            "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
+        NAMESPACE
+            "${PROJECT_NAME}::"
+    )
 
-        myci_private_export_custom_target_properties(
-            TARGETS
-                ${arg_TARGETS}
-            PROPERTIES
-                myci_installed_resource_directory_within_datadir
-        )
+    myci_private_export_custom_target_properties(
+        TARGETS
+            ${arg_TARGETS}
+        PROPERTIES
+            myci_installed_resource_directory_within_datadir
+    )
 
-        myci_private_generate_config_file()
-    endif()
+    myci_private_generate_config_file()
 endfunction()
 
 ####
@@ -469,38 +441,36 @@ function(myci_declare_library name)
         )
     endif()
 
-    myci_private_get_install_flag(install)
-    if(${install})
-        target_include_directories(${name} ${public} $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-        # install library header files preserving directory hierarchy
-        foreach(dir ${arg_INSTALL_INCLUDE_DIRECTORIES})
-            install(
-                DIRECTORY
-                    "${dir}"
-                DESTINATION
-                    "${CMAKE_INSTALL_INCLUDEDIR}"
-                FILES_MATCHING
-                    PATTERN "*.h"
-                    PATTERN "*.hpp"
-                    PATTERN "*.hh" # TODO: why support this extension?
-            )
-        endforeach()
+    target_include_directories(${name} ${public} $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-        if(${arg_RESOURCE_DIRECTORY})
-            install(
-                DIRECTORY
-                    "${arg_RESOURCE_DIRECTORY}"
-                DESTINATION
-                    "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
-            )
-        endif()
+    # install library header files preserving directory hierarchy
+    foreach(dir ${arg_INSTALL_INCLUDE_DIRECTORIES})
+        install(
+            DIRECTORY
+                "${dir}"
+            DESTINATION
+                "${CMAKE_INSTALL_INCLUDEDIR}"
+            FILES_MATCHING
+                PATTERN "*.h"
+                PATTERN "*.hpp"
+                PATTERN "*.hh" # TODO: why support this extension?
+        )
+    endforeach()
 
-        if(NOT arg_NO_EXPORT)
-            myci_export(
-                TARGETS
-                    ${name}
-            )
-        endif()
+    if(${arg_RESOURCE_DIRECTORY})
+        install(
+            DIRECTORY
+                "${arg_RESOURCE_DIRECTORY}"
+            DESTINATION
+                "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
+        )
+    endif()
+
+    if(NOT arg_NO_EXPORT)
+        myci_export(
+            TARGETS
+                ${name}
+        )
     endif()
 endfunction()
 
