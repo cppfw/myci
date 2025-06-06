@@ -97,8 +97,21 @@ function(myci_add_source_files out)
     set(${out} ${${out}} ${result_files} PARENT_SCOPE)
 endfunction()
 
-function(myci_private_add_target_dependencies target visibility)
-    foreach(dep ${ARGN})
+function(myci_private_add_target_dependencies)
+    set(options)
+    set(single TARGET VISIBILITY OS_ONLY)
+    set(multiple DEPENDENCIES)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    if(NOT arg_TARGET)
+        message(FATAL_ERROR "myci_private_add_target_dependencies(): required argument TARGET is empty.")
+    endif()
+
+    if(NOT arg_VISIBILITY)
+        message(FATAL_ERROR "myci_private_add_target_dependencies(): required argument VISIBILITY is empty.")
+    endif()
+
+    foreach(dep ${arg_DEPENDENCIES})
         set(package_name)
 
         string(FIND ${dep} "/" slash_pos)
@@ -108,7 +121,7 @@ function(myci_private_add_target_dependencies target visibility)
             # set package_name
             string(SUBSTRING ${dep} 0 ${slash_pos} package_name)
 
-            # set target name
+            # set actual_dep
             math(EXPR target_pos "${slash_pos}+1")
             string(SUBSTRING ${dep} ${target_pos} -1 actual_dep)
         else()
@@ -139,7 +152,7 @@ function(myci_private_add_target_dependencies target visibility)
         # if dependency taget is not defined, try to find a package providing it
         if(NOT TARGET ${actual_dep})
             if(NOT package_name)
-                message(FATAL_ERROR "package_name is unexpectedly empty")
+                message(FATAL_ERROR "assertion failure: package_name is unexpectedly empty")
             endif()
 
             if(LINUX AND ${package_name} STREQUAL "PkgConfig")
@@ -150,7 +163,7 @@ function(myci_private_add_target_dependencies target visibility)
                 pkg_check_modules(${target_name} REQUIRED IMPORTED_TARGET "${target_name}")
             else()
                 if(${package_name}_FOUND)
-                    message(FATAL_ERROR "target '${actual_dep}' is not defined, but package '${package_name}' which should provide it is unexpectedly found")
+                    message(FATAL_ERROR "assertion failure: target '${actual_dep}' is not defined, but package '${package_name}' which should provide it is unexpectedly found")
                 endif()
 
                 # try to find the package using CONFIG method first
@@ -159,10 +172,21 @@ function(myci_private_add_target_dependencies target visibility)
                     # could not find package using CONFIG method, try to find using MODULE method
                     find_package(${package_name} MODULE REQUIRED)
                 endif()
+
+                # save package name which provides the target as dependency target property
+                set_target_properties(${actual_dep}
+                    PROPERTIES
+                        myci_providing_package_name "${package_name}"
+                )
+                # save OS specificity as dependency target property
+                set_target_properties(${actual_dep}
+                    PROPERTIES
+                        myci_os_only "${arg_OS_ONLY}"
+                )
             endif()
         endif()
 
-        target_link_libraries(${target} ${visibility} ${actual_dep})
+        target_link_libraries(${arg_TARGET} ${arg_VISIBILITY} ${actual_dep})
     endforeach()
 endfunction()
 
@@ -336,6 +360,7 @@ function(myci_export)
         EXPORT
             ${PROJECT_NAME}-export
     )
+
     # generate and install cmake import targets file
     install(
         EXPORT
@@ -470,13 +495,38 @@ function(myci_declare_library name)
         target_include_directories(${name} PRIVATE $<BUILD_INTERFACE:${abs_path_directory}>)
     endforeach()
 
-    myci_private_add_target_dependencies(${name} ${public} ${arg_DEPENDENCIES})
+    myci_private_add_target_dependencies(
+        TARGET
+            ${name}
+        VISIBILITY
+            ${public}
+        DEPENDENCIES
+            ${arg_DEPENDENCIES}
+    )
     myci_private_add_target_external_dependencies(${name} ${public} ${arg_EXTERNAL_DEPENDENCIES})
 
     if(LINUX AND arg_LINUX_ONLY_DEPENDENCIES)
-        myci_private_add_target_dependencies(${name} ${public} ${arg_LINUX_ONLY_DEPENDENCIES})
+        myci_private_add_target_dependencies(
+            TARGET
+                ${name}
+            VISIBILITY
+                ${public}
+            OS_ONLY
+                windows
+            DEPENDENCIES
+                ${arg_LINUX_ONLY_DEPENDENCIES}
+        )
     elseif(WIN32 AND arg_WINDOWS_ONLY_DEPENDENCIES)
-        myci_private_add_target_dependencies(${name} ${public} ${arg_WINDOWS_ONLY_DEPENDENCIES})
+        myci_private_add_target_dependencies(
+            TARGET
+                ${name}
+            VISIBILITY
+                ${public}
+            OS_ONLY
+                linux
+            DEPENDENCIES
+                ${arg_WINDOWS_ONLY_DEPENDENCIES}
+        )
     endif()
 
     if(arg_RESOURCE_DIRECTORY)
@@ -712,13 +762,38 @@ function(myci_declare_application name)
         target_link_libraries(${name} PRIVATE "${lib}")
     endforeach()
 
-    myci_private_add_target_dependencies(${name} PRIVATE ${arg_DEPENDENCIES})
+    myci_private_add_target_dependencies(
+        TARGET
+            ${name}
+        VISIBILITY
+            PRIVATE
+        DEPENDENCIES
+            ${arg_DEPENDENCIES}
+    )
     myci_private_add_target_external_dependencies(${name} PRIVATE ${arg_EXTERNAL_DEPENDENCIES})
 
     if(LINUX AND arg_LINUX_ONLY_DEPENDENCIES)
-        myci_private_add_target_dependencies(${name} ${public} ${arg_LINUX_ONLY_DEPENDENCIES})
+        myci_private_add_target_dependencies(
+            TARGET
+                ${name}
+            VISIBILITY
+                PRIVATE
+            OS_ONLY
+                linux
+            DEPENDENCIES
+                ${arg_LINUX_ONLY_DEPENDENCIES}
+        )
     elseif(WIN32 AND arg_WINDOWS_ONLY_DEPENDENCIES)
-        myci_private_add_target_dependencies(${name} ${public} ${arg_WINDOWS_ONLY_DEPENDENCIES})
+        myci_private_add_target_dependencies(
+            TARGET
+                ${name}
+            VISIBILITY
+                PRIVATE
+            OS_ONLY
+                windows
+            DEPENDENCIES
+                ${arg_WINDOWS_ONLY_DEPENDENCIES}
+        )
     endif()
 
     # copy direct application resources
