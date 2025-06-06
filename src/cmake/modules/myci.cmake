@@ -128,6 +128,10 @@ function(myci_private_add_target_dependencies target visibility)
                 # set package_name
                 string(SUBSTRING ${dep} 0 ${colon_colon_pos} package_name)
 
+                # set lib name
+                math(EXPR lib_pos "${colon_colon_pos}+2")
+                string(SUBSTRING ${dep} ${lib_pos} -1 target_name)
+
                 set(actual_dep ${dep})
             endif()
         endif()
@@ -138,15 +142,23 @@ function(myci_private_add_target_dependencies target visibility)
                 message(FATAL_ERROR "package_name is unexpectedly empty")
             endif()
 
-            if(${package_name}_FOUND)
-                message(FATAL_ERROR "target '${actual_dep}' is not defined, but package '${package_name}' which should provide it is unexpectedly found")
-            endif()
+            if(LINUX AND ${package_name} STREQUAL "PkgConfig")
+                if(NOT PkgConfig_FOUND)
+                    find_package(PkgConfig REQUIRED)
+                endif()
 
-            # try to find the package using CONFIG method first
-            find_package(${package_name} CONFIG)
-            if(NOT ${package_name}_FOUND)
-                # could not find package using CONFIG method, try to find using MODULE method
-                find_package(${package_name} MODULE REQUIRED)
+                pkg_check_modules(${target_name} REQUIRED IMPORTED_TARGET "${target_name}")
+            else()
+                if(${package_name}_FOUND)
+                    message(FATAL_ERROR "target '${actual_dep}' is not defined, but package '${package_name}' which should provide it is unexpectedly found")
+                endif()
+
+                # try to find the package using CONFIG method first
+                find_package(${package_name} CONFIG)
+                if(NOT ${package_name}_FOUND)
+                    # could not find package using CONFIG method, try to find using MODULE method
+                    find_package(${package_name} MODULE REQUIRED)
+                endif()
             endif()
         endif()
 
@@ -353,15 +365,23 @@ endfunction()
 # @param name - library name.
 # @param SOURCES <file1> [<file2> ...] - list of source files. Required.
 # @param RESOURCE_DIRECTORY <dir> - directory with resource files. Optional. The directory will be installed.
-#                                   Application linking to the library will also copy the resources directory to the
-#                                   application binary output directory.
+#                           Application linking to the library will also copy the resources directory to the
+#                           application binary output directory.
 # @param DEPENDENCIES <dep1> [<dep2> ...] - list of dependencies. Optional.
 #                     If <depX> does not have any '::' in its name, then
-#                     it will be searched with find_package(<depX> CONFIG REQUIRED) and
-#                     passed to target_link_libraries() as <depX>::<depX>.
+#                     it will be searched with find_package(<depX> CONFIG) and if not found then searched with find_package(<depX> MODULE REQUIRED),
+#                     and passed to target_link_libraries() as <depX>::<depX>.
 #                     If <depX> is in format '<pkg>::<name>' then the <pkg> namespace is treated as package name,
-#                     it will be searched with find_package(<pkg> CONFIG REQUIRED) and
-#                     the target will be passed to target_link_libraries() as <depX>.
+#                     it will be searched with find_package(<pkg> CONFIG) and if not found then searched with find_package(<pkg> MODULE REQUIRED),
+#                     and the target will be passed to target_link_libraries() as <depX>.
+#                     If <depX> is in format '<pkg>/<target>' then
+#                     it will be searched with find_package(<pkg> CONFIG) and if not found then searched with find_package(<pkg> MODULE REQUIRED),
+#                     and the target will be passed to target_link_libraries() as <target>.
+#                     If <depX> is in format 'PkgConfig::<target>' and host system is Linux then
+#                     PkgConfig package will be searched with find_package(PkgConfig REQUIRED) and
+#                     the target will be added as pkg_check_modules(<target> REQUIRED IMPORTED_TARGET "<target>").
+# @param LINUX_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of linux-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
+# @param WINDOWS_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of windows-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
 # @param EXTERNAL_DEPENDENCIES <target1> [<target2> ...] - list of external dependency targets. Optional.
 #                              These will NOT be searched with find_package().
 #                              Passed to target_link_libraries() as is.
@@ -382,6 +402,8 @@ function(myci_declare_library name)
         SOURCES
         RESOURCE_DIRECTORY
         DEPENDENCIES
+        LINUX_ONLY_DEPENDENCIES
+        WINDOWS_ONLY_DEPENDENCIES
         EXTERNAL_DEPENDENCIES
         PUBLIC_COMPILE_DEFINITIONS
         PRIVATE_INCLUDE_DIRECTORIES
@@ -450,6 +472,12 @@ function(myci_declare_library name)
 
     myci_private_add_target_dependencies(${name} ${public} ${arg_DEPENDENCIES})
     myci_private_add_target_external_dependencies(${name} ${public} ${arg_EXTERNAL_DEPENDENCIES})
+
+    if(LINUX AND arg_LINUX_ONLY_DEPENDENCIES)
+        myci_private_add_target_dependencies(${name} ${public} ${arg_LINUX_ONLY_DEPENDENCIES})
+    elseif(WIN32 AND arg_WINDOWS_ONLY_DEPENDENCIES)
+        myci_private_add_target_dependencies(${name} ${public} ${arg_WINDOWS_ONLY_DEPENDENCIES})
+    endif()
 
     if(arg_RESOURCE_DIRECTORY)
         file(REAL_PATH
@@ -621,14 +649,22 @@ endfunction()
 # @param name - application name.
 # @param SOURCES <file1> [<file2> ...] - list of source files. Required.
 # @param RESOURCE_DIRECTORY <dir> - application resource directory. The resource directory will be copied to the
-#                                   application binary output directory.
+#                           application binary output directory.
 # @param DEPENDENCIES <dep1> [<dep2> ...] - list of dependencies. Optional.
 #                     If <depX> does not have any '::' in its name, then
-#                     it will be searched with find_package(<depX> CONFIG REQUIRED) and
-#                     passed to target_link_libraries() as <depX>::<depX>.
+#                     it will be searched with find_package(<depX> CONFIG) and if not found then searched with find_package(<depX> MODULE REQUIRED),
+#                     and passed to target_link_libraries() as <depX>::<depX>.
 #                     If <depX> is in format '<pkg>::<name>' then the <pkg> namespace is treated as package name,
-#                     it will be searched with find_package(<pkg> CONFIG REQUIRED) and
-#                     the target will be passed to target_link_libraries() as <depX>.
+#                     it will be searched with find_package(<pkg> CONFIG) and if not found then searched with find_package(<pkg> MODULE REQUIRED),
+#                     and the target will be passed to target_link_libraries() as <depX>.
+#                     If <depX> is in format '<pkg>/<target>' then
+#                     it will be searched with find_package(<pkg> CONFIG) and if not found then searched with find_package(<pkg> MODULE REQUIRED),
+#                     and the target will be passed to target_link_libraries() as <target>.
+#                     If <depX> is in format 'PkgConfig::<target>' and host system is Linux then
+#                     PkgConfig package will be searched with find_package(PkgConfig REQUIRED) and
+#                     the target will be added as pkg_check_modules(<target> REQUIRED IMPORTED_TARGET "<target>").
+# @param LINUX_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of linux-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
+# @param WINDOWS_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of windows-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
 # @param EXTERNAL_DEPENDENCIES <target1> [<target2> ...] - list of external dependency targets. Optional.
 #                              These will NOT be searched with find_package().
 #                              Passed to target_link_libraries() as is.
@@ -643,6 +679,8 @@ function(myci_declare_application name)
         SOURCES
         INCLUDE_DIRECTORIES
         DEPENDENCIES
+        LINUX_ONLY_DEPENDENCIES
+        WINDOWS_ONLY_DEPENDENCIES
         EXTERNAL_DEPENDENCIES
     )
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
@@ -655,6 +693,8 @@ function(myci_declare_application name)
     endif()
 
     add_executable(${name} ${win32} ${arg_SOURCES})
+
+    # TODO: allow specifying C++ standard as parameter
     target_compile_features(${name} PRIVATE cxx_std_20)
 
     set_target_properties(${name} PROPERTIES
@@ -674,6 +714,12 @@ function(myci_declare_application name)
 
     myci_private_add_target_dependencies(${name} PRIVATE ${arg_DEPENDENCIES})
     myci_private_add_target_external_dependencies(${name} PRIVATE ${arg_EXTERNAL_DEPENDENCIES})
+
+    if(LINUX AND arg_LINUX_ONLY_DEPENDENCIES)
+        myci_private_add_target_dependencies(${name} ${public} ${arg_LINUX_ONLY_DEPENDENCIES})
+    elseif(WIN32 AND arg_WINDOWS_ONLY_DEPENDENCIES)
+        myci_private_add_target_dependencies(${name} ${public} ${arg_WINDOWS_ONLY_DEPENDENCIES})
+    endif()
 
     # copy direct application resources
     if(arg_RESOURCE_DIRECTORY)
