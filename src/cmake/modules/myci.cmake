@@ -99,6 +99,8 @@ endfunction()
 
 function(myci_private_add_target_dependencies target visibility)
     foreach(dep ${ARGN})
+        set(package_name)
+
         string(FIND ${dep} "::" colon_colon_pos)
         if(colon_colon_pos EQUAL -1)
             # prefer non-namespaced dependency
@@ -106,20 +108,33 @@ function(myci_private_add_target_dependencies target visibility)
                 set(actual_dep ${dep})
             else()
                 # package name same as target name
-                if(NOT TARGET ${dep}::${dep})
-                    find_package(${dep} CONFIG REQUIRED)
-                endif()
+                set(package_name ${dep})
                 set(actual_dep ${dep}::${dep})
             endif()
-            target_link_libraries(${target} ${visibility} ${actual_dep})
         else()
             # dep is in <pkg>::<target> format
-            if(NOT TARGET ${dep})
-                string(SUBSTRING ${dep} 0 ${colon_colon_pos} package_name)
-                find_package(${package_name} CONFIG REQUIRED)
-            endif()
-            target_link_libraries(${target} ${visibility} ${dep})
+
+            # set package_name
+            string(SUBSTRING ${dep} 0 ${colon_colon_pos} package_name)
+
+            set(actual_dep ${dep})
         endif()
+
+        # if dependency taget is not defined, try to find a package providing it
+        if(NOT TARGET ${actual_dep})
+            if(${package_name}_FOUND)
+                message(FATAL_ERROR "target '${actual_dep}' is not defined, but package '${package_name}' which should provide it is unexpectedly found")
+            endif()
+
+            # try to find the package using CONFIG method first
+            find_package(${package_name} CONFIG)
+            if(NOT ${package_name}_FOUND)
+                message("INFO: could not find package '${package_name}' using CONFIG method, trying to find using MODULE method")
+                find_package(${package_name} REQUIRED)
+            endif()
+        endif()
+
+        target_link_libraries(${target} ${visibility} ${actual_dep})
     endforeach()
 endfunction()
 
