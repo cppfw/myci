@@ -122,6 +122,10 @@ function(myci_private_add_target_dependencies target visibility)
 
         # if dependency taget is not defined, try to find a package providing it
         if(NOT TARGET ${actual_dep})
+            if(NOT package_name)
+                message(FATAL_ERROR "package_name is unexpectedly empty")
+            endif()
+
             if(${package_name}_FOUND)
                 message(FATAL_ERROR "target '${actual_dep}' is not defined, but package '${package_name}' which should provide it is unexpectedly found")
             endif()
@@ -358,7 +362,7 @@ endfunction()
 #                                    Hierarchy of subdirectories is preserved during isntallation.
 #                                    The last directory level will be included in the installation,
 #                                    e.g. for '../src/mylib' the destination will be '<system-include-dir>/mylib/'.
-# @param IDE_FOLDER IDE - folder for the library (default is "Libs")
+# @param IDE_FOLDER - folder in the generated IDE project for the library. Optional. Defaults to "Libs".
 function(myci_declare_library name)
     set(options NO_EXPORT)
     set(single IDE_FOLDER)
@@ -380,7 +384,6 @@ function(myci_declare_library name)
     set(static INTERFACE)
     foreach(src ${arg_SOURCES})
         get_filename_component(ext "${src}" LAST_EXT)
-        # TODO: why support .cc?
         if("${ext}" STREQUAL ".c" OR "${ext}" STREQUAL ".cpp" OR "${ext}" STREQUAL ".cc")
             set(public PUBLIC)
             set(static STATIC)
@@ -468,7 +471,7 @@ function(myci_declare_library name)
             FILES_MATCHING
                 PATTERN "*.h"
                 PATTERN "*.hpp"
-                PATTERN "*.hh" # TODO: why support this extension?
+                PATTERN "*.hh"
         )
     endforeach()
 
