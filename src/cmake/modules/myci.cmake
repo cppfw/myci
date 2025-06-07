@@ -209,7 +209,7 @@ function(myci_private_get_packages_list out)
                 ${dep}
         )
 
-        message("package_name = ${package_name}, target_name = ${target_name}")
+        # message("package_name = ${package_name}, target_name = ${target_name}")
 
         if(${package_name} STREQUAL "PkgConfig")
             list(APPEND result "${package_name}/${target_name}")
@@ -347,12 +347,6 @@ function(myci_private_add_target_dependencies)
     if(link_targets)
         target_link_libraries(${arg_TARGET} ${arg_VISIBILITY} ${link_targets} ${linux_link_targets} ${windows_link_targets})
     endif()
-endfunction()
-
-function(myci_private_add_target_external_dependencies target visibility)
-    foreach(dep ${ARGN})
-        target_link_libraries(${target} ${visibility} ${dep})
-    endforeach()
 endfunction()
 
 function(myci_private_copy_resource_file_command out target_name src_dir file)
@@ -744,9 +738,6 @@ endfunction()
 #                     the target will be added as pkg_check_modules(<target> REQUIRED IMPORTED_TARGET "<target>").
 # @param LINUX_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of linux-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
 # @param WINDOWS_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of windows-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
-# @param EXTERNAL_DEPENDENCIES <target1> [<target2> ...] - DEPRECATED: TODO: remove. list of external dependency targets. Optional.
-#                              These will NOT be searched with find_package().
-#                              Passed to target_link_libraries() as is.
 # @param PUBLIC_COMPILE_DEFINITIONS <def1> [<def2> ...] - preprocessor macro definitions. Optional.
 # @param PRIVATE_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - private include directories. Optional.
 #                                    These directories will not be propagated to the library users.
@@ -766,7 +757,6 @@ function(myci_declare_library name)
         DEPENDENCIES
         LINUX_ONLY_DEPENDENCIES
         WINDOWS_ONLY_DEPENDENCIES
-        EXTERNAL_DEPENDENCIES
         PUBLIC_COMPILE_DEFINITIONS
         PRIVATE_INCLUDE_DIRECTORIES
         PUBLIC_INCLUDE_DIRECTORIES
@@ -844,7 +834,6 @@ function(myci_declare_library name)
         WINDOWS_ONLY_DEPENDENCIES
             ${arg_WINDOWS_ONLY_DEPENDENCIES}
     )
-    myci_private_add_target_external_dependencies(${name} ${public} ${arg_EXTERNAL_DEPENDENCIES})
 
     if(arg_RESOURCE_DIRECTORY)
         file(REAL_PATH
@@ -1034,9 +1023,6 @@ endfunction()
 #                     the target will be added as pkg_check_modules(<target> REQUIRED IMPORTED_TARGET "<target>").
 # @param LINUX_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of linux-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
 # @param WINDOWS_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of windows-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
-# @param EXTERNAL_DEPENDENCIES <target1> [<target2> ...] -  DEPRECATED: TODO: remove. list of external dependency targets. Optional.
-#                              These will NOT be searched with find_package().
-#                              Passed to target_link_libraries() as is.
 # @param INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - include directories. Optional.
 # @param GUI - the application is a GUI application, i.e. not a console application.
 #              This option only has effect on Windows, on other systems it has no effect.
@@ -1050,7 +1036,6 @@ function(myci_declare_application name)
         DEPENDENCIES
         LINUX_ONLY_DEPENDENCIES
         WINDOWS_ONLY_DEPENDENCIES
-        EXTERNAL_DEPENDENCIES
     )
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
@@ -1093,7 +1078,6 @@ function(myci_declare_application name)
         WINDOWS_ONLY_DEPENDENCIES
             ${arg_WINDOWS_ONLY_DEPENDENCIES}
     )
-    myci_private_add_target_external_dependencies(${name} PRIVATE ${arg_EXTERNAL_DEPENDENCIES})
 
     # copy direct application resources
     if(arg_RESOURCE_DIRECTORY)
