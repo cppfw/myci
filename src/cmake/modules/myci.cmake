@@ -97,10 +97,200 @@ function(myci_add_source_files out)
     set(${out} ${${out}} ${result_files} PARENT_SCOPE)
 endfunction()
 
+# Append <package>/ to dependencies, where <package> is the package name which is supposed to provide the target.
+# PkgConfig dependencies replaced by 'PkgConfig/<pkg-config-lib>'.
+function(myci_private_get_full_dependencies out)
+    set(options)
+    set(single)
+    set(multiple DEPENDENCIES)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    set(result)
+    foreach(dep ${arg_DEPENDENCIES})
+        set(package_name)
+
+        string(FIND ${dep} "/" slash_pos)
+        if(NOT slash_pos EQUAL -1)
+            # dep is already in <package>/<target> format
+            list(APPEND result ${dep})
+            continue()
+        else()
+            string(FIND ${dep} "::" colon_colon_pos)
+            if(colon_colon_pos EQUAL -1)
+                set(target_name ${dep}::${dep})
+                set(package_name ${dep})
+            else()
+                # dep is in <pkg>::<target> format
+
+                # set package_name
+                string(SUBSTRING ${dep} 0 ${colon_colon_pos} package_name)
+
+                if(${package_name} STREQUAL "PkgConfig")
+                    math(EXPR target_pos "${colon_colon_pos}+2")
+                    string(SUBSTRING ${dep} ${target_pos} -1 lib_name)
+                    set(target_name ${lib_name})
+                else()
+                    set(target_name ${dep})
+                endif()
+            endif()
+        endif()
+        list(APPEND result "${package_name}/${target_name}")
+    endforeach()
+    set(${out} ${result} PARENT_SCOPE)
+endfunction()
+
+function(myci_private_split_by_slash out_left out_right)
+    set(options NO_FORMAT_ERROR)
+    set(single STR)
+    set(multiple)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+    
+    if(NOT arg_STR)
+        message(FATAL_ERROR "myci_private_split_by_slash(): required argument STR is empty")
+    endif()
+
+    string(FIND ${arg_STR} "/" slash_pos)
+    if(slash_pos EQUAL -1)
+        if(arg_NO_FORMAT_ERROR)
+            set(${out_left} "" PARENT_SCOPE)
+            set(${out_right} "" PARENT_SCOPE)
+            return()
+        else()
+            message(FATAL_ERROR "myci_private_split_by_slash(): STR does not contain: ${arg_STR}")
+        endif()
+    endif()
+
+    string(SUBSTRING ${arg_STR} 0 ${slash_pos} left_part)
+
+    math(EXPR target_pos "${slash_pos}+1")
+    string(SUBSTRING ${arg_STR} ${target_pos} -1 right_part)
+
+    set(${out_left} ${left_part} PARENT_SCOPE)
+    set(${out_right} ${right_part} PARENT_SCOPE)
+endfunction()
+
+# @return pkg-config target if the package is a pkg-config package, ie in format 'PkgConfig/<pkg-config-lib>'.
+# @return empty string if the package is not a pkg-config one. 
+function(myci_private_get_lib_of_pkgconfig_package out)
+    set(options)
+    set(single PACKAGE)
+    set(multiple)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+    
+    if(NOT arg_PACKAGE)
+        message(FATAL_ERROR "myci_private_get_lib_of_pkgconfig_package(): required argument PACKAGE is empty")
+    endif()
+
+    myci_private_split_by_slash(package_name target_name
+        STR
+            ${arg_PACKAGE}
+        NO_FORMAT_ERROR
+    )
+
+    if(NOT ${package_name} STREQUAL "PkgConfig")
+        set(${out} "" PARENT_SCOPE)
+    else()
+        set(${out} ${target_name} PARENT_SCOPE)
+    endif()
+endfunction()
+
+# get list of packages from list of full dependencies.
+# PkgConfig package are returned in format 'PkgConfig/<pkg-config-lib>'
+function(myci_private_get_packages_list out)
+    set(options)
+    set(single)
+    set(multiple FULL_DEPENDENCIES)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    set(result)
+    foreach(dep ${arg_FULL_DEPENDENCIES})
+        myci_private_split_by_slash(package_name target_name
+            STR
+                ${dep}
+        )
+
+        message("package_name = ${package_name}, target_name = ${target_name}")
+
+        if(${package_name} STREQUAL "PkgConfig")
+            list(APPEND result "${package_name}/${target_name}")
+            continue()
+        endif()
+
+        list(APPEND result ${package_name})
+    endforeach()
+    set(${out} ${result} PARENT_SCOPE)
+endfunction()
+
+# Makes sure all the targets are available by finding needed packages.
+# Returns list of targets to link to.
+function(myci_private_find_packages out_targets)
+    set(options)
+    set(single)
+    set(multiple FULL_DEPENDENCIES)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    set(result_targets)
+    foreach(dep ${arg_FULL_DEPENDENCIES})
+        myci_private_split_by_slash(package_name target_name
+            STR
+                ${dep}
+        )
+
+        if(${package_name} STREQUAL "PkgConfig")
+            list(APPEND result_targets PkgConfig::${target_name})
+            if(TARGET PkgConfig::${target_name})
+                continue()
+            endif()
+
+            if(NOT PkgConfig_FOUND)
+                find_package(PkgConfig REQUIRED)
+            endif()
+            pkg_check_modules(${target_name} REQUIRED IMPORTED_TARGET "${target_name}")
+            continue()
+        endif()
+
+        set(original_target ${target_name})
+        if(TARGET ${target_name})
+            get_target_property(alias ${target_name} ALIASED_TARGET)
+            if(alias)
+                # this is an aliased target, use original target further
+                set(original_target ${alias})
+            endif()
+        endif()
+
+        # message("dep = ${dep}, package_name = ${package_name}, target_name = ${target_name}, original_target = ${original_target}")
+
+        list(APPEND result_targets ${original_target})
+
+        if(TARGET ${original_target})
+            continue()
+        endif()
+
+        if(${package_name}_FOUND)
+            message(FATAL_ERROR "assertion failure: target '${actual_dep}' is not defined, but package '${package_name}' which should provide it is unexpectedly found")
+        endif()
+
+        # try to find the package using CONFIG method first
+        find_package(${package_name} CONFIG QUIET)
+        if(NOT ${package_name}_FOUND)
+            # could not find package using CONFIG method, try to find using MODULE method
+            find_package(${package_name} MODULE REQUIRED)
+        endif()
+    endforeach()
+    set(${out_targets} ${result_targets} PARENT_SCOPE)
+endfunction()
+
 function(myci_private_add_target_dependencies)
     set(options)
-    set(single TARGET VISIBILITY OS_ONLY)
-    set(multiple DEPENDENCIES)
+    set(single
+        TARGET
+        VISIBILITY
+    )
+    set(multiple
+        DEPENDENCIES
+        LINUX_ONLY_DEPENDENCIES
+        WINDOWS_ONLY_DEPENDENCIES
+    )
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
     if(NOT arg_TARGET)
@@ -111,83 +301,52 @@ function(myci_private_add_target_dependencies)
         message(FATAL_ERROR "myci_private_add_target_dependencies(): required argument VISIBILITY is empty.")
     endif()
 
-    foreach(dep ${arg_DEPENDENCIES})
-        set(package_name)
+    # all
+    myci_private_get_full_dependencies(full_deps
+        DEPENDENCIES
+            ${arg_DEPENDENCIES}
+    )
+    myci_private_find_packages(link_targets
+        FULL_DEPENDENCIES
+            ${full_deps}
+    )
 
-        string(FIND ${dep} "/" slash_pos)
-        if(NOT slash_pos EQUAL -1)
-            # dep is in <package>/<target> format
+    # linux
+    set(linux_link_targets)
+    myci_private_get_full_dependencies(linux_full_deps
+        DEPENDENCIES
+            ${arg_LINUX_ONLY_DEPENDENCIES}
+    )
+    if(LINUX)
+        myci_private_find_packages(linux_link_targets
+            FULL_DEPENDENCIES
+                ${linux_full_deps}
+        )
+    endif()
 
-            # set package_name
-            string(SUBSTRING ${dep} 0 ${slash_pos} package_name)
+    # windows
+    set(windows_link_targets)
+    myci_private_get_full_dependencies(windows_full_deps
+        DEPENDENCIES
+            ${arg_WINDOWS_ONLY_DEPENDENCIES}
+    )
+    if(WIN32)
+        myci_private_find_packages(windows_link_targets
+            FULL_DEPENDENCIES
+                ${windows_full_deps}
+        )
+    endif()
 
-            # set actual_dep
-            math(EXPR target_pos "${slash_pos}+1")
-            string(SUBSTRING ${dep} ${target_pos} -1 actual_dep)
-        else()
-            string(FIND ${dep} "::" colon_colon_pos)
-            if(colon_colon_pos EQUAL -1)
-                # prefer non-namespaced dependency
-                if(TARGET ${dep})
-                    set(actual_dep ${dep})
-                else()
-                    # package name same as target name
-                    set(package_name ${dep})
-                    set(actual_dep ${dep}::${dep})
-                endif()
-            else()
-                # dep is in <pkg>::<target> format
+    set_target_properties(${arg_TARGET}
+        PROPERTIES
+            myci_full_dependencies "${full_deps}"
+            myci_linux_full_dependencies "${linux_full_deps}"
+            myci_windows_full_dependencies "${windows_full_deps}"
+    )
 
-                # set package_name
-                string(SUBSTRING ${dep} 0 ${colon_colon_pos} package_name)
-
-                # set lib name
-                math(EXPR lib_pos "${colon_colon_pos}+2")
-                string(SUBSTRING ${dep} ${lib_pos} -1 target_name)
-
-                set(actual_dep ${dep})
-            endif()
-        endif()
-
-        # if dependency taget is not defined, try to find a package providing it
-        if(NOT TARGET ${actual_dep})
-            if(NOT package_name)
-                message(FATAL_ERROR "assertion failure: package_name is unexpectedly empty")
-            endif()
-
-            if(LINUX AND ${package_name} STREQUAL "PkgConfig")
-                if(NOT PkgConfig_FOUND)
-                    find_package(PkgConfig REQUIRED)
-                endif()
-
-                pkg_check_modules(${target_name} REQUIRED IMPORTED_TARGET "${target_name}")
-            else()
-                if(${package_name}_FOUND)
-                    message(FATAL_ERROR "assertion failure: target '${actual_dep}' is not defined, but package '${package_name}' which should provide it is unexpectedly found")
-                endif()
-
-                # try to find the package using CONFIG method first
-                find_package(${package_name} CONFIG)
-                if(NOT ${package_name}_FOUND)
-                    # could not find package using CONFIG method, try to find using MODULE method
-                    find_package(${package_name} MODULE REQUIRED)
-                endif()
-
-                # save package name which provides the target as dependency target property
-                set_target_properties(${actual_dep}
-                    PROPERTIES
-                        myci_providing_package_name "${package_name}"
-                )
-                # save OS specificity as dependency target property
-                set_target_properties(${actual_dep}
-                    PROPERTIES
-                        myci_os_only "${arg_OS_ONLY}"
-                )
-            endif()
-        endif()
-
-        target_link_libraries(${arg_TARGET} ${arg_VISIBILITY} ${actual_dep})
-    endforeach()
+    if(link_targets)
+        target_link_libraries(${arg_TARGET} ${arg_VISIBILITY} ${link_targets} ${linux_link_targets} ${windows_link_targets})
+    endif()
 endfunction()
 
 function(myci_private_add_target_external_dependencies target visibility)
@@ -239,7 +398,10 @@ endfunction()
 # @param DIRECTORY <dir> - directory containing the resources pack. The directory will be copied to application output directory.
 function(myci_private_declare_resource_pack target_name)
     set(options)
-    set(single APP_TARGET DIRECTORY)
+    set(single
+        APP_TARGET
+        DIRECTORY
+    )
     set(multiple)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
@@ -303,7 +465,9 @@ function(myci_private_export_custom_target_properties)
 
     set(filename "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-properties.cmake")
 
-    file(WRITE "${filename}" "# Set exported custom properties on imported targets\n")
+    file(WRITE "${filename}"
+        "# Set exported custom properties on imported targets\n"
+    )
 
     foreach(target ${arg_TARGETS})
         foreach(prop ${arg_PROPERTIES})
@@ -324,11 +488,182 @@ function(myci_private_export_custom_target_properties)
     )
 endfunction()
 
+function(myci_private_write_find_packages_to_config_file)
+    set(options)
+    set(single FILENAME)
+    set(multiple PACKAGES)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    if(NOT arg_FILENAME)
+        message(FATAL_ERROR "myci_private_write_find_packages_to_config_file(): required argument FILENAME is empty")
+    endif()
+
+    set(pkg_config_encountered)
+    foreach(pkg ${arg_PACKAGES})
+        myci_private_get_lib_of_pkgconfig_package(pkg_config_lib
+            PACKAGE
+                ${pkg}
+        )
+
+        if(pkg_config_lib)
+            # pkg-config package
+            if(NOT pkg_config_encountered)
+                file(APPEND "${arg_FILENAME}"
+                    # TODO:
+                    # "if(NOT PkgConfig_FOUND)\n"
+                    "    find_dependency(PkgConfig)\n"
+                    # TODO:
+                    # "endif()\n"
+                )
+                set(pkg_config_encountered True)
+            endif()
+            file(APPEND "${filename}"
+                "if(NOT TARGET PkgConfig::${pkg_config_lib})\n"
+                "    pkg_check_modules(${pkg_config_lib} REQUIRED IMPORTED_TARGET \"${pkg_config_lib}\")\n"
+                "endif()\n"
+            )
+        else()
+            # TODO:
+            # file(APPEND "${arg_FILENAME}"
+            #     "if(NOT ${pkg}_FOUND)\n"
+            # )
+
+            set(config)
+            if(${pkg}_FOUND)
+                if(${pkg}_CONFIG)
+                    set(config True)
+                endif()
+            else()
+                # If package is not found then we get it from monorepo, should be CONFIG method.
+                set(config True)
+            endif()
+
+            if(config)
+                file(APPEND "${arg_FILENAME}"
+                    "    find_dependency(${pkg} CONFIG)\n"
+                )
+            else()
+                file(APPEND "${arg_FILENAME}"
+                    "    find_dependency(${pkg})\n"
+                )
+            endif()
+
+            # TODO:
+            # file(APPEND "${arg_FILENAME}"
+            #     "endif()\n"
+            # )
+        endif()
+    endforeach()
+endfunction()
+
 function(myci_private_generate_config_file)
+    set(options)
+    set(single)
+    set(multiple
+        TARGETS
+    )
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    set(all_full_deps)
+    set(all_linux_full_deps)
+    set(all_windows_full_deps)
+
+    # collect full deps
+    foreach(target ${arg_TARGETS})
+        get_target_property(full_deps ${target} myci_full_dependencies)
+        get_target_property(linux_full_deps ${target} myci_linux_full_dependencies)
+        get_target_property(windows_full_deps ${target} myci_windows_full_dependencies)
+
+        foreach(dep ${full_deps})
+            if(NOT ${dep} IN_LIST all_full_deps)
+                list(APPEND all_full_deps ${dep})
+            endif()
+        endforeach()
+
+        foreach(dep ${linux_full_deps})
+            if(NOT ${dep} IN_LIST all_linux_full_deps)
+                list(APPEND all_linux_full_deps ${dep})
+            endif()
+        endforeach()
+
+        foreach(dep ${windows_full_deps})
+            if(NOT ${dep} IN_LIST all_windows_full_deps)
+                list(APPEND all_windows_full_deps ${dep})
+            endif()
+        endforeach()
+    endforeach()
+    
+    # message("all_full_deps = ${all_full_deps}")
+
+    myci_private_get_packages_list(packages
+        FULL_DEPENDENCIES
+            ${all_full_deps}
+    )
+    myci_private_get_packages_list(linux_packages
+        FULL_DEPENDENCIES
+            ${all_linux_full_deps}
+    )
+    myci_private_get_packages_list(windows_packages
+        FULL_DEPENDENCIES
+            ${all_windows_full_deps}
+    )
+
+    # message("packages = ${packages}")
+
     set(filename "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake")
 
     file(WRITE "${filename}"
-        "# Auto-generated\n"
+        "# Auto-generated\n\n"
+        "include(CMakeFindDependencyMacro)\n\n"
+    )
+
+    # Config file should find_package() for all the dependencies, so
+    # here we generate code for finding all direct dependency packages.
+
+    myci_private_write_find_packages_to_config_file(
+        FILENAME
+            "${filename}"
+        PACKAGES
+            ${packages}
+    )
+    file(APPEND "${filename}" "\n")
+
+    if(linux_packages)
+        file(APPEND "${filename}"
+            "if(LINUX)\n"
+        )
+        myci_private_write_find_packages_to_config_file(
+            FILENAME
+                "${filename}"
+            PACKAGES
+                ${linux_packages}
+        )
+        file(APPEND "${filename}"
+            "endif()\n"
+        )
+        file(APPEND "${filename}" "\n")
+    endif()
+
+    if(windows_packages)
+        file(APPEND "${filename}"
+            "if(WIN32)\n"
+        )
+        myci_private_write_find_packages_to_config_file(
+            FILENAME
+                "${filename}"
+            PACKAGES
+                ${windows_packages}
+        )
+        file(APPEND "${filename}"
+            "endif()\n"
+        )
+        file(APPEND "${filename}" "\n")
+    endif()
+
+    # Done generating find_package() code.
+
+    file(APPEND "${filename}"
+        "\n"
         "include(\"\${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}-targets.cmake\")\n"
         "include(\"\${CMAKE_CURRENT_LIST_DIR}/${PROJECT_NAME}-properties.cmake\")\n"
     )
@@ -340,7 +675,6 @@ function(myci_private_generate_config_file)
             "${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}"
     )
 endfunction()
-
 
 ####
 # @brief Export targets.
@@ -380,7 +714,10 @@ function(myci_export)
             myci_installed_resource_directory_within_datadir
     )
 
-    myci_private_generate_config_file()
+    myci_private_generate_config_file(
+        TARGETS
+            ${arg_TARGETS}
+    )
 endfunction()
 
 ####
@@ -407,7 +744,7 @@ endfunction()
 #                     the target will be added as pkg_check_modules(<target> REQUIRED IMPORTED_TARGET "<target>").
 # @param LINUX_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of linux-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
 # @param WINDOWS_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of windows-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
-# @param EXTERNAL_DEPENDENCIES <target1> [<target2> ...] - list of external dependency targets. Optional.
+# @param EXTERNAL_DEPENDENCIES <target1> [<target2> ...] - DEPRECATED: TODO: remove. list of external dependency targets. Optional.
 #                              These will NOT be searched with find_package().
 #                              Passed to target_link_libraries() as is.
 # @param PUBLIC_COMPILE_DEFINITIONS <def1> [<def2> ...] - preprocessor macro definitions. Optional.
@@ -502,32 +839,12 @@ function(myci_declare_library name)
             ${public}
         DEPENDENCIES
             ${arg_DEPENDENCIES}
+        LINUX_ONLY_DEPENDENCIES
+            ${arg_LINUX_ONLY_DEPENDENCIES}
+        WINDOWS_ONLY_DEPENDENCIES
+            ${arg_WINDOWS_ONLY_DEPENDENCIES}
     )
     myci_private_add_target_external_dependencies(${name} ${public} ${arg_EXTERNAL_DEPENDENCIES})
-
-    if(LINUX AND arg_LINUX_ONLY_DEPENDENCIES)
-        myci_private_add_target_dependencies(
-            TARGET
-                ${name}
-            VISIBILITY
-                ${public}
-            OS_ONLY
-                windows
-            DEPENDENCIES
-                ${arg_LINUX_ONLY_DEPENDENCIES}
-        )
-    elseif(WIN32 AND arg_WINDOWS_ONLY_DEPENDENCIES)
-        myci_private_add_target_dependencies(
-            TARGET
-                ${name}
-            VISIBILITY
-                ${public}
-            OS_ONLY
-                linux
-            DEPENDENCIES
-                ${arg_WINDOWS_ONLY_DEPENDENCIES}
-        )
-    endif()
 
     if(arg_RESOURCE_DIRECTORY)
         file(REAL_PATH
@@ -588,7 +905,7 @@ endfunction()
 # @param out - output variable name listing all the dependencies.
 # @param TARGET - target to get dependencies for.
 function(myci_private_get_all_dependencies out)
-    set(options)
+    set(options RECURSIVE)
     set(single TARGET)
     set(multiple)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
@@ -617,20 +934,22 @@ function(myci_private_get_all_dependencies out)
 
         list(APPEND result_deps ${dep})
 
-        # recursively get dependencies of a dependency and add them to the resulting list
-        myci_private_get_all_dependencies(dep_deps
-            TARGET
-                ${dep}
-        )
-        foreach(dep_dep ${dep_deps})
-            if(NOT TARGET ${dep_dep})
-                continue()
-            endif()
+        if(arg_RECURSIVE)
+            # recursively get dependencies of a dependency and add them to the resulting list
+            myci_private_get_all_dependencies(dep_deps
+                TARGET
+                    ${dep}
+            )
+            foreach(dep_dep ${dep_deps})
+                if(NOT TARGET ${dep_dep})
+                    continue()
+                endif()
 
-            if(NOT "${dep_dep}" IN_LIST result_deps)
-                list(APPEND result_deps ${dep_dep})
-            endif()
-        endforeach()
+                if(NOT "${dep_dep}" IN_LIST result_deps)
+                    list(APPEND result_deps ${dep_dep})
+                endif()
+            endforeach()
+        endif()
     endforeach()
     set(${out} ${result_deps} PARENT_SCOPE)
 endfunction()
@@ -715,7 +1034,7 @@ endfunction()
 #                     the target will be added as pkg_check_modules(<target> REQUIRED IMPORTED_TARGET "<target>").
 # @param LINUX_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of linux-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
 # @param WINDOWS_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of windows-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
-# @param EXTERNAL_DEPENDENCIES <target1> [<target2> ...] - list of external dependency targets. Optional.
+# @param EXTERNAL_DEPENDENCIES <target1> [<target2> ...] -  DEPRECATED: TODO: remove. list of external dependency targets. Optional.
 #                              These will NOT be searched with find_package().
 #                              Passed to target_link_libraries() as is.
 # @param INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - include directories. Optional.
@@ -769,32 +1088,12 @@ function(myci_declare_application name)
             PRIVATE
         DEPENDENCIES
             ${arg_DEPENDENCIES}
+        LINUX_ONLY_DEPENDENCIES
+            ${arg_LINUX_ONLY_DEPENDENCIES}
+        WINDOWS_ONLY_DEPENDENCIES
+            ${arg_WINDOWS_ONLY_DEPENDENCIES}
     )
     myci_private_add_target_external_dependencies(${name} PRIVATE ${arg_EXTERNAL_DEPENDENCIES})
-
-    if(LINUX AND arg_LINUX_ONLY_DEPENDENCIES)
-        myci_private_add_target_dependencies(
-            TARGET
-                ${name}
-            VISIBILITY
-                PRIVATE
-            OS_ONLY
-                linux
-            DEPENDENCIES
-                ${arg_LINUX_ONLY_DEPENDENCIES}
-        )
-    elseif(WIN32 AND arg_WINDOWS_ONLY_DEPENDENCIES)
-        myci_private_add_target_dependencies(
-            TARGET
-                ${name}
-            VISIBILITY
-                PRIVATE
-            OS_ONLY
-                windows
-            DEPENDENCIES
-                ${arg_WINDOWS_ONLY_DEPENDENCIES}
-        )
-    endif()
 
     # copy direct application resources
     if(arg_RESOURCE_DIRECTORY)
@@ -823,6 +1122,7 @@ function(myci_declare_application name)
     myci_private_get_all_dependencies(all_deps
         TARGET
             ${name}
+        RECURSIVE
     )
     myci_private_add_resource_pack_deps(
         TARGET
