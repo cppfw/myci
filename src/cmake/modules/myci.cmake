@@ -279,6 +279,12 @@ function(myci_private_find_packages out_targets)
             # could not find package using CONFIG method, try to find using MODULE method
             find_package(${package_name} MODULE REQUIRED)
         endif()
+
+        message("done finding package ${package_name}")
+
+        if(NOT ${package_name}_FOUND)
+            message((FATAL_ERROR "assertion failure: package ${package_name} is unexpectedly not found"))
+        endif()
     endforeach()
     set(${out_targets} ${result_targets} PARENT_SCOPE)
 endfunction()
