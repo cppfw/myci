@@ -851,6 +851,12 @@ function(myci_declare_library name)
             ${arg_WINDOWS_ONLY_DEPENDENCIES}
     )
 
+    if(ZLIB_FOUND)
+        message("!!! ZLIB found")
+    else()
+        message("!!! ZLIB not found")
+    endif()
+
     if(arg_RESOURCE_DIRECTORY)
         file(REAL_PATH
             # PATH
