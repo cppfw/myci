@@ -258,17 +258,20 @@ function(myci_private_find_packages out_targets)
             endif()
         endif()
 
-        # message("dep = ${dep}, package_name = ${package_name}, target_name = ${target_name}, original_target = ${original_target}")
+        message("dep = ${dep}, package_name = ${package_name}, target_name = ${target_name}, original_target = ${original_target}")
 
         list(APPEND result_targets ${original_target})
 
         if(TARGET ${original_target})
+            message("target ${original_target} alrady exists")
             continue()
         endif()
 
         if(${package_name}_FOUND)
             message(FATAL_ERROR "assertion failure: target '${actual_dep}' is not defined, but package '${package_name}' which should provide it is unexpectedly found")
         endif()
+
+        message("find package ${package_name}")
 
         # try to find the package using CONFIG method first
         find_package(${package_name} CONFIG QUIET)
