@@ -733,7 +733,7 @@ endfunction()
 #                     If <depX> is in format '<pkg>/<target>' then
 #                     it will be searched with find_package(<pkg> CONFIG) and if not found then searched with find_package(<pkg> MODULE REQUIRED),
 #                     and the target will be passed to target_link_libraries() as <target>.
-#                     If <depX> is in format 'PkgConfig::<target>' and host system is Linux then
+#                     If <depX> is in format 'PkgConfig::<target>' then
 #                     PkgConfig package will be searched with find_package(PkgConfig REQUIRED) and
 #                     the target will be added as pkg_check_modules(<target> REQUIRED IMPORTED_TARGET "<target>").
 # @param LINUX_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of linux-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
@@ -1018,7 +1018,7 @@ endfunction()
 #                     If <depX> is in format '<pkg>/<target>' then
 #                     it will be searched with find_package(<pkg> CONFIG) and if not found then searched with find_package(<pkg> MODULE REQUIRED),
 #                     and the target will be passed to target_link_libraries() as <target>.
-#                     If <depX> is in format 'PkgConfig::<target>' and host system is Linux then
+#                     If <depX> is in format 'PkgConfig::<target>' then
 #                     PkgConfig package will be searched with find_package(PkgConfig REQUIRED) and
 #                     the target will be added as pkg_check_modules(<target> REQUIRED IMPORTED_TARGET "<target>").
 # @param LINUX_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of linux-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
