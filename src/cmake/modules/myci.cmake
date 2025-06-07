@@ -169,7 +169,7 @@ function(myci_private_split_by_slash out_left out_right)
     set(${out_right} ${right_part} PARENT_SCOPE)
 endfunction()
 
-# @return pkg-config target if the package is a pkg-config package, ie in format 'PkgConfig/<pkg-config-lib>'.
+# @return pkg-config target if the package is a pkg-config package, i.e. in 'PkgConfig/<pkg-config-lib>' format.
 # @return empty string if the package is not a pkg-config one. 
 function(myci_private_get_lib_of_pkgconfig_package out)
     set(options)
