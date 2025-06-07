@@ -522,12 +522,17 @@ function(myci_private_write_find_packages_to_config_file)
             #     "if(NOT ${pkg}_FOUND)\n"
             # )
 
+            message("pkg = ${pkg}")
+
             set(config)
             if(${pkg}_FOUND)
+                message("pkg found")
                 if(${pkg}_CONFIG)
+                    message("pkg config")
                     set(config True)
                 endif()
             else()
+                message("pkg not found")
                 # If package is not found then we get it from monorepo, should be CONFIG method.
                 set(config True)
             endif()
