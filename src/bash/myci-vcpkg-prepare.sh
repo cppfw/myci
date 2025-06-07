@@ -11,7 +11,7 @@ while [[ $# > 0 ]] ; do
     case $1 in
         --help)
             echo "Usage:"
-            echo "	$(basename $0) --git-ref <git-ref> [--version <soname> --vcpkg-dir <path-to-vcpkgization-dir>]"
+            echo "	$(basename $0) --git-ref <git-ref> [--version <ver> --vcpkg-dir <path-to-vcpkgization-dir>]"
             echo " "
             echo "Options:"
 			echo "  --git-ref    git ref, e.g. commit hash or tag."
