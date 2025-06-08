@@ -18,7 +18,7 @@ function(myci_private_find_package package)
     get_property(found_packages_by_config GLOBAL PROPERTY myci_found_packages_by_config)
 
     if(${package} IN_LIST found_packages)
-        message("myci_private_find_package(): package ${package} already found")
+        # message("myci_private_find_package(): package ${package} already found")
         if(arg_OUT_IS_BY_CONFIG)
             if(${package} IN_LIST found_packages_by_config)
                 set(${arg_OUT_IS_BY_CONFIG} True PARENT_SCOPE)
@@ -32,23 +32,7 @@ function(myci_private_find_package package)
         return()
     endif()
 
-    set(opts)
-    # TODO: remove
-    # if(arg_REQUIRED)
-    #     set(opts ${opts} REQUIRED)
-    # endif()
-    # if(arg_QUIET)
-    #     set(opts ${opts} QUIET)
-    # endif()
-
-    # TODO: remove
-    # if(arg_CONFIG)
-    #     set(opts ${opts} CONFIG)
-    # else()
-    #     set(opts ${opts} MODULE)
-    # endif()
-
-    set(opts ${opts} GLOBAL)
+    set(opts GLOBAL)
 
     # try config first
     find_package(${package} ${opts} CONFIG QUIET)
@@ -73,9 +57,9 @@ function(myci_private_find_package package)
         else()
             unset(is_by_config)
         endif()
-        message("myci_private_find_package(): package ${package} found, opts = ${opts}, is_by_config = ${is_by_config}")
+        # message("myci_private_find_package(): package ${package} found, opts = ${opts}, is_by_config = ${is_by_config}")
     else()
-        message("myci_private_find_package(): package ${package} not found, opts = ${opts}")
+        # message("myci_private_find_package(): package ${package} not found, opts = ${opts}")
         unset(is_found)
         unset(is_by_config)
     endif()
@@ -348,50 +332,24 @@ function(myci_private_find_packages out_targets)
             endif()
         endif()
 
-        message("myci_private_find_packages(): dep = ${dep}, package_name = ${package_name}, target_name = ${target_name}, original_target = ${original_target}")
+        # message("myci_private_find_packages(): dep = ${dep}, package_name = ${package_name}, target_name = ${target_name}, original_target = ${original_target}")
 
         list(APPEND result_targets ${original_target})
 
         if(TARGET ${original_target})
-            message("myci_private_find_packages(): target ${original_target} already exists")
+            # message("myci_private_find_packages(): target ${original_target} already exists")
             continue()
         endif()
 
-        # TODO: remove
-        # if(${package_name}_FOUND)
-        #     message(FATAL_ERROR "assertion failure: target '${original_target}' is not defined, but package '${package_name}' which should provide it is unexpectedly found")
-        # endif()
+        # message("myci_private_find_packages(): find package ${package_name}")
 
-        message("myci_private_find_packages(): find package ${package_name}")
+        myci_private_find_package(${package_name})
 
-        # try to find the package using CONFIG method first
-        myci_private_find_package(${package_name}
-            # TODO: remove
-            # CONFIG
-            # QUIET
-            # OUT_IS_FOUND
-            #     is_found
-        )
-        # TODO: remove
-        # if(NOT is_found)
-        #     # could not find package using CONFIG method, try to find using MODULE method
-        #     myci_private_find_package(${package_name}
-        #         REQUIRED
-        #     )
-        # endif()
-
-        message("myci_private_find_packages(): done finding package ${package_name}")
+        # message("myci_private_find_packages(): done finding package ${package_name}")
 
         if(NOT TARGET ${original_target})
             message(FATAL_ERROR "assertion failure: target ${original_target} does not exist")
         endif()
-
-        # TODO: remove
-        # if(NOT ${package_name}_FOUND)
-        #     message(FATAL_ERROR "assertion failure: package ${package_name} is unexpectedly not found")
-        # else()
-        #     message("package ${package_name} found")
-        # endif()
     endforeach()
     set(${out_targets} ${result_targets} PARENT_SCOPE)
 endfunction()
@@ -619,11 +577,7 @@ function(myci_private_write_find_packages_to_config_file)
             # pkg-config package
             if(NOT pkg_config_encountered)
                 file(APPEND "${arg_FILENAME}"
-                    # TODO:
-                    # "if(NOT PkgConfig_FOUND)\n"
                     "find_dependency(PkgConfig REQUIRED)\n"
-                    # TODO:
-                    # "endif()\n"
                 )
                 set(pkg_config_encountered True)
             endif()
@@ -633,12 +587,7 @@ function(myci_private_write_find_packages_to_config_file)
                 "endif()\n"
             )
         else()
-            # TODO:
-            # file(APPEND "${arg_FILENAME}"
-            #     "if(NOT ${pkg}_FOUND)\n"
-            # )
-
-            message("myci_private_write_find_packages_to_config_file(): pkg = ${pkg}")
+            # message("myci_private_write_find_packages_to_config_file(): pkg = ${pkg}")
 
             myci_private_find_package(${pkg}
                 QUIET
@@ -649,39 +598,21 @@ function(myci_private_write_find_packages_to_config_file)
             )
 
             if(NOT is_found)
-                # If package is not found then we get it from monorepo, should be CONFIG method.
+                # If package is not found then we get it from monorepo, should be CONFIG method, because MODULE method is obsolete.
                 set(is_by_config True)
             endif()
 
-            # TODO: remove
-            # if(NOT ${pkg}_FOUND)
-            #     message("pkg ${pkg} not found")
-            #     # If package is not found then we get it from monorepo, should be CONFIG method.
-            #     set(config True)
-            # else()
-            #     message("pkg ${pkg} found")
-            #     if(${pkg}_CONFIG)
-            #         message("pkg ${pkg} config")
-            #         set(config True)
-            #     endif()
-            # endif()
-
             if(is_by_config)
-                message("myci_private_write_find_packages_to_config_file(): by_config ${pkg}")
+                # message("myci_private_write_find_packages_to_config_file(): by_config ${pkg}")
                 file(APPEND "${arg_FILENAME}"
                     "find_dependency(${pkg} CONFIG)\n"
                 )
             else()
-                message("myci_private_write_find_packages_to_config_file(): by module ${pkg}")
+                # message("myci_private_write_find_packages_to_config_file(): by module ${pkg}")
                 file(APPEND "${arg_FILENAME}"
                     "find_dependency(${pkg})\n"
                 )
             endif()
-
-            # TODO:
-            # file(APPEND "${arg_FILENAME}"
-            #     "endif()\n"
-            # )
         endif()
     endforeach()
 endfunction()
@@ -970,13 +901,6 @@ function(myci_declare_library name)
         WINDOWS_ONLY_DEPENDENCIES
             ${arg_WINDOWS_ONLY_DEPENDENCIES}
     )
-
-    # TODO: remove
-    # if(ZLIB_FOUND)
-    #     message("myci_declare_library(): !!! ZLIB found")
-    # else()
-    #     message("myci_declare_library(): !!! ZLIB not found")
-    # endif()
 
     if(arg_RESOURCE_DIRECTORY)
         file(REAL_PATH
