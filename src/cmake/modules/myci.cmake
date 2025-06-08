@@ -7,6 +7,77 @@ include(GNUInstallDirs)
 
 set(myci_private_output_dir "${CMAKE_BINARY_DIR}/exe")
 
+function(myci_private_find_package package)
+    set(options CONFIG MODULE REQUIRED QUIET)
+    set(single OUT_IS_FOUND OUT_IS_BY_CONFIG)
+    set(multiple)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    get_property(found_packages GLOBAL PROPERTY myci_found_packages)
+    get_property(found_packages_by_config GLOBAL PROPERTY myci_found_packages_by_config)
+
+    if(${package} IN_LIST found_packages)
+        message("myci_private_find_package(): package ${package} already found")
+        if(arg_OUT_IS_BY_CONFIG)
+            if(${package} IN_LIST found_packages_by_config)
+                set(${arg_OUT_IS_BY_CONFIG} True PARENT_SCOPE)
+            else()
+                unset(${arg_OUT_IS_BY_CONFIG} PARENT_SCOPE)
+            endif()
+        endif()
+        if(arg_OUT_IS_FOUND)
+            set(${arg_OUT_IS_FOUND} True PARENT_SCOPE)
+        endif()
+        return()
+    endif()
+
+    set(opts)
+    if(arg_REQUIRED)
+        set(opts ${opts} REQUIRED)
+    endif()
+    if(arg_QUIET)
+        set(opts ${opts} QUIET)
+    endif()
+    if(arg_CONFIG)
+        set(opts ${opts} CONFIG)
+    endif()
+    if(arg_MODULE)
+        set(opts ${opts} MODULE)
+    endif()
+
+    find_package(${package} ${opts} GLOBAL)
+
+    if(${pkg}_FOUND)
+        set_property(GLOBAL APPEND PROPERTY myci_found_packages ${package})
+        set(is_found True)
+    else()
+        unset(is_found)
+    endif()
+
+    if(${pkg}_CONFIG)
+        set_property(GLOBAL APPEND PROPERTY myci_found_packages_by_config ${package})
+        set(is_by_config True)
+    else()
+        unset(is_by_config)
+    endif()
+
+    if(arg_OUT_IS_FOUND)
+        if(is_found)
+            set(${arg_OUT_IS_FOUND} True PARENT_SCOPE)
+        else()
+            unset(${arg_OUT_IS_FOUND} PARENT_SCOPE)
+        endif()
+    endif()
+
+    if(arg_OUT_IS_BY_CONFIG)
+        if(is_by_config)
+            set(${arg_OUT_IS_BY_CONFIG} True PARENT_SCOPE)
+        else()
+            unset(${arg_OUT_IS_BY_CONFIG} PARENT_SCOPE)
+        endif()
+    endif()
+endfunction()
+
 ####
 # @brief Add source files from a directory to a list variable.
 # @param out - list variable name to which to append source files.
@@ -258,35 +329,49 @@ function(myci_private_find_packages out_targets)
             endif()
         endif()
 
-        message("dep = ${dep}, package_name = ${package_name}, target_name = ${target_name}, original_target = ${original_target}")
+        message("myci_private_find_packages(): dep = ${dep}, package_name = ${package_name}, target_name = ${target_name}, original_target = ${original_target}")
 
         list(APPEND result_targets ${original_target})
 
         if(TARGET ${original_target})
-            message("target ${original_target} alrady exists")
+            message("myci_private_find_packages(): target ${original_target} already exists")
             continue()
         endif()
 
-        if(${package_name}_FOUND)
-            message(FATAL_ERROR "assertion failure: target '${actual_dep}' is not defined, but package '${package_name}' which should provide it is unexpectedly found")
-        endif()
+        # TODO: remove
+        # if(${package_name}_FOUND)
+        #     message(FATAL_ERROR "assertion failure: target '${original_target}' is not defined, but package '${package_name}' which should provide it is unexpectedly found")
+        # endif()
 
-        message("find package ${package_name}")
+        message("myci_private_find_packages(): find package ${package_name}")
 
         # try to find the package using CONFIG method first
-        find_package(${package_name} CONFIG QUIET)
-        if(NOT ${package_name}_FOUND)
+        myci_private_find_package(${package_name}
+            CONFIG
+            QUIET
+            OUT_IS_FOUND
+                is_found
+        )
+        if(NOT is_found)
             # could not find package using CONFIG method, try to find using MODULE method
-            find_package(${package_name} MODULE REQUIRED)
+            myci_private_find_package(${package_name}
+                MODULE
+                REQUIRED
+            )
         endif()
 
-        message("done finding package ${package_name}")
+        message("myci_private_find_packages(): done finding package ${package_name}")
 
-        if(NOT ${package_name}_FOUND)
-            message(FATAL_ERROR "assertion failure: package ${package_name} is unexpectedly not found")
-        else()
-            message("package ${package_name} found")
+        if(NOT TARGET ${original_target})
+            message(FATAL_ERROR "assertion failure: target ${original_target} does not exist")
         endif()
+
+        # TODO: remove
+        # if(NOT ${package_name}_FOUND)
+        #     message(FATAL_ERROR "assertion failure: package ${package_name} is unexpectedly not found")
+        # else()
+        #     message("package ${package_name} found")
+        # endif()
     endforeach()
     set(${out_targets} ${result_targets} PARENT_SCOPE)
 endfunction()
@@ -516,7 +601,7 @@ function(myci_private_write_find_packages_to_config_file)
                 file(APPEND "${arg_FILENAME}"
                     # TODO:
                     # "if(NOT PkgConfig_FOUND)\n"
-                    "    find_dependency(PkgConfig)\n"
+                    "find_dependency(PkgConfig REQUIRED)\n"
                     # TODO:
                     # "endif()\n"
                 )
@@ -533,28 +618,43 @@ function(myci_private_write_find_packages_to_config_file)
             #     "if(NOT ${pkg}_FOUND)\n"
             # )
 
-            message("pkg = ${pkg}")
+            message("myci_private_write_find_packages_to_config_file(): pkg = ${pkg}")
 
-            set(config)
-            if(NOT ${pkg}_FOUND)
-                message("pkg ${pkg} not found")
+            myci_private_find_package(${pkg}
+                QUIET
+                OUT_IS_FOUND
+                    is_found
+                OUT_IS_BY_CONFIG
+                    is_by_config
+            )
+
+            if(NOT is_found)
                 # If package is not found then we get it from monorepo, should be CONFIG method.
-                set(config True)
-            else()
-                message("pkg ${pkg} found")
-                if(${pkg}_CONFIG)
-                    message("pkg ${pkg} config")
-                    set(config True)
-                endif()
+                set(is_by_config True)
             endif()
 
-            if(config)
+            # TODO: remove
+            # if(NOT ${pkg}_FOUND)
+            #     message("pkg ${pkg} not found")
+            #     # If package is not found then we get it from monorepo, should be CONFIG method.
+            #     set(config True)
+            # else()
+            #     message("pkg ${pkg} found")
+            #     if(${pkg}_CONFIG)
+            #         message("pkg ${pkg} config")
+            #         set(config True)
+            #     endif()
+            # endif()
+
+            if(is_by_config)
+                message("myci_private_write_find_packages_to_config_file(): by_config ${pkg}")
                 file(APPEND "${arg_FILENAME}"
-                    "    find_dependency(${pkg} CONFIG)\n"
+                    "find_dependency(${pkg} CONFIG)\n"
                 )
             else()
+                message("myci_private_write_find_packages_to_config_file(): by module ${pkg}")
                 file(APPEND "${arg_FILENAME}"
-                    "    find_dependency(${pkg})\n"
+                    "find_dependency(${pkg})\n"
                 )
             endif()
 
@@ -851,11 +951,12 @@ function(myci_declare_library name)
             ${arg_WINDOWS_ONLY_DEPENDENCIES}
     )
 
-    if(ZLIB_FOUND)
-        message("!!! ZLIB found")
-    else()
-        message("!!! ZLIB not found")
-    endif()
+    # TODO: remove
+    # if(ZLIB_FOUND)
+    #     message("myci_declare_library(): !!! ZLIB found")
+    # else()
+    #     message("myci_declare_library(): !!! ZLIB not found")
+    # endif()
 
     if(arg_RESOURCE_DIRECTORY)
         file(REAL_PATH
