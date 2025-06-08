@@ -7,8 +7,9 @@ include(GNUInstallDirs)
 
 set(myci_private_output_dir "${CMAKE_BINARY_DIR}/exe")
 
+# try to find package by config first and if it fails try by module
 function(myci_private_find_package package)
-    set(options CONFIG MODULE REQUIRED QUIET)
+    set(options REQUIRED QUIET)
     set(single OUT_IS_FOUND OUT_IS_BY_CONFIG)
     set(multiple)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
@@ -32,32 +33,50 @@ function(myci_private_find_package package)
     endif()
 
     set(opts)
-    if(arg_REQUIRED)
-        set(opts ${opts} REQUIRED)
-    endif()
-    if(arg_QUIET)
-        set(opts ${opts} QUIET)
-    endif()
-    if(arg_CONFIG)
-        set(opts ${opts} CONFIG)
-    endif()
-    if(arg_MODULE)
-        set(opts ${opts} MODULE)
+    # TODO: remove
+    # if(arg_REQUIRED)
+    #     set(opts ${opts} REQUIRED)
+    # endif()
+    # if(arg_QUIET)
+    #     set(opts ${opts} QUIET)
+    # endif()
+
+    # TODO: remove
+    # if(arg_CONFIG)
+    #     set(opts ${opts} CONFIG)
+    # else()
+    #     set(opts ${opts} MODULE)
+    # endif()
+
+    set(opts ${opts} GLOBAL)
+
+    # try config first
+    find_package(${package} ${opts} CONFIG QUIET)
+    if(NOT ${package}_FOUND)
+        if(arg_REQUIRED)
+            set(opts ${opts} REQUIRED)
+        endif()
+        if(arg_QUIET)
+            set(opts ${opts} QUIET)
+        endif()
+        find_package(${package} ${opts} MODULE)
     endif()
 
-    find_package(${package} ${opts} GLOBAL)
-
-    if(${pkg}_FOUND)
+    if(${package}_FOUND)
         set_property(GLOBAL APPEND PROPERTY myci_found_packages ${package})
-        set(is_found True)
-    else()
-        unset(is_found)
-    endif()
 
-    if(${pkg}_CONFIG)
-        set_property(GLOBAL APPEND PROPERTY myci_found_packages_by_config ${package})
-        set(is_by_config True)
+        set(is_found True)
+
+        if(${package}_CONFIG)
+            set_property(GLOBAL APPEND PROPERTY myci_found_packages_by_config ${package})
+            set(is_by_config True)
+        else()
+            unset(is_by_config)
+        endif()
+        message("myci_private_find_package(): package ${package} found, opts = ${opts}, is_by_config = ${is_by_config}")
     else()
+        message("myci_private_find_package(): package ${package} not found, opts = ${opts}")
+        unset(is_found)
         unset(is_by_config)
     endif()
 
@@ -347,18 +366,19 @@ function(myci_private_find_packages out_targets)
 
         # try to find the package using CONFIG method first
         myci_private_find_package(${package_name}
-            CONFIG
-            QUIET
-            OUT_IS_FOUND
-                is_found
+            # TODO: remove
+            # CONFIG
+            # QUIET
+            # OUT_IS_FOUND
+            #     is_found
         )
-        if(NOT is_found)
-            # could not find package using CONFIG method, try to find using MODULE method
-            myci_private_find_package(${package_name}
-                MODULE
-                REQUIRED
-            )
-        endif()
+        # TODO: remove
+        # if(NOT is_found)
+        #     # could not find package using CONFIG method, try to find using MODULE method
+        #     myci_private_find_package(${package_name}
+        #         REQUIRED
+        #     )
+        # endif()
 
         message("myci_private_find_packages(): done finding package ${package_name}")
 
