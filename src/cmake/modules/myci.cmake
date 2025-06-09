@@ -243,7 +243,7 @@ function(myci_private_split_by_slash out_left out_right)
     set(${out_right} ${right_part} PARENT_SCOPE)
 endfunction()
 
-# @return pkg-config target if the package is a pkg-config package, i.e. in 'PkgConfig/<pkg-config-lib>' format.
+# @return pkg-config lib if the package is a pkg-config package, i.e. in 'PkgConfig/<pkg-config-lib>' format.
 # @return empty string if the package is not a pkg-config one. 
 function(myci_private_get_lib_of_pkgconfig_package out)
     set(options)
@@ -269,7 +269,7 @@ function(myci_private_get_lib_of_pkgconfig_package out)
 endfunction()
 
 # get list of packages from list of full dependencies.
-# PkgConfig package are returned in format 'PkgConfig/<pkg-config-lib>'
+# PkgConfig packages are returned in format 'PkgConfig/<pkg-config-lib>'
 function(myci_private_get_packages_list out)
     set(options)
     set(single)
@@ -418,6 +418,7 @@ function(myci_private_add_target_dependencies)
             myci_windows_full_dependencies "${windows_full_deps}"
     )
 
+    # TODO: is this if needed? can we call target_link_libraries() with empty list of link targets? If no, then also check for ${linux_link_targets} ${windows_link_targets} 
     if(link_targets)
         target_link_libraries(${arg_TARGET} ${arg_VISIBILITY} ${link_targets} ${linux_link_targets} ${windows_link_targets})
     endif()
