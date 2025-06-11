@@ -38,8 +38,13 @@ echo "Deploying to homebrew repo"
 [ -z "$tapname" ] && echo "Error: -t option is not given" && exit 1;
 
 if [ -z "$infiles" ]; then
-	echo "No input files specified, taking all files from 'homebrew' folder"
-	infiles=$(ls homebrew/*.rb.in)
+	if [ -d "build/homebrew" ]; then
+		echo "No input files specified, taking all files from 'build/homebrew' folder"
+		infiles=$(ls build/homebrew/*.rb.in)
+	else
+		echo "No input files specified, taking all files from 'homebrew' folder"
+		infiles=$(ls homebrew/*.rb.in)
+	fi
 fi
 
 # parse homebrew tap name

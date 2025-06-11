@@ -13,7 +13,7 @@ while [[ $# > 0 ]] ; do
 			echo "Usage:"
 			echo "	$(basename $0) [<formulae-filename> ...]"
 			echo " "
-			echo "If no input files are give, all dependencies from all files under 'homebrew' directory are listed."
+			echo "If no input files are given, all dependencies from all files under 'build/homebrew' and 'homebrew' directory are listed."
 			echo " "
 			echo "Example:"
 			echo "	$(basename $0) homebrew/myformulae.rb.in"
@@ -27,7 +27,11 @@ while [[ $# > 0 ]] ; do
 done
 
 if [ -z "$input_files" ]; then
-    input_files=$(ls homebrew/*)
+	if [ -d "build/homebrew" ]; then
+    	input_files=$(ls build/homebrew/*)
+	else
+		input_files=$(ls homebrew/*)
+	fi
 fi
 
 # echo input_files = $input_files
