@@ -1,3 +1,9 @@
+myci (0.1.204) unstable; urgency=medium
+
+  * deb: install deps from build/debian/control
+
+ -- Ivan Gagis <igagis@gmail.com>  Mon, 16 Jun 2025 16:26:43 +0300
+
 myci (0.1.203) unstable; urgency=medium
 
   * homebrew: support build/homebrew dir
