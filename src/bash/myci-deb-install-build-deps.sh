@@ -29,11 +29,9 @@ echo "Checking for missing build dependencies."
 
 if [ -f "build/debian/control" ]; then
 	pushd build > /dev/null
-	builddeps=$(dpkg-checkbuilddeps 2>&1 || true)
-	popd > /dev/null
-else
-	builddeps=$(dpkg-checkbuilddeps 2>&1 || true)
 fi
+
+builddeps=$(dpkg-checkbuilddeps 2>&1 || true)
 
 unmetDepsMsg="dpkg-checkbuilddeps: error: Unmet build dependencies: "
 
@@ -53,3 +51,7 @@ apt --quiet install --assume-yes $deps
 
 # finally, check again that all dependencies were installed successfully.
 dpkg-checkbuilddeps
+
+if [ -f "build/debian/control" ]; then
+	popd > /dev/null
+fi
