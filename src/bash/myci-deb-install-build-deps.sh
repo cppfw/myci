@@ -11,7 +11,7 @@ while [[ $# > 0 ]] ; do
 			echo "Usage:"
 			echo "	$(basename $0)"
 			echo " "
-			echo "The script should be run from within the directory containing the debian/control."
+			echo "The script should be run from within the directory containing the build/debian/control or debian/control."
 			echo " "
 			echo "Example:"
 			echo "	$(basename $0)"
@@ -27,7 +27,13 @@ done
 
 echo "Checking for missing build dependencies."
 
-builddeps=$(dpkg-checkbuilddeps 2>&1 || true)
+if [ -f "build/debian/control" ]; then
+	pushd build > /dev/null
+	builddeps=$(dpkg-checkbuilddeps 2>&1 || true)
+	popd > /dev/null
+else
+	builddeps=$(dpkg-checkbuilddeps 2>&1 || true)
+fi
 
 unmetDepsMsg="dpkg-checkbuilddeps: error: Unmet build dependencies: "
 
