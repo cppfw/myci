@@ -338,6 +338,8 @@ function(myci_private_find_packages out_targets)
         list(APPEND result_targets ${original_target})
 
         if(TARGET ${original_target})
+#            message("myci_private_find_packages(): target ${original_target} already exists")
+
             get_target_property(imported ${original_target} IMPORTED)
             if(NOT imported)
 #                message("myci_private_find_packages(): target ${original_target} is from monorepo")
@@ -357,7 +359,6 @@ function(myci_private_find_packages out_targets)
 #                message("myci_private_find_packages(): target ${original_target} is NOT from monorepo")
             endif()
 
-#            message("myci_private_find_packages(): target ${original_target} already exists")
             continue()
         endif()
 
