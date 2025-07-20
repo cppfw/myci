@@ -1,3 +1,10 @@
+myci (0.1.207) unstable; urgency=medium
+
+  * cmake: improve config file generation to avoid using unnecessary
+    find_package() calls
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 20 Jul 2025 18:17:29 +0300
+
 myci (0.1.206) unstable; urgency=medium
 
   * upload script
