@@ -18,7 +18,7 @@ function(myci_private_find_package package)
     get_property(found_packages_by_config GLOBAL PROPERTY myci_found_packages_by_config)
 
     if(${package} IN_LIST found_packages)
-        # message("myci_private_find_package(): package ${package} already found")
+#        message("myci_private_find_package(): package ${package} already found")
         if(arg_OUT_IS_BY_CONFIG)
             if(${package} IN_LIST found_packages_by_config)
                 set(${arg_OUT_IS_BY_CONFIG} True PARENT_SCOPE)
@@ -57,9 +57,9 @@ function(myci_private_find_package package)
         else()
             unset(is_by_config)
         endif()
-        # message("myci_private_find_package(): package ${package} found, opts = ${opts}, is_by_config = ${is_by_config}")
+#        message("myci_private_find_package(): package ${package} found, opts = ${opts}, is_by_config = ${is_by_config}")
     else()
-        # message("myci_private_find_package(): package ${package} not found, opts = ${opts}")
+#        message("myci_private_find_package(): package ${package} not found, opts = ${opts}")
         unset(is_found)
         unset(is_by_config)
     endif()
@@ -283,7 +283,7 @@ function(myci_private_get_packages_list out)
                 ${dep}
         )
 
-        # message("package_name = ${package_name}, target_name = ${target_name}")
+#        message("package_name = ${package_name}, target_name = ${target_name}")
 
         if(${package_name} STREQUAL "PkgConfig")
             list(APPEND result "${package_name}/${target_name}")
@@ -325,27 +325,47 @@ function(myci_private_find_packages out_targets)
 
         set(original_target ${target_name})
         if(TARGET ${target_name})
-            get_target_property(alias ${target_name} ALIASED_TARGET)
-            if(alias)
-                # this is an aliased target, use original target further
-                set(original_target ${alias})
+            get_target_property(aliased_target ${target_name} ALIASED_TARGET)
+            if(aliased_target)
+                # The target is an alias.
+                # Use aliased target as original target further.
+                set(original_target ${aliased_target})
             endif()
         endif()
 
-        # message("myci_private_find_packages(): dep = ${dep}, package_name = ${package_name}, target_name = ${target_name}, original_target = ${original_target}")
+#        message("myci_private_find_packages(): dep = ${dep}, package_name = ${package_name}, target_name = ${target_name}, original_target = ${original_target}")
 
         list(APPEND result_targets ${original_target})
 
         if(TARGET ${original_target})
-            # message("myci_private_find_packages(): target ${original_target} already exists")
+            get_target_property(imported ${original_target} IMPORTED)
+            if(NOT imported)
+#                message("myci_private_find_packages(): target ${original_target} is from monorepo")
+
+                # The target is not imported, it means that it comes from monorepo.
+                # It means that the package for that target would be imported using
+                # the CONFIG method if it was imported from non-monorepo source, e.g. vcpkg,
+                # because MODULE method is obsolete and is not supposed to be used in monorepo.
+                # So, add the package to the global list of BY-CONFIG found packages for future information,
+                # it will be later used for example when generating config cmake file.
+                get_property(found_packages_by_config GLOBAL PROPERTY myci_found_packages_by_config)
+                if(NOT ${package_name} IN_LIST found_packages_by_config)
+#                    message("myci_private_find_packages(): add ${package_name} to global list of config imported packages")
+                    set_property(GLOBAL APPEND PROPERTY myci_found_packages_by_config ${package_name})
+                endif()
+            else()
+#                message("myci_private_find_packages(): target ${original_target} is NOT from monorepo")
+            endif()
+
+#            message("myci_private_find_packages(): target ${original_target} already exists")
             continue()
         endif()
 
-        # message("myci_private_find_packages(): find package ${package_name}")
+#        message("myci_private_find_packages(): find package ${package_name}")
 
         myci_private_find_package(${package_name})
 
-        # message("myci_private_find_packages(): done finding package ${package_name}")
+#        message("myci_private_find_packages(): done finding package ${package_name}")
 
         if(NOT TARGET ${original_target})
             message(FATAL_ERROR "assertion failure: target ${original_target} does not exist")
@@ -418,7 +438,7 @@ function(myci_private_add_target_dependencies)
             myci_windows_full_dependencies "${windows_full_deps}"
     )
 
-    # TODO: is this if needed? can we call target_link_libraries() with empty list of link targets? If no, then also check for ${linux_link_targets} ${windows_link_targets} 
+    # TODO: is this 'if' needed? can we call target_link_libraries() with empty list of link targets? If no, then also check for ${linux_link_targets} ${windows_link_targets} 
     if(link_targets)
         target_link_libraries(${arg_TARGET} ${arg_VISIBILITY} ${link_targets} ${linux_link_targets} ${windows_link_targets})
     endif()
@@ -588,28 +608,21 @@ function(myci_private_write_find_packages_to_config_file)
                 "endif()\n"
             )
         else()
-            # message("myci_private_write_find_packages_to_config_file(): pkg = ${pkg}")
+            # non-pkg-config package
 
-            myci_private_find_package(${pkg}
-                QUIET
-                OUT_IS_FOUND
-                    is_found
-                OUT_IS_BY_CONFIG
-                    is_by_config
-            )
+#            message("myci_private_write_find_packages_to_config_file(): pkg = ${pkg}")
 
-            if(NOT is_found)
-                # If package is not found then we get it from monorepo, should be CONFIG method, because MODULE method is obsolete.
-                set(is_by_config True)
-            endif()
-
-            if(is_by_config)
-                # message("myci_private_write_find_packages_to_config_file(): by_config ${pkg}")
+            # At the time this function is called all the packages should already have been found.
+            # So, we can get information about the package finding method from the
+            # global myci_found_packages_by_config list.
+            get_property(found_packages_by_config GLOBAL PROPERTY myci_found_packages_by_config)
+            if(${pkg} IN_LIST found_packages_by_config)
+#                message("myci_private_write_find_packages_to_config_file(): package ${pkg} found by config")
                 file(APPEND "${arg_FILENAME}"
                     "find_dependency(${pkg} CONFIG)\n"
                 )
             else()
-                # message("myci_private_write_find_packages_to_config_file(): by module ${pkg}")
+#                message("myci_private_write_find_packages_to_config_file(): package ${pkg} found by module")
                 file(APPEND "${arg_FILENAME}"
                     "find_dependency(${pkg})\n"
                 )
@@ -655,7 +668,7 @@ function(myci_private_generate_config_file)
         endforeach()
     endforeach()
     
-    # message("all_full_deps = ${all_full_deps}")
+#    message("all_full_deps = ${all_full_deps}")
 
     myci_private_get_packages_list(packages
         FULL_DEPENDENCIES
@@ -670,7 +683,7 @@ function(myci_private_generate_config_file)
             ${all_windows_full_deps}
     )
 
-    # message("packages = ${packages}")
+#    message("packages = ${packages}")
 
     set(filename "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake")
 
