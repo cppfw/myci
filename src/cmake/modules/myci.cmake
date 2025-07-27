@@ -953,7 +953,7 @@ function(myci_declare_library name)
         )
     endforeach()
 
-    if(${arg_RESOURCE_DIRECTORY})
+    if(arg_RESOURCE_DIRECTORY)
         install(
             DIRECTORY
                 "${arg_RESOURCE_DIRECTORY}"
