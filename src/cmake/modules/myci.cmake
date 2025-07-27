@@ -933,7 +933,7 @@ function(myci_declare_library name)
         set_target_properties(${name}
             PROPERTIES
                 myci_resource_directory "${abs_path_directory}"
-                myci_installed_resource_directory_within_datadir "${PROJECT_NAME}/${dirname}"
+                myci_installed_resource_directory_within_datadir "\${CMAKE_CURRENT_LIST_DIR}/${dirname}"
         )
     endif()
 
@@ -1062,21 +1062,15 @@ function(myci_private_add_resource_pack_deps)
         else()
             get_target_property(res_dir "${dep}" myci_installed_resource_directory_within_datadir)
             if(NOT res_dir STREQUAL "res_dir-NOTFOUND")
-                file(REAL_PATH
-                    # PATH
-                        "${res_dir}"
-                    # OUTPUT
-                        abs_path_directory
-                    BASE_DIRECTORY
-                        "${CMAKE_INSTALL_FULL_DATAROOTDIR}"
-                    EXPAND_TILDE
-                )
+                if(NOT IS_ABSOLUTE ${res_dir})
+                    message(FATAL_ERROR "myci_private_add_resource_pack_deps(): myci_installed_resource_directory_within_datadir must be absolute path, got ${res_dir}")
+                endif()
 
                 myci_private_declare_resource_pack(${res_target_name}
                     APP_TARGET
                         ${arg_TARGET}
                     DIRECTORY
-                        ${abs_path_directory}
+                        ${res_dir}
                 )
                 add_dependencies(${arg_TARGET} ${res_target_name})
             endif()
