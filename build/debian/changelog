@@ -1,3 +1,9 @@
+myci (0.1.208) unstable; urgency=medium
+
+  * cmake: fix library resource installation
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 27 Jul 2025 06:12:45 +0300
+
 myci (0.1.207) unstable; urgency=medium
 
   * cmake: improve config file generation to avoid using unnecessary
