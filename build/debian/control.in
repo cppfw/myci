@@ -2,26 +2,27 @@ Source: myci
 Section: misc
 Priority: extra
 Maintainer: Ivan Gagis <igagis@gmail.com>
-Build-Depends: debhelper (>= 9),
-        sed
+Build-Depends:
+	debhelper (>= 9),
+	sed
 Standards-Version: 3.9.2
 
 Package: myci
 Section: devel
 Architecture: all
 Depends:
-        sed,
-        curl,
-        openssh-client,
-        git,
-        devscripts,
-        jq
+	sed,
+	curl,
+	openssh-client,
+	git,
+	devscripts,
+	jq
 Description: Helper CI scripts.
- Some helper CI scripts, mainly for deploying to different repositories.
+	Some helper CI scripts, mainly for deploying to different repositories.
 
 Package: myci-dummy
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Dummy binary package.
- This is the dummy binary package.
+	This is the dummy binary package.
