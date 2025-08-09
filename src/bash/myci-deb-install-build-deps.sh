@@ -31,14 +31,23 @@ if [ -f "build/debian/control" ]; then
 	pushd build > /dev/null
 fi
 
-builddeps=$(dpkg-checkbuilddeps 2>&1 || true)
+checkbuilddeps_out=$(dpkg-checkbuilddeps 2>&1 || true)
 
-unmetDepsMsg="dpkg-checkbuilddeps: error: Unmet build dependencies: "
+# TODO: check for dpkg-checkbuilddeps return code
+# 1 = there are unmet dependencies
+# other codes = other errors
 
-[ ! -z "$builddeps" ] && [ -z "$(echo $builddeps | sed -n -e "s/^$unmetDepsMsg//p")" ] && myci-error.sh "Could not check for unmet build dependencies.\nError message: $builddeps";
+# echo "checkbuilddeps_out = $checkbuilddeps_out"
+
+# On debian trixie the error output of dpkg-checkbuilddeps changed from capital to small letter, so use [Uu] in the regex.
+unmet_deps_msg="dpkg-checkbuilddeps: error: [Uu]nmet build dependencies: "
+
+builddeps=$(echo $checkbuilddeps_out | sed -n -e "s/^$unmet_deps_msg//p")
+
+[ ! -z "$checkbuilddeps_out" ] && [ -z "$builddeps" ] && myci-error.sh "Could not check for unmet build dependencies.\nError message: $unmet_deps_msg";
 
 # remove version restrictions from list of unmet dependencies
-deps=$(echo $builddeps | sed -n -e "s/^$unmetDepsMsg//p" | sed -e 's/ ([^)]*)//g')
+deps=$(echo $builddeps | sed -e 's/ ([^)]*)//g')
 
 if [ -z "$deps" ]; then
     echo "All dependencies satisfied."
