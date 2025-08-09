@@ -24,7 +24,7 @@ noextract=()
 md5sums=()
 validpgpkeys=()
 
-rootDir=$(pwd)/..
+rootDir=$(pwd)/../..
 
 prepare() {
 	cd "$rootDir"
