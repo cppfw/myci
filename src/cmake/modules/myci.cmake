@@ -820,7 +820,6 @@ endfunction()
 #                     the target will be added as pkg_check_modules(<target> REQUIRED IMPORTED_TARGET "<target>").
 # @param LINUX_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of linux-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
 # @param WINDOWS_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of windows-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
-# @param PUBLIC_COMPILE_DEFINITIONS <def1> [<def2> ...] - preprocessor macro definitions. Optional.
 # @param PRIVATE_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - private include directories. Optional.
 #                                    These directories will not be propagated to the library users.
 # @param PUBLIC_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - public include directories. Optional.
@@ -830,6 +829,7 @@ endfunction()
 #                                    The last directory level will be included in the installation,
 #                                    e.g. for '../src/mylib' the destination will be '<system-include-dir>/mylib/'.
 # @param IDE_FOLDER - folder in the generated IDE project for the library. Optional. Defaults to "Libs".
+# @param PREPROCESSOR_DEFINITIONS [<def1>[=<val1>] ...] - preprocessor macro definitions. Optional.
 function(myci_declare_library name)
     set(options NO_EXPORT)
     set(single IDE_FOLDER)
@@ -839,10 +839,10 @@ function(myci_declare_library name)
         DEPENDENCIES
         LINUX_ONLY_DEPENDENCIES
         WINDOWS_ONLY_DEPENDENCIES
-        PUBLIC_COMPILE_DEFINITIONS
         PRIVATE_INCLUDE_DIRECTORIES
         PUBLIC_INCLUDE_DIRECTORIES
         INSTALL_INCLUDE_DIRECTORIES
+        PREPROCESSOR_DEFINITIONS
     )
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
@@ -872,9 +872,7 @@ function(myci_declare_library name)
     set_target_properties(${name} PROPERTIES CXX_STANDARD_REQUIRED ON)
     set_target_properties(${name} PROPERTIES CXX_EXTENSIONS OFF)
 
-    foreach(def ${arg_PUBLIC_COMPILE_DEFINITIONS})
-        target_compile_definitions(${name} ${public} ${def})
-    endforeach()
+    target_compile_definitions(${name} PRIVATE ${arg_PREPROCESSOR_DEFINITIONS})
 
     foreach(dir ${arg_PUBLIC_INCLUDE_DIRECTORIES})
         # absolute path is needed by target_include_directories()
@@ -1103,6 +1101,7 @@ endfunction()
 # @param GUI - the application is a GUI application, i.e. not a console application.
 #              This option only has effect on Windows, on other systems it has no effect.
 #              On Windows, inidcates that a generated application will provide WinMain() function instead of main() as entry point.
+# @param PREPROCESSOR_DEFINITIONS [<def1>[=<val1>] ...] - preprocessor macro definitions. Optional.
 function(myci_declare_application name)
     set(options GUI)
     set(single RESOURCE_DIRECTORY)
@@ -1112,6 +1111,7 @@ function(myci_declare_application name)
         DEPENDENCIES
         LINUX_ONLY_DEPENDENCIES
         WINDOWS_ONLY_DEPENDENCIES
+        PREPROCESSOR_DEFINITIONS
     )
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
@@ -1133,6 +1133,8 @@ function(myci_declare_application name)
         VS_DEBUGGER_WORKING_DIRECTORY "${myci_private_output_dir}/${name}"
         RUNTIME_OUTPUT_DIRECTORY "${myci_private_output_dir}/${name}"
     )
+
+    target_compile_definitions(${name} PRIVATE ${arg_PREPROCESSOR_DEFINITIONS})
 
     foreach(dir ${arg_INCLUDE_DIRECTORIES})
         target_include_directories(${name} PRIVATE "${dir}")
