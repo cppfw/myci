@@ -849,11 +849,13 @@ function(myci_declare_library name)
     # Normally we create STATIC libraries and specify PUBLIC includes and dependencies.
     # For libraries with no source files this won't work, so use INTERFACE/INTERFACE instead.
     set(public INTERFACE)
+    set(private INTERFACE)
     set(static INTERFACE)
     foreach(src ${arg_SOURCES})
         get_filename_component(ext "${src}" LAST_EXT)
         if("${ext}" STREQUAL ".c" OR "${ext}" STREQUAL ".cpp" OR "${ext}" STREQUAL ".cc")
             set(public PUBLIC)
+            set(private PRIVATE)
             set(static STATIC)
             break()
         endif()
@@ -871,6 +873,15 @@ function(myci_declare_library name)
     target_compile_features(${name} ${public} cxx_std_20)
     set_target_properties(${name} PROPERTIES CXX_STANDARD_REQUIRED ON)
     set_target_properties(${name} PROPERTIES CXX_EXTENSIONS OFF)
+
+    # force unicode character set under Visual Studio
+    target_compile_definitions(${name} ${private} _UNICODE)
+
+    # tell MSVC compiler that sources are in utf-8 encoding
+    if (MSVC)
+        target_compile_options(${name} ${private} "$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+        target_compile_options(${name} ${private} "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+    endif()
 
     target_compile_definitions(${name} PRIVATE ${arg_PREPROCESSOR_DEFINITIONS})
 
@@ -1133,6 +1144,15 @@ function(myci_declare_application name)
         VS_DEBUGGER_WORKING_DIRECTORY "${myci_private_output_dir}/${name}"
         RUNTIME_OUTPUT_DIRECTORY "${myci_private_output_dir}/${name}"
     )
+
+    # force unicode character set under Visual Studio
+    target_compile_definitions(${name} PRIVATE _UNICODE)
+
+    # tell MSVC compiler that sources are in utf-8 encoding
+    if (MSVC)
+        target_compile_options(${name} PRIVATE "$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+        target_compile_options(${name} PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+    endif()
 
     target_compile_definitions(${name} PRIVATE ${arg_PREPROCESSOR_DEFINITIONS})
 
