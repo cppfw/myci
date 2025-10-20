@@ -1126,14 +1126,16 @@ function(myci_declare_application name)
     )
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
-    set(win32)
-    if(WIN32)
-        if(arg_GUI)
-            set(win32 WIN32)
+    set(gui)
+    if(arg_GUI)
+        if(WIN32)
+            set(gui WIN32)
+        elseif(APPLE) # macos or ios
+            set(gui MACOSX_BUNDLE)
         endif()
     endif()
 
-    add_executable(${name} ${win32} ${arg_SOURCES})
+    add_executable(${name} ${gui} ${arg_SOURCES})
 
     # TODO: allow specifying C++ standard as parameter
     target_compile_features(${name} PRIVATE cxx_std_20)
