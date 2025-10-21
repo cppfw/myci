@@ -445,6 +445,7 @@ function(myci_private_add_target_dependencies)
     endif()
 endfunction()
 
+# TODO: make this function arguments named
 function(myci_private_copy_resource_file_command out target_name src_dir file)
     get_filename_component(dirname "${src_dir}" NAME)
 
@@ -1034,7 +1035,7 @@ function(myci_private_get_all_dependencies out)
     set(${out} ${result_deps} PARENT_SCOPE)
 endfunction()
 
-# Generate a resouce copying target for each target from DEPENDENCIES
+# Generate a resource copying target for each target from DEPENDENCIES
 # and add the generated target as dependency to the TARGET.
 function(myci_private_add_resource_pack_deps)
     set(options)
