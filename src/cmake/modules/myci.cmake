@@ -833,10 +833,12 @@ endfunction()
 # @param PREPROCESSOR_DEFINITIONS [<def1>[=<val1>] ...] - preprocessor macro definitions. Optional.
 function(myci_declare_library name)
     set(options NO_EXPORT)
-    set(single IDE_FOLDER)
+    set(single
+        IDE_FOLDER
+        RESOURCE_DIRECTORY
+    )
     set(multiple
         SOURCES
-        RESOURCE_DIRECTORY
         DEPENDENCIES
         LINUX_ONLY_DEPENDENCIES
         WINDOWS_ONLY_DEPENDENCIES
@@ -864,6 +866,9 @@ function(myci_declare_library name)
 
     add_library(${name} ${static} ${arg_SOURCES})
     add_library(${PROJECT_NAME}::${name} ALIAS ${name})
+
+    # define DEBUG macro for Debug build configuration
+    target_compile_definitions(${name} ${private} $<$<CONFIG:Debug>:DEBUG>)
 
     if(NOT arg_IDE_FOLDER)
         set(arg_IDE_FOLDER "Libs")
@@ -1048,20 +1053,39 @@ function(myci_private_add_resource_pack_deps)
     endif()
 
     foreach(dep ${arg_DEPENDENCIES})
-        string(REPLACE "::" "___" res_target_name "${dep}")
-        set(res_target_name ${res_target_name}__${arg_TARGET}__copy_resources)
+        if(NOT IOS)
+            string(REPLACE "::" "___" res_target_name "${dep}")
+            set(res_target_name ${res_target_name}__${arg_TARGET}__copy_resources)
 
-        if(TARGET ${res_target_name})
-            add_dependencies(${arg_TARGET} ${res_target_name})
-            continue()
+            if(TARGET ${res_target_name})
+                add_dependencies(${arg_TARGET} ${res_target_name})
+                continue()
+            endif()
         endif()
 
+        # get dependency's resource directory if it has resources
         get_target_property(res_dir "${dep}" myci_resource_directory)
-        if(NOT res_dir STREQUAL "res_dir-NOTFOUND")
+        if(res_dir STREQUAL "res_dir-NOTFOUND")
+            get_target_property(res_dir "${dep}" myci_installed_resource_directory_within_datadir)
+            if(res_dir STREQUAL "res_dir-NOTFOUND")
+                # the dependency does not have resources
+                continue()
+            endif()
+            if(NOT IS_ABSOLUTE ${res_dir})
+                message(FATAL_ERROR "myci_private_add_resource_pack_deps(): myci_installed_resource_directory_within_datadir must be absolute path, got ${res_dir}")
+            endif()
+        else()
             if(NOT IS_ABSOLUTE ${res_dir})
                 message(FATAL_ERROR "myci_private_add_resource_pack_deps(): myci_resource_directory property must be an absolute path, got ${res_dir}")
             endif()
+        endif()
 
+        if(IOS)
+            # On iOS instead of copying resources to the executable output directory we add the resources to the
+            # project as source files and mark them as 'Resources', XCode will do the rest.
+            target_sources(${arg_TARGET} PRIVATE ${res_dir})
+            set_source_files_properties(${res_dir} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+        else()
             myci_private_declare_resource_pack(${res_target_name}
                 APP_TARGET
                     ${arg_TARGET}
@@ -1069,21 +1093,6 @@ function(myci_private_add_resource_pack_deps)
                     ${res_dir}
             )
             add_dependencies(${arg_TARGET} ${res_target_name})
-        else()
-            get_target_property(res_dir "${dep}" myci_installed_resource_directory_within_datadir)
-            if(NOT res_dir STREQUAL "res_dir-NOTFOUND")
-                if(NOT IS_ABSOLUTE ${res_dir})
-                    message(FATAL_ERROR "myci_private_add_resource_pack_deps(): myci_installed_resource_directory_within_datadir must be absolute path, got ${res_dir}")
-                endif()
-
-                myci_private_declare_resource_pack(${res_target_name}
-                    APP_TARGET
-                        ${arg_TARGET}
-                    DIRECTORY
-                        ${res_dir}
-                )
-                add_dependencies(${arg_TARGET} ${res_target_name})
-            endif()
         endif()
     endforeach()
 endfunction()
@@ -1138,6 +1147,9 @@ function(myci_declare_application name)
 
     add_executable(${name} ${gui} ${arg_SOURCES})
 
+    # define DEBUG macro for Debug build configuration
+    target_compile_definitions(${name} PRIVATE $<$<CONFIG:Debug>:DEBUG>)
+
     # TODO: allow specifying C++ standard as parameter
     target_compile_features(${name} PRIVATE cxx_std_20)
 
@@ -1152,7 +1164,7 @@ function(myci_declare_application name)
     target_compile_definitions(${name} PRIVATE _UNICODE)
 
     # tell MSVC compiler that sources are in utf-8 encoding
-    if (MSVC)
+    if(MSVC)
         target_compile_options(${name} PRIVATE "$<$<C_COMPILER_ID:MSVC>:/utf-8>")
         target_compile_options(${name} PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
     endif()
@@ -1182,25 +1194,32 @@ function(myci_declare_application name)
 
     # copy direct application resources
     if(arg_RESOURCE_DIRECTORY)
-        set(res_target_name ${name}__copy_resources)
+        if(IOS)
+            # On iOS instead of copying resources to the executable output directory we add the resources to the
+            # project as source files and mark them as 'Resources', XCode will do the rest.
+            target_sources(${name} PRIVATE ${arg_RESOURCE_DIRECTORY})
+            set_source_files_properties(${arg_RESOURCE_DIRECTORY} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+        else()
+            set(res_target_name ${name}__copy_resources)
 
-        file(REAL_PATH
-            # PATH
-                "${arg_RESOURCE_DIRECTORY}"
-            # OUTPUT
-                abs_path_directory
-            BASE_DIRECTORY
-                ${CMAKE_CURRENT_LIST_DIR}
-            EXPAND_TILDE
-        )
+            file(REAL_PATH
+                # PATH
+                    "${arg_RESOURCE_DIRECTORY}"
+                # OUTPUT
+                    abs_path_directory
+                BASE_DIRECTORY
+                    ${CMAKE_CURRENT_LIST_DIR}
+                EXPAND_TILDE
+            )
 
-        myci_private_declare_resource_pack(${res_target_name}
-            APP_TARGET
-                ${name}
-            DIRECTORY
-                ${abs_path_directory}
-        )
-        add_dependencies(${name} ${res_target_name})
+            myci_private_declare_resource_pack(${res_target_name}
+                APP_TARGET
+                    ${name}
+                DIRECTORY
+                    ${abs_path_directory}
+            )
+            add_dependencies(${name} ${res_target_name})
+        endif()
     endif()
 
     # copy resources of linked libraries
