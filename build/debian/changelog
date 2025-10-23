@@ -1,3 +1,9 @@
+myci (0.1.214) unstable; urgency=medium
+
+  * cmake: ios support
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 23 Oct 2025 23:38:23 +0300
+
 myci (0.1.213) unstable; urgency=medium
 
   * cmake: MSVC unicode
