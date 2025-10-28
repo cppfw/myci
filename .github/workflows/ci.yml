@@ -113,7 +113,7 @@ jobs:
     - name: git clone
       uses: myci-actions/checkout@main
     - name: install myci
-      run: make install
+      run: PREFIX=/usr make install
     - name: install deps
       run: myci-brew-install.sh `myci-list-deps-homebrew.sh`
     - name: build
