@@ -1,3 +1,9 @@
+myci (0.1.215) unstable; urgency=medium
+
+  * install cmake files
+
+ -- Ivan Gagis <igagis@gmail.com>  Tue, 28 Oct 2025 14:46:58 +0200
+
 myci (0.1.214) unstable; urgency=medium
 
   * cmake: ios support
