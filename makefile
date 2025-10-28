@@ -10,3 +10,6 @@ endif
 install:
 	@install -d $(DESTDIR)$(PREFIX)/bin
 	@install src/bash/*.sh $(DESTDIR)$(PREFIX)/bin
+	@install -d $(DESTDIR)$(PREFIX)/lib/cmake/myci/modules
+	@install src/cmake/*.cmake $(DESTDIR)$(PREFIX)/lib/cmake/myci
+	@install src/cmake/modules/*.cmake $(DESTDIR)$(PREFIX)/lib/cmake/myci/modules
