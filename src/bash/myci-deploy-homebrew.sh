@@ -91,7 +91,9 @@ do
 	cp $f $tapname
 
 	echo "file to deploy = $f"
-	specfilename=$(echo $f | sed -n -e 's/^homebrew\/\(.*\)$/\1/p')
+
+	# get filename from path
+	specfilename=$(echo $f | sed -n -e 's/.*\/\(.*\)$/\1/p')
 
 	echo "add file $specfilename to homebrew tap git repo"
 	cd $tapname
