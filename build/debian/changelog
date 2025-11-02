@@ -1,3 +1,9 @@
+myci (0.1.216) unstable; urgency=medium
+
+  * bash: add more logging to homebrew deploy script
+
+ -- Ivan Gagis <igagis@gmail.com>  Sun, 02 Nov 2025 23:44:39 +0200
+
 myci (0.1.215) unstable; urgency=medium
 
   * install cmake files
