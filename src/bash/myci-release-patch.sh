@@ -10,7 +10,7 @@ set -eo pipefail
 
 script_dir="$(dirname $0)/"
 
-[ ! -z "$1" ] || source myci-error.sh "comment as argument expected"
+[ ! -z "$1" ] || source ${script_dir}myci-error.sh "comment as argument expected"
 
 source ${script_dir}myci-release-check.sh --no-unreleased-check
 

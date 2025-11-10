@@ -33,21 +33,21 @@ done
 
 echo "check that we are on main branch"
 branch=$(git rev-parse --abbrev-ref HEAD)
-[ "$branch" == "main" ] || source myci-error.sh "not on main branch"
+[ "$branch" == "main" ] || source ${script_dir}myci-error.sh "not on main branch"
 
 echo "check for uncommitted changes"
-[ -z "$(git diff-index HEAD --)" ] || source myci-error.sh "uncommitted changes detected"
+[ -z "$(git diff-index HEAD --)" ] || source ${script_dir}myci-error.sh "uncommitted changes detected"
 
 echo "fetch latest"
-git fetch || source myci-error.sh "git fetch failed"
+git fetch || source ${script_dir}myci-error.sh "git fetch failed"
 
 echo "check for main up to date"
-[ -z "$(git status --short --branch | sed -E -n -e 's/.*(behind).*/true/p')" ] || source myci-error.sh "local main is behind remote main, do git pull and try again"
+[ -z "$(git status --short --branch | sed -E -n -e 's/.*(behind).*/true/p')" ] || source ${script_dir}myci-error.sh "local main is behind remote main, do git pull and try again"
 
 if [ "$no_unreleased_check" != "true" ]; then
     echo "check that debian/changelog is UNRELEASED"
     distro=$(${script_dir}myci-deb-get-dist.sh)
-    [ "$distro" == "UNRELEASED" ] || source myci-error.sh "the debian/changelog is not in UNRELEASED state: $distro"
+    [ "$distro" == "UNRELEASED" ] || source ${script_dir}myci-error.sh "the debian/changelog is not in UNRELEASED state: $distro"
 fi
 
 echo "all ok"
