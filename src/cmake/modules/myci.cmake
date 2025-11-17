@@ -1235,3 +1235,40 @@ function(myci_declare_application name)
             ${all_deps}
     )
 endfunction()
+
+####
+# @brief Add test target for a test application.
+# - Declares a general test target if it is not yet declared.
+# - Declares test-${name} target which runs the given test application.
+#   The test application itself should be declared separately, same as ordinary application.
+# - Adds the declared test-${name} target as a dependency of the general test target.
+# @param name - name of the test.
+# @param TEST_APP_TARGET <target> - target name of the test application to run. Optional. If not given, then
+#                                   the target name "${name}-tests" is used.
+function(myci_declare_test name)
+    set(options)
+    set(single TEST_APP_TARGET)
+    set(multiple)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    if(NOT TARGET test)
+        add_custom_target(test)
+    endif()
+
+    if(TARGET test-${name})
+        message(FATAL_ERROR "the target test-${name} is already declared")
+    endif()
+
+    add_custom_target(test-${name})
+    add_dependencies(test test-${name})
+
+    if(NOT arg_TEST_APP_TARGET)
+        set(arg_TEST_APP_TARGET ${name}-tests)
+    endif()
+
+    add_custom_command(TARGET test-${name}
+        POST_BUILD
+        COMMAND
+            $<TARGET_FILE:${arg_TEST_APP_TARGET}>
+    )
+endfunction()
