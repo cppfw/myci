@@ -1,3 +1,9 @@
+myci (0.1.219) unstable; urgency=medium
+
+  * cmake: add myci_declare_test
+
+ -- Ivan Gagis <igagis@gmail.com>  Mon, 17 Nov 2025 13:10:09 +0200
+
 myci (0.1.218) unstable; urgency=medium
 
   * use script_dir
