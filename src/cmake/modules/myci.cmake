@@ -141,7 +141,7 @@ function(myci_add_source_files out)
         LIST_DIRECTORIES
             false
         # If arg_DIRECTORY is relative and has '..' in front then this does not work.
-        # So, use absoulte directory path.
+        # So, use absolute directory path.
         RELATIVE
             "${abs_path_directory}"
         ${patterns}
@@ -826,7 +826,7 @@ endfunction()
 # @param PUBLIC_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - public include directories. Optional.
 #                                    These directories will be propagated to the library users.
 # @param INSTALL_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - directories to install headers from. Optional.
-#                                    Hierarchy of subdirectories is preserved during isntallation.
+#                                    Hierarchy of subdirectories is preserved during installation.
 #                                    The last directory level will be included in the installation,
 #                                    e.g. for '../src/mylib' the destination will be '<system-include-dir>/mylib/'.
 # @param IDE_FOLDER - folder in the generated IDE project for the library. Optional. Defaults to "Libs".
@@ -889,7 +889,7 @@ function(myci_declare_library name)
         target_compile_options(${name} ${private} "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
     endif()
 
-    target_compile_definitions(${name} PRIVATE ${arg_PREPROCESSOR_DEFINITIONS})
+    target_compile_definitions(${name} ${private} ${arg_PREPROCESSOR_DEFINITIONS})
 
     foreach(dir ${arg_PUBLIC_INCLUDE_DIRECTORIES})
         # absolute path is needed by target_include_directories()
@@ -916,7 +916,7 @@ function(myci_declare_library name)
                 ${CMAKE_CURRENT_LIST_DIR}
             EXPAND_TILDE
         )
-        target_include_directories(${name} PRIVATE $<BUILD_INTERFACE:${abs_path_directory}>)
+        target_include_directories(${name} ${private} $<BUILD_INTERFACE:${abs_path_directory}>)
     endforeach()
 
     myci_private_add_target_dependencies(
@@ -1271,4 +1271,38 @@ function(myci_declare_test name)
         COMMAND
             $<TARGET_FILE:${arg_TEST_APP_TARGET}>
     )
+endfunction()
+
+####
+# @brief Add subdirectory if it is not yet added.
+# Check if the given directory has beed added and if not just calls add_subdirectory() to add it.
+# @param source_dir - path to the directory containing CMakeLists.txt to add.
+# @param BINARY_DIR <binary_dir> - the <binary_dir> parameter to be passed to add_subdirectory().
+#                                  Required if source_dir is out-of-tree path, e.g. absolute path.
+function(myci_add_subdirectory source_dir)
+    set(options)
+    set(single BINARY_DIR)
+    set(multiple)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    file(REAL_PATH
+        # PATH
+            "${source_dir}"
+        # OUTPUT
+            abs_source_dir
+        BASE_DIRECTORY
+            ${CMAKE_CURRENT_LIST_DIR}
+        EXPAND_TILDE
+    )
+
+    get_property(added_dirs GLOBAL PROPERTY myci_added_subdirectories)
+
+    if(${abs_source_dir} IN_LIST added_dirs)
+        # already included
+        return()
+    endif()
+
+    add_subdirectory(${source_dir} ${arg_BINARY_DIR})
+
+    set_property(GLOBAL APPEND PROPERTY myci_added_subdirectories ${abs_source_dir})
 endfunction()
