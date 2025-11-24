@@ -1,3 +1,9 @@
+myci (0.1.221) unstable; urgency=medium
+
+  * cmake: add run-<app> target when declaring an app
+
+ -- Ivan Gagis <igagis@gmail.com>  Mon, 24 Nov 2025 09:27:05 +0200
+
 myci (0.1.220) unstable; urgency=medium
 
   * cmake: add myci_add_subdirectory()
