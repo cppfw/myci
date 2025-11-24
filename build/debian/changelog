@@ -1,3 +1,9 @@
+myci (0.1.222) unstable; urgency=medium
+
+  * cmake: add RUN_ARGUMENTS parameter to declare app
+
+ -- Ivan Gagis <igagis@gmail.com>  Mon, 24 Nov 2025 11:07:43 +0200
+
 myci (0.1.221) unstable; urgency=medium
 
   * cmake: add run-<app> target when declaring an app
