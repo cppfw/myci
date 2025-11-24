@@ -1245,6 +1245,7 @@ function(myci_declare_application name)
 
     # declare run-<name> target
     add_custom_target(run-${name})
+    add_dependencies(run-${name} ${name})
 
     add_custom_command(TARGET run-${name}
         POST_BUILD
