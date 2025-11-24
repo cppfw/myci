@@ -1099,10 +1099,13 @@ endfunction()
 
 ####
 # @brief Declare application.
+# - Declares application build target
+# - Declares run-<name> target to run the application
 # @param name - application name.
 # @param SOURCES <file1> [<file2> ...] - list of source files. Required.
 # @param RESOURCE_DIRECTORY <dir> - application resource directory. The resource directory will be copied to the
 #                           application binary output directory.
+# @param RUN_ARGUMENTS <arg1> [<arg2> ...] - list of command line arguments to be passed to the application by the run-<name> target. Optional.
 # @param DEPENDENCIES <dep1> [<dep2> ...] - list of dependencies. Optional.
 #                     If <depX> does not have any '::' in its name, then
 #                     it will be searched with find_package(<depX> CONFIG) and if not found then searched with find_package(<depX> MODULE REQUIRED),
@@ -1124,8 +1127,12 @@ endfunction()
 #              On Windows, inidcates that a generated application will provide WinMain() function instead of main() as entry point.
 # @param PREPROCESSOR_DEFINITIONS [<def1>[=<val1>] ...] - preprocessor macro definitions. Optional.
 function(myci_declare_application name)
-    set(options GUI)
-    set(single RESOURCE_DIRECTORY)
+    set(options
+        GUI
+    )
+    set(single
+        RESOURCE_DIRECTORY
+    )
     set(multiple
         SOURCES
         INCLUDE_DIRECTORIES
@@ -1133,6 +1140,7 @@ function(myci_declare_application name)
         LINUX_ONLY_DEPENDENCIES
         WINDOWS_ONLY_DEPENDENCIES
         PREPROCESSOR_DEFINITIONS
+        RUN_ARGUMENTS
     )
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
@@ -1240,8 +1248,10 @@ function(myci_declare_application name)
 
     add_custom_command(TARGET run-${name}
         POST_BUILD
+        WORKING_DIRECTORY
+            ${myci_private_output_dir}/${name}
         COMMAND
-            $<TARGET_FILE:${name}>
+            $<TARGET_FILE:${name}> ${arg_RUN_ARGUMENTS}
     )
 endfunction()
 
