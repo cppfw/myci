@@ -13,15 +13,26 @@ set(myci_private_output_dir "${CMAKE_BINARY_DIR}/exe")
 # @param out - variable name which receives the resulting absolute path.
 # @param relative_path - relative path to get absolute path for.
 function(myci_abs_path out relative_path)
+    if(POLICY CMP0152)
+        cmake_policy(GET CMP0152 previous_policy_value)
+        cmake_policy(SET CMP0152 NEW)
+    endif()
+
     file(REAL_PATH
         # PATH
-            "${relative_path}"
+            ${relative_path}
         # OUTPUT
             absolute_path
         BASE_DIRECTORY
             ${CMAKE_CURRENT_LIST_DIR}
         EXPAND_TILDE
     )
+
+    if(POLICY CMP0152)
+        if(previous_policy_value) # if the policy was set
+            cmake_policy(SET CMP0152 ${previous_policy_value})
+        endif()
+    endif()
     
     set(${out} ${absolute_path} PARENT_SCOPE)
 endfunction()
@@ -1279,7 +1290,7 @@ function(myci_add_subdirectory source_dir)
         return()
     endif()
 
-    add_subdirectory(${source_dir} ${arg_BINARY_DIR})
-
     set_property(GLOBAL APPEND PROPERTY myci_added_subdirectories ${abs_source_dir})
+
+    add_subdirectory(${source_dir} ${arg_BINARY_DIR})
 endfunction()
