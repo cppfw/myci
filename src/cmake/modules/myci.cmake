@@ -1257,25 +1257,31 @@ function(myci_declare_application name)
 endfunction()
 
 ####
-# @brief Add test target for a test application.
+# @brief Add test application's run-target to the test target's dependencies.
 # - Declares a general test target if it is not yet declared.
-# - Adds the given application target as a dependency of the general test target.
-# @param app_target - name of the test application target.
-function(myci_declare_test app_target)
+# - Adds the given application's run-target as a dependency of the general test target.
+# @param RUN_TARGET - test application's run-target. Required.
+function(myci_declare_test)
     set(options)
-    set(single)
+    set(single
+        RUN_TARGET
+    )
     set(multiple)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    if(NOT arg_RUN_TARGET)
+        message(FATAL_ERROR "myci_declare_test(): required argument RUN_TARGET is not given")
+    endif()
 
     if(NOT TARGET test)
         add_custom_target(test)
     endif()
 
-    if(NOT TARGET run-${app_target})
-        message(FATAL_ERROR "the target run-${app_target} does not exist")
+    if(NOT TARGET ${arg_RUN_TARGET})
+        message(FATAL_ERROR "the target ${arg_RUN_TARGET} does not exist")
     endif()
 
-    add_dependencies(test run-${app_target})
+    add_dependencies(test ${arg_RUN_TARGET})
 endfunction()
 
 ####
