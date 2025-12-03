@@ -7,6 +7,26 @@ include(GNUInstallDirs)
 
 set(myci_private_output_dir "${CMAKE_BINARY_DIR}/exe")
 
+####
+# @brief Make absolute path from relative path.
+# The absolute path is constructed relatively to CMAKE_CURRENT_LIST_DIR.
+# @param out - variable name which receives the resulting absolute path.
+# @param relative_path - relative path to get absolute path for.
+function(myci_abs_path out relative_path)
+    file(REAL_PATH
+        # PATH
+            "${relative_path}"
+        # OUTPUT
+            absolute_path
+        BASE_DIRECTORY
+            ${CMAKE_CURRENT_LIST_DIR}
+        EXPAND_TILDE
+    )
+    
+    set(${out} ${absolute_path} PARENT_SCOPE)
+endfunction()
+
+
 # try to find package by config first and if it fails try by module
 function(myci_private_find_package package)
     set(options REQUIRED QUIET)
@@ -117,15 +137,7 @@ function(myci_add_source_files out)
         list(APPEND patterns "${arg_DIRECTORY}/*${pattern}")
     endforeach()
 
-    file(REAL_PATH
-        # PATH
-            "${arg_DIRECTORY}"
-        # OUTPUT
-            abs_path_directory
-        BASE_DIRECTORY
-            ${CMAKE_CURRENT_LIST_DIR}
-        EXPAND_TILDE
-    )
+    myci_abs_path(abs_path_directory ${arg_DIRECTORY})
 
     if(arg_RECURSIVE)
         set(glob GLOB_RECURSE)
@@ -456,15 +468,7 @@ function(myci_private_copy_resource_file_command out target_name src_dir file)
     string(REPLACE "/" "\\" path "Generated Files/${path}")
     source_group("${path}" FILES "${outfile}")
 
-    file(REAL_PATH
-        # PATH
-            "${src_dir}/${file}"
-        # OUTPUT
-            abs_src_file
-        BASE_DIRECTORY
-            ${CMAKE_CURRENT_LIST_DIR}
-        EXPAND_TILDE
-    )
+    myci_abs_path(abs_src_file "${src_dir}/${file}")
 
     add_custom_command(
         OUTPUT
@@ -893,29 +897,13 @@ function(myci_declare_library name)
 
     foreach(dir ${arg_PUBLIC_INCLUDE_DIRECTORIES})
         # absolute path is needed by target_include_directories()
-        file(REAL_PATH
-            # PATH
-                "${dir}"
-            # OUTPUT
-                abs_path_directory
-            BASE_DIRECTORY
-                ${CMAKE_CURRENT_LIST_DIR}
-            EXPAND_TILDE
-        )
+        myci_abs_path(abs_path_directory "${dir}")
         target_include_directories(${name} ${public} $<BUILD_INTERFACE:${abs_path_directory}>)
     endforeach()
 
     foreach(dir ${arg_PRIVATE_INCLUDE_DIRECTORIES})
         # absolute path is needed by target_include_directories()
-        file(REAL_PATH
-            # PATH
-                "${dir}"
-            # OUTPUT
-                abs_path_directory
-            BASE_DIRECTORY
-                ${CMAKE_CURRENT_LIST_DIR}
-            EXPAND_TILDE
-        )
+        myci_abs_path(abs_path_directory "${dir}")
         target_include_directories(${name} ${private} $<BUILD_INTERFACE:${abs_path_directory}>)
     endforeach()
 
@@ -933,15 +921,7 @@ function(myci_declare_library name)
     )
 
     if(arg_RESOURCE_DIRECTORY)
-        file(REAL_PATH
-            # PATH
-                "${arg_RESOURCE_DIRECTORY}"
-            # OUTPUT
-                abs_path_directory
-            BASE_DIRECTORY
-                ${CMAKE_CURRENT_LIST_DIR}
-            EXPAND_TILDE
-        )
+        myci_abs_path(abs_path_directory "${arg_RESOURCE_DIRECTORY}")
 
         get_filename_component(dirname "${arg_RESOURCE_DIRECTORY}" NAME)
 
@@ -1210,15 +1190,7 @@ function(myci_declare_application name)
         else()
             set(res_target_name ${name}__copy_resources)
 
-            file(REAL_PATH
-                # PATH
-                    "${arg_RESOURCE_DIRECTORY}"
-                # OUTPUT
-                    abs_path_directory
-                BASE_DIRECTORY
-                    ${CMAKE_CURRENT_LIST_DIR}
-                EXPAND_TILDE
-            )
+            myci_abs_path(abs_path_directory "${arg_RESOURCE_DIRECTORY}")
 
             myci_private_declare_resource_pack(${res_target_name}
                 APP_TARGET
@@ -1298,15 +1270,7 @@ function(myci_add_subdirectory source_dir)
     set(multiple)
     cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
 
-    file(REAL_PATH
-        # PATH
-            "${source_dir}"
-        # OUTPUT
-            abs_source_dir
-        BASE_DIRECTORY
-            ${CMAKE_CURRENT_LIST_DIR}
-        EXPAND_TILDE
-    )
+    myci_abs_path(abs_source_dir ${source_dir})
 
     get_property(added_dirs GLOBAL PROPERTY myci_added_subdirectories)
 
