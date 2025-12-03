@@ -1246,6 +1246,7 @@ function(myci_declare_application name)
     # declare run-<name> target
     add_custom_target(run-${name})
     add_dependencies(run-${name} ${name})
+    set_target_properties(run-${name} PROPERTIES FOLDER "Runs")
 
     add_custom_command(TARGET run-${name}
         POST_BUILD
@@ -1275,6 +1276,7 @@ function(myci_declare_test)
 
     if(NOT TARGET test)
         add_custom_target(test)
+        set_target_properties(test PROPERTIES FOLDER "Tasks")
     endif()
 
     if(NOT TARGET ${arg_RUN_TARGET})
