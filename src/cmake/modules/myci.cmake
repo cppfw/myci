@@ -1229,7 +1229,7 @@ function(myci_declare_application name)
     # declare run-<name> target
     add_custom_target(run-${name})
     add_dependencies(run-${name} ${name})
-    set_target_properties(run-${name} PROPERTIES FOLDER "Runs")
+    set_target_properties(run-${name} PROPERTIES FOLDER "Tasks")
 
     add_custom_command(TARGET run-${name}
         POST_BUILD
@@ -1263,7 +1263,7 @@ function(myci_declare_test)
     endif()
 
     if(NOT TARGET ${arg_RUN_TARGET})
-        message(FATAL_ERROR "the target ${arg_RUN_TARGET} does not exist")
+        message(FATAL_ERROR "myci_declare_test(): the target ${arg_RUN_TARGET} does not exist")
     endif()
 
     add_dependencies(test ${arg_RUN_TARGET})
