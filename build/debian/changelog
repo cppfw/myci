@@ -1,3 +1,9 @@
+myci (0.1.224) unstable; urgency=medium
+
+  * cmake: fix resource files source dependency
+
+ -- Ivan Gagis <igagis@gmail.com>  Mon, 02 Feb 2026 21:29:12 +0200
+
 myci (0.1.223) unstable; urgency=medium
 
   * cmake: change declare_test behaviour
