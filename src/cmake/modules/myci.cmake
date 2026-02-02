@@ -487,9 +487,9 @@ function(myci_private_copy_resource_file_command out target_name src_dir file)
         COMMAND
             "${CMAKE_COMMAND}" -E copy ${abs_src_file} "${outfile}"
         DEPENDS
-            "${src_file}"
+            "${abs_src_file}"
         MAIN_DEPENDENCY
-            "${src_file}"
+            "${abs_src_file}"
     )
 
     set(${out} ${outfile} PARENT_SCOPE)
