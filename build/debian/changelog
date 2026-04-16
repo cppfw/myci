@@ -1,3 +1,9 @@
+myci (0.1.226) unstable; urgency=medium
+
+  * cmake: -fstrict-aliasing
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 16 Apr 2026 23:37:25 +0300
+
 myci (0.1.225) unstable; urgency=medium
 
   * cmake: enable more compiler warnings
