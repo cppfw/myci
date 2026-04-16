@@ -866,14 +866,14 @@ function(myci_declare_library name)
 
     # Normally we create STATIC libraries and specify PUBLIC includes and dependencies.
     # For libraries with no source files this won't work, so use INTERFACE/INTERFACE instead.
+    set(is_header_only True)
     set(public INTERFACE)
-    set(private INTERFACE)
     set(static INTERFACE)
     foreach(src ${arg_SOURCES})
         get_filename_component(ext "${src}" LAST_EXT)
         if("${ext}" STREQUAL ".c" OR "${ext}" STREQUAL ".cpp" OR "${ext}" STREQUAL ".cc")
+            set(is_header_only False)
             set(public PUBLIC)
-            set(private PRIVATE)
             set(static STATIC)
             break()
         endif()
@@ -881,9 +881,6 @@ function(myci_declare_library name)
 
     add_library(${name} ${static} ${arg_SOURCES})
     add_library(${PROJECT_NAME}::${name} ALIAS ${name})
-
-    # define DEBUG macro for Debug build configuration
-    target_compile_definitions(${name} ${private} $<$<CONFIG:Debug>:DEBUG>)
 
     if(NOT arg_IDE_FOLDER)
         set(arg_IDE_FOLDER "Libs")
@@ -895,27 +892,49 @@ function(myci_declare_library name)
     set_target_properties(${name} PROPERTIES CXX_STANDARD_REQUIRED ON)
     set_target_properties(${name} PROPERTIES CXX_EXTENSIONS OFF)
 
-    # force unicode character set under Visual Studio
-    target_compile_definitions(${name} ${private} _UNICODE)
+    if(NOT is_header_only)
+        # define DEBUG macro for Debug build configuration
+        target_compile_definitions(${name} PRIVATE $<$<CONFIG:Debug>:DEBUG>)
 
-    # tell MSVC compiler that sources are in utf-8 encoding
-    if (MSVC)
-        target_compile_options(${name} ${private} "$<$<C_COMPILER_ID:MSVC>:/utf-8>")
-        target_compile_options(${name} ${private} "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+        # enable sane warnings and other compiler options
+        if(MSVC)
+            target_compile_options(${name} PRIVATE
+                /W4
+                /WX # warnings = errors
+                # /W4 includes check for non-virtual-destructor.
+                # There is no equivalent for -fstring-aliasing, as MSVS generally assumes a more conservative aliasing model by default.
+            )
+        else()
+            target_compile_options(${name} PRIVATE
+                -Wall
+                -Werror
+                $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
+                $<$<COMPILE_LANGUAGE:CXX>:-fstrict-aliasing>
+            )
+        endif()
+
+        # force unicode character set under Visual Studio
+        target_compile_definitions(${name} PRIVATE _UNICODE)
+
+        # tell MSVC compiler that sources are in utf-8 encoding
+        if (MSVC)
+            target_compile_options(${name} PRIVATE "$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+            target_compile_options(${name} PRIVATE "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+        endif()
+
+        target_compile_definitions(${name} PRIVATE ${arg_PREPROCESSOR_DEFINITIONS})
+
+        foreach(dir ${arg_PRIVATE_INCLUDE_DIRECTORIES})
+            # absolute path is needed by target_include_directories()
+            myci_abs_path(abs_path_directory "${dir}")
+            target_include_directories(${name} PRIVATE $<BUILD_INTERFACE:${abs_path_directory}>)
+        endforeach()
     endif()
-
-    target_compile_definitions(${name} ${private} ${arg_PREPROCESSOR_DEFINITIONS})
 
     foreach(dir ${arg_PUBLIC_INCLUDE_DIRECTORIES})
         # absolute path is needed by target_include_directories()
         myci_abs_path(abs_path_directory "${dir}")
         target_include_directories(${name} ${public} $<BUILD_INTERFACE:${abs_path_directory}>)
-    endforeach()
-
-    foreach(dir ${arg_PRIVATE_INCLUDE_DIRECTORIES})
-        # absolute path is needed by target_include_directories()
-        myci_abs_path(abs_path_directory "${dir}")
-        target_include_directories(${name} ${private} $<BUILD_INTERFACE:${abs_path_directory}>)
     endforeach()
 
     myci_private_add_target_dependencies(
@@ -1158,6 +1177,23 @@ function(myci_declare_application name)
         VS_DEBUGGER_WORKING_DIRECTORY "${myci_private_output_dir}/${name}"
         RUNTIME_OUTPUT_DIRECTORY "${myci_private_output_dir}/${name}"
     )
+
+    # enable sane warnings and other compiler options
+    if(MSVC)
+        target_compile_options(${name} PRIVATE
+            /W4
+            /WX # warnings = errors
+            # /W4 includes check for non-virtual-destructor.
+            # There is no equivalent for -fstring-aliasing, as MSVS generally assumes a more conservative aliasing model by default.
+        )
+    else()
+        target_compile_options(${name} PRIVATE
+            -Wall
+            -Werror
+            $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
+            $<$<COMPILE_LANGUAGE:CXX>:-fstrict-aliasing>
+        )
+    endif()
 
     # force unicode character set under Visual Studio
     target_compile_definitions(${name} PRIVATE _UNICODE)
