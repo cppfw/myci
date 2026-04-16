@@ -908,8 +908,8 @@ function(myci_declare_library name)
             target_compile_options(${name} PRIVATE
                 -Wall
                 -Werror
-                $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
-                $<$<COMPILE_LANGUAGE:CXX>:-fstrict-aliasing>
+                $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor> # only for C++ files
+                -fstrict-aliasing
             )
         endif()
 
@@ -1190,8 +1190,8 @@ function(myci_declare_application name)
         target_compile_options(${name} PRIVATE
             -Wall
             -Werror
-            $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
-            $<$<COMPILE_LANGUAGE:CXX>:-fstrict-aliasing>
+            $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor> # only for C++ files
+            -fstrict-aliasing
         )
     endif()
 
