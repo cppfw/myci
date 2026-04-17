@@ -906,8 +906,10 @@ function(myci_declare_library name)
             )
         else()
             target_compile_options(${name} PRIVATE
-                -Wall
-                -Werror
+                # Enable more warnings only for C++ files.
+                # We don't care much about C files, as C code is only maintained by 3rd party.
+                $<$<COMPILE_LANGUAGE:CXX>:-Wall>
+                $<$<COMPILE_LANGUAGE:CXX>:-Werror>
                 $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor> # only for C++ files
                 -fstrict-aliasing
             )
@@ -1188,8 +1190,10 @@ function(myci_declare_application name)
         )
     else()
         target_compile_options(${name} PRIVATE
-            -Wall
-            -Werror
+            # Enable more warnings only for C++ files.
+            # We don't care much about C files, as C code is only maintained by 3rd party.
+            $<$<COMPILE_LANGUAGE:CXX>:-Wall>
+            $<$<COMPILE_LANGUAGE:CXX>:-Werror>
             $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor> # only for C++ files
             -fstrict-aliasing
         )
