@@ -903,6 +903,9 @@ function(myci_declare_library name)
                 /WX # warnings = errors
                 # /W4 includes check for non-virtual-destructor.
                 # There is no equivalent for -fstring-aliasing, as MSVS generally assumes a more conservative aliasing model by default.
+
+                # disable some warnings
+                /wd4458 # local declaration hides class member
             )
         else()
             target_compile_options(${name} PRIVATE
@@ -1187,6 +1190,9 @@ function(myci_declare_application name)
             /WX # warnings = errors
             # /W4 includes check for non-virtual-destructor.
             # There is no equivalent for -fstring-aliasing, as MSVS generally assumes a more conservative aliasing model by default.
+
+            # disable some warnings
+            /wd4458 # local declaration hides class member
         )
     else()
         target_compile_options(${name} PRIVATE
