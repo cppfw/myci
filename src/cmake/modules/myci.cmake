@@ -899,8 +899,8 @@ function(myci_declare_library name)
         # enable sane warnings and other compiler options
         if(MSVC)
             target_compile_options(${name} PRIVATE
-                /W4
-                /WX # warnings = errors
+                $<$<COMPILE_LANGUAGE:CXX>:/W4>
+                $<$<COMPILE_LANGUAGE:CXX>:/WX> # warnings = errors
                 # /W4 includes check for non-virtual-destructor.
                 # There is no equivalent for -fstring-aliasing, as MSVS generally assumes a more conservative aliasing model by default.
 
@@ -1186,8 +1186,8 @@ function(myci_declare_application name)
     # enable sane warnings and other compiler options
     if(MSVC)
         target_compile_options(${name} PRIVATE
-            /W4
-            /WX # warnings = errors
+            $<$<COMPILE_LANGUAGE:CXX>:/W4>
+            $<$<COMPILE_LANGUAGE:CXX>:/WX> # warnings = errors
             # /W4 includes check for non-virtual-destructor.
             # There is no equivalent for -fstring-aliasing, as MSVS generally assumes a more conservative aliasing model by default.
 
