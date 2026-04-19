@@ -846,8 +846,13 @@ endfunction()
 #                                    e.g. for '../src/mylib' the destination will be '<system-include-dir>/mylib/'.
 # @param IDE_FOLDER - folder in the generated IDE project for the library. Optional. Defaults to "Libs".
 # @param PREPROCESSOR_DEFINITIONS [<def1>[=<val1>] ...] - preprocessor macro definitions. Optional.
+# @param NO_EXPORT - if specified, the library will not be exported as a package. Optional.
+# @param NO_WARNINGS_AS_ERRORS - if specified, warnings will not be treated as errors. Optional.
 function(myci_declare_library name)
-    set(options NO_EXPORT)
+    set(options
+        NO_EXPORT
+        NO_WARNINGS_AS_ERRORS
+    )
     set(single
         IDE_FOLDER
         RESOURCE_DIRECTORY
@@ -898,9 +903,15 @@ function(myci_declare_library name)
 
         # enable sane warnings and other compiler options
         if(MSVC)
+            if(arg_NO_WARNINGS_AS_ERRORS)
+                set(warnings_as_errors)
+            else()
+                set(warnings_as_errors /WX)
+            endif()
+
             target_compile_options(${name} PRIVATE
                 $<$<COMPILE_LANGUAGE:CXX>:/W4>
-                $<$<COMPILE_LANGUAGE:CXX>:/WX> # warnings = errors
+                ${warnings_as_errors}
                 # /W4 includes check for non-virtual-destructor.
                 # There is no equivalent for -fstring-aliasing, as MSVS generally assumes a more conservative aliasing model by default.
 
@@ -908,11 +919,17 @@ function(myci_declare_library name)
                 /wd4458 # local declaration hides class member
             )
         else()
+            if(arg_NO_WARNINGS_AS_ERRORS)
+                set(warnings_as_errors)
+            else()
+                set(warnings_as_errors -Werror)
+            endif()
+
             target_compile_options(${name} PRIVATE
                 # Enable more warnings only for C++ files.
                 # We don't care much about C files, as C code is only maintained by 3rd party.
                 $<$<COMPILE_LANGUAGE:CXX>:-Wall>
-                $<$<COMPILE_LANGUAGE:CXX>:-Werror>
+                ${warnings_as_errors}
                 $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor> # only for C++ files
                 -fstrict-aliasing
             )
