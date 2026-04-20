@@ -917,6 +917,8 @@ function(myci_declare_library name)
 
                 # disable some warnings
                 /wd4458 # local declaration hides class member
+                /wd4100 # unreferenced parameter
+                /wd4456 # declaration of 'X' hides previous local declaration
             )
         else()
             if(arg_NO_WARNINGS_AS_ERRORS)
@@ -1210,6 +1212,8 @@ function(myci_declare_application name)
 
             # disable some warnings
             /wd4458 # local declaration hides class member
+            /wd4100 # unreferenced parameter
+            /wd4456 # declaration of 'X' hides previous local declaration
         )
     else()
         target_compile_options(${name} PRIVATE
