@@ -915,10 +915,12 @@ function(myci_declare_library name)
                 # /W4 includes check for non-virtual-destructor.
                 # There is no equivalent for -fstring-aliasing, as MSVS generally assumes a more conservative aliasing model by default.
 
+                # TODO: this list is duplicated in myci_declare_application, avoid duplication.
                 # disable some warnings
                 /wd4458 # local declaration hides class member
                 /wd4100 # unreferenced parameter
                 /wd4456 # declaration of 'X' hides previous local declaration
+                /wd4459 # declaration of 'X' hides global declaration
             )
         else()
             if(arg_NO_WARNINGS_AS_ERRORS)
@@ -1214,6 +1216,7 @@ function(myci_declare_application name)
             /wd4458 # local declaration hides class member
             /wd4100 # unreferenced parameter
             /wd4456 # declaration of 'X' hides previous local declaration
+            /wd4459 # declaration of 'X' hides global declaration
         )
     else()
         target_compile_options(${name} PRIVATE
