@@ -853,6 +853,7 @@ function(myci_declare_library name)
     set(options
         NO_EXPORT
         NO_WARNINGS_AS_ERRORS
+        NO_ALL_WARNINGS
     )
     set(single
         IDE_FOLDER
@@ -910,8 +911,14 @@ function(myci_declare_library name)
                 set(warnings_as_errors /WX)
             endif()
 
+            if(arg_NO_ALL_WARNINGS)
+                set(all_warnings)
+            else()
+                set(all_warnings /W4)
+            endif()
+
             target_compile_options(${name} PRIVATE
-                $<$<COMPILE_LANGUAGE:CXX>:/W4>
+                ${all_warnings}
                 ${warnings_as_errors}
                 # /W4 includes check for non-virtual-destructor.
                 # There is no equivalent for -fstring-aliasing, as MSVS generally assumes a more conservative aliasing model by default.
@@ -930,12 +937,15 @@ function(myci_declare_library name)
                 set(warnings_as_errors -Werror)
             endif()
 
+            if(arg_NO_ALL_WARNINGS)
+                set(all_warnings)
+            else()
+                set(all_warnings -Wall $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>)
+            endif()
+
             target_compile_options(${name} PRIVATE
-                # Enable more warnings only for C++ files.
-                # We don't care much about C files, as C code is only maintained by 3rd party.
-                $<$<COMPILE_LANGUAGE:CXX>:-Wall>
+                ${all_warnings}
                 ${warnings_as_errors}
-                $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor> # only for C++ files
                 -fstrict-aliasing
             )
         endif()
