@@ -772,6 +772,7 @@ endfunction()
 # @brief Export targets.
 # Generates and installs ${PROJECT_NAME}-config.cmake file for given targets.
 # Exported targets are appended with ${PROJECT_NAME}:: namespace.
+# This function is needed in order to export multiple targets of the cmake project into a single cmake config file.
 # @param TARGETS <targte1> [<target2> ...] - list of targets to export.
 function(myci_export)
     set(options)
