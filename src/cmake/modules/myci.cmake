@@ -313,7 +313,12 @@ function(myci_private_get_packages_list out)
             continue()
         endif()
 
-        list(APPEND result ${package_name})
+        # If package name is the same as the dependant's project name (which is the package name of the dependant),
+        # then it means that the dependency is provided by the same package the dependant belongs to.
+        # So we have to skip it to avoid infinite recursion by find_package(<dependant-project-name>).
+        if(NOT ${package_name} STREQUAL ${PROJECT_NAME})
+            list(APPEND result ${package_name})
+        endif()
     endforeach()
     set(${out} ${result} PARENT_SCOPE)
 endfunction()
