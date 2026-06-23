@@ -558,6 +558,7 @@ function(myci_private_declare_resource_pack target_name)
             ${out_files}
     )
     set_target_properties(${target_name} PROPERTIES FOLDER "CMake")
+    set_target_properties(${target_name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 endfunction()
 
 ####
@@ -1107,7 +1108,7 @@ function(myci_private_add_resource_pack_deps)
     foreach(dep ${arg_DEPENDENCIES})
         if(NOT IOS)
             string(REPLACE "::" "___" res_target_name "${dep}")
-            set(res_target_name ${res_target_name}__${arg_TARGET}__copy_resources)
+            set(res_target_name private_${res_target_name}__${arg_TARGET}__copy_resources)
 
             if(TARGET ${res_target_name})
                 add_dependencies(${arg_TARGET} ${res_target_name})
@@ -1285,7 +1286,7 @@ function(myci_declare_application name)
             target_sources(${name} PRIVATE ${arg_RESOURCE_DIRECTORY})
             set_source_files_properties(${arg_RESOURCE_DIRECTORY} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
         else()
-            set(res_target_name ${name}__copy_resources)
+            set(res_target_name private_${name}__copy_resources)
 
             myci_abs_path(abs_path_directory "${arg_RESOURCE_DIRECTORY}")
 
