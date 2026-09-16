@@ -1,3 +1,9 @@
+myci (0.1.229) unstable; urgency=medium
+
+  * cmake: fix recursive resource copying
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 17 Sep 2026 00:05:08 +0300
+
 myci (0.1.228) unstable; urgency=medium
 
   * cmake: fix infinite recursion when project provides 2 libraries one
