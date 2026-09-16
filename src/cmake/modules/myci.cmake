@@ -1078,6 +1078,7 @@ function(myci_private_get_all_dependencies out)
             myci_private_get_all_dependencies(dep_deps
                 TARGET
                     ${dep}
+                RECURSIVE
             )
             foreach(dep_dep ${dep_deps})
                 if(NOT TARGET ${dep_dep})
