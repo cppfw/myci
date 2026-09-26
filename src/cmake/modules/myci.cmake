@@ -820,6 +820,70 @@ function(myci_export)
 endfunction()
 
 ####
+# @brief Declare clang-format targets for the given application or library.
+# - Declares a format-<name> target which runs 'clang-format -i --Werror' on the sources,
+#   i.e. it reformats the sources in place.
+# - Declares a check-format-<name> target which runs 'clang-format --dry-run --Werror' on the sources,
+#   i.e. it only checks the sources formatting without modifying them.
+# - Adds the format-<name> target as a dependency of the global format target.
+# - Adds the check-format-<name> target as a dependency of the global check-format target.
+# The global format and check-format targets are declared if they are not yet declared.
+# @param name - application or library name.
+# @param SOURCES <file1> [<file2> ...] - list of source files to format. Required.
+function(myci_private_declare_format_targets name)
+    set(options)
+    set(single)
+    set(multiple SOURCES)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    if(NOT arg_SOURCES)
+        # nothing to format
+        return()
+    endif()
+
+    # Make sources absolute so that the command works regardless of the build directory.
+    set(abs_sources)
+    foreach(src ${arg_SOURCES})
+        myci_abs_path(abs_src ${src})
+        list(APPEND abs_sources ${abs_src})
+    endforeach()
+
+    # declare global format target if not yet declared
+    if(NOT TARGET format)
+        add_custom_target(format)
+        set_target_properties(format PROPERTIES FOLDER "Tasks")
+        set_target_properties(format PROPERTIES EXCLUDE_FROM_ALL TRUE)
+    endif()
+
+    # declare global check-format target if not yet declared
+    if(NOT TARGET check-format)
+        add_custom_target(check-format)
+        set_target_properties(check-format PROPERTIES FOLDER "Tasks")
+        set_target_properties(check-format PROPERTIES EXCLUDE_FROM_ALL TRUE)
+    endif()
+
+    # declare per-target format target
+    add_custom_target(format-${name}
+        COMMAND
+            clang-format -i --Werror ${abs_sources}
+    )
+    set_target_properties(format-${name} PROPERTIES FOLDER "Tasks")
+    set_target_properties(format-${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
+    # declare per-target check-format target
+    add_custom_target(check-format-${name}
+        COMMAND
+            clang-format --dry-run --Werror ${abs_sources}
+    )
+    set_target_properties(check-format-${name} PROPERTIES FOLDER "Tasks")
+    set_target_properties(check-format-${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
+    # add the per-target targets as dependencies of the global targets
+    add_dependencies(format format-${name})
+    add_dependencies(check-format check-format-${name})
+endfunction()
+
+####
 # @brief Declare library.
 # A target alias will be added as add_library(${PROJECT_NAME}::${name} ALIAS ${name}).
 # By default it will also export the library as package with same name. Exporting can be suppressed using NO_EXPORT option.
@@ -855,11 +919,13 @@ endfunction()
 # @param PREPROCESSOR_DEFINITIONS [<def1>[=<val1>] ...] - preprocessor macro definitions. Optional.
 # @param NO_EXPORT - if specified, the library will not be exported as a package. Optional.
 # @param NO_WARNINGS_AS_ERRORS - if specified, warnings will not be treated as errors. Optional.
+# @param NO_FORMAT - if specified, the format-<name> and check-format-<name> targets will not be declared. Optional.
 function(myci_declare_library name)
     set(options
         NO_EXPORT
         NO_WARNINGS_AS_ERRORS
         NO_ALL_WARNINGS
+        NO_FORMAT
     )
     set(single
         IDE_FOLDER
@@ -1030,6 +1096,14 @@ function(myci_declare_library name)
         )
     endif()
 
+    # declare format-<name> and check-format-<name> targets
+    if(NOT arg_NO_FORMAT)
+        myci_private_declare_format_targets(${name}
+            SOURCES
+                ${arg_SOURCES}
+        )
+    endif()
+
     if(NOT arg_NO_EXPORT)
         myci_export(
             TARGETS
@@ -1180,9 +1254,11 @@ endfunction()
 #              This option only has effect on Windows, on other systems it has no effect.
 #              On Windows, inidcates that a generated application will provide WinMain() function instead of main() as entry point.
 # @param PREPROCESSOR_DEFINITIONS [<def1>[=<val1>] ...] - preprocessor macro definitions. Optional.
+# @param NO_FORMAT - if specified, the format-<name> and check-format-<name> targets will not be declared. Optional.
 function(myci_declare_application name)
     set(options
         GUI
+        NO_FORMAT
     )
     set(single
         RESOURCE_DIRECTORY
@@ -1326,6 +1402,14 @@ function(myci_declare_application name)
         COMMAND
             $<TARGET_FILE:${name}> ${arg_RUN_ARGUMENTS}
     )
+
+    # declare format-<name> and check-format-<name> targets
+    if(NOT arg_NO_FORMAT)
+        myci_private_declare_format_targets(${name}
+            SOURCES
+                ${arg_SOURCES}
+        )
+    endif()
 endfunction()
 
 ####
