@@ -42,6 +42,17 @@ version=$(${script_dir}myci-deb-version.sh)
 
 # echo $version
 
+if [ -f src/version.hpp ]; then
+	echo "update src/version.hpp"
+	cat > src/version.hpp <<EOF
+// AUTO-GENERATED VERSION FILE!!!
+#pragma once
+constexpr auto program_version = "${version}";
+EOF
+else
+	echo "no src/version.hpp present, not generating it"
+fi
+
 if [ -d build/debian ]; then
 	deb_root_dir=build
 elif [ -d debian ]; then
