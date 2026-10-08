@@ -1,3 +1,9 @@
+myci (0.1.230) unstable; urgency=medium
+
+  * generate version.hxx when releasing
+
+ -- Ivan Gagis <igagis@gmail.com>  Thu, 08 Oct 2026 19:03:20 +0300
+
 myci (0.1.229) unstable; urgency=medium
 
   * cmake: fix recursive resource copying
