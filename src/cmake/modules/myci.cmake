@@ -909,6 +909,9 @@ endfunction()
 # @param WINDOWS_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of windows-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
 # @param PRIVATE_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - private include directories. Optional.
 #                                    These directories will not be propagated to the library users.
+#                                    They are added via -isystem (SYSTEM) because they are supposed to
+#                                    contain third-party vendored headers, which should neither be linted
+#                                    nor produce compiler warnings.
 # @param PUBLIC_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - public include directories. Optional.
 #                                    These directories will be propagated to the library users.
 # @param INSTALL_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - directories to install headers from. Optional.
@@ -1036,7 +1039,10 @@ function(myci_declare_library name)
         foreach(dir ${arg_PRIVATE_INCLUDE_DIRECTORIES})
             # absolute path is needed by target_include_directories()
             myci_abs_path(abs_path_directory "${dir}")
-            target_include_directories(${name} PRIVATE $<BUILD_INTERFACE:${abs_path_directory}>)
+            # private include directories are added with SYSTEM, i.e. via -isystem,
+            # because they contain third-party headers which should not be linted
+            # and should not produce compiler warnings
+            target_include_directories(${name} SYSTEM PRIVATE $<BUILD_INTERFACE:${abs_path_directory}>)
         endforeach()
     endif()
 
