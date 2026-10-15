@@ -908,12 +908,14 @@ endfunction()
 # @param LINUX_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of linux-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
 # @param WINDOWS_ONLY_DEPENDENCIES <dep1> [<dep2> ...] - list of windows-specific dependencies. Optional. Same rules as for DEPENDENCIES apply.
 # @param PRIVATE_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - private include directories. Optional.
-#                                    These directories will not be propagated to the library users.
+#                                    These directories will not be propagated to the library consumers.
+#                                    These directories are only for headers lookup by the library.
 #                                    They are added via -isystem (SYSTEM) because they are supposed to
 #                                    contain third-party vendored headers, which should neither be linted
 #                                    nor produce compiler warnings.
 # @param PUBLIC_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - public include directories. Optional.
-#                                    These directories will be propagated to the library users.
+#                                    These directories will be conveyed to the library consumers.
+#                                    The Library itself will not use these directories for headers lookup.
 # @param INSTALL_INCLUDE_DIRECTORIES <dir1> [<dir2> ...] - directories to install headers from. Optional.
 #                                    Hierarchy of subdirectories is preserved during installation.
 #                                    The last directory level will be included in the installation,
@@ -1046,10 +1048,15 @@ function(myci_declare_library name)
         endforeach()
     endif()
 
+    # set target public include directories (public = for itself and for consumers)
     foreach(dir ${arg_PUBLIC_INCLUDE_DIRECTORIES})
         # absolute path is needed by target_include_directories()
         myci_abs_path(abs_path_directory "${dir}")
-        target_include_directories(${name} ${public} $<BUILD_INTERFACE:${abs_path_directory}>)
+        # Consumers should not care about warnings in the library's header files, so the public
+        # include directories are set with SYSTEM, i.e. via -isystem.
+        # Public include directories are the directoies the library supplies to its consumers, but does not use itself,
+        # so we set it as INTERFACE.
+        target_include_directories(${name} SYSTEM INTERFACE $<BUILD_INTERFACE:${abs_path_directory}>)
     endforeach()
 
     myci_private_add_target_dependencies(
@@ -1065,6 +1072,7 @@ function(myci_declare_library name)
             ${arg_WINDOWS_ONLY_DEPENDENCIES}
     )
 
+    # record resources location for the library target
     if(arg_RESOURCE_DIRECTORY)
         myci_abs_path(abs_path_directory "${arg_RESOURCE_DIRECTORY}")
 
@@ -1077,7 +1085,14 @@ function(myci_declare_library name)
         )
     endif()
 
-    target_include_directories(${name} ${public} $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+    # This sets the location where public header files will be isntalled, i.e. consumers of an imported library
+    # target will look for its header files in this location, i.e. CMAKE_INSTALL_INCLUDEDIR.
+    # This will set INTERFACE_INCLUDE_DIRECTORIES for the target.
+    # I.e. this include directory is working when the target is imported, i.e. via find_package().
+    # Consumers should not care about warnings in the library's header files, so the
+    # include directory is set with SYSTEM, i.e. via -isystem.
+    # Install path is not used by the library itself so, it is added as INTERFACE.
+    target_include_directories(${name} SYSTEM INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
     # install library header files preserving directory hierarchy
     foreach(dir ${arg_INSTALL_INCLUDE_DIRECTORIES})
@@ -1093,6 +1108,7 @@ function(myci_declare_library name)
         )
     endforeach()
 
+    # install library resources if any
     if(arg_RESOURCE_DIRECTORY)
         install(
             DIRECTORY
@@ -1110,6 +1126,7 @@ function(myci_declare_library name)
         )
     endif()
 
+    # export library target if requested
     if(NOT arg_NO_EXPORT)
         myci_export(
             TARGETS
