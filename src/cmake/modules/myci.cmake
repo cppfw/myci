@@ -5,6 +5,11 @@ set(MYCI_MODULE_INCLUDED TRUE)
 
 include(GNUInstallDirs)
 
+# Enable AddressSanitizer and UndefinedBehaviorSanitizer for all targets declared by
+# myci_declare_library() and myci_declare_application().
+# Enabled via the 'asan' CMake preset.
+option(MYCI_ASAN "Build with AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
+
 set(myci_private_output_dir "${CMAKE_BINARY_DIR}/exe")
 
 ####
@@ -884,6 +889,89 @@ function(myci_private_declare_format_targets name)
 endfunction()
 
 ####
+# @brief Enable sane warnings and other compiler options for the given target.
+# Warnings are enabled only for C++ files, C code is not warned about, as it is only maintained by 3rd party.
+# @param target - target to add the compiler options to.
+# @param NO_ALL_WARNINGS - if specified, the 'all warnings' flag is not enabled.
+# @param NO_WARNINGS_AS_ERRORS - if specified, warnings are not treated as errors.
+function(myci_private_enable_warnings target)
+    set(options
+        NO_ALL_WARNINGS
+        NO_WARNINGS_AS_ERRORS
+    )
+    set(single)
+    set(multiple)
+    cmake_parse_arguments(arg "${options}" "${single}" "${multiple}" ${ARGN})
+
+    if(MSVC)
+        if(arg_NO_WARNINGS_AS_ERRORS)
+            set(warnings_as_errors)
+        else()
+            set(warnings_as_errors "$<$<COMPILE_LANGUAGE:CXX>:/WX>") # warnings = errors
+        endif()
+
+        if(arg_NO_ALL_WARNINGS)
+            set(all_warnings)
+        else()
+            set(all_warnings "$<$<COMPILE_LANGUAGE:CXX>:/W4>")
+        endif()
+
+        # /W4 includes check for non-virtual-destructor.
+        # There is no equivalent for -fstring-aliasing, as MSVS generally assumes a more conservative aliasing model by default.
+
+        target_compile_options(${target} PRIVATE
+            ${all_warnings}
+            ${warnings_as_errors}
+
+            # disable some warnings
+            /wd4458 # local declaration hides class member
+            /wd4100 # unreferenced parameter
+            /wd4456 # declaration of 'X' hides previous local declaration
+            /wd4459 # declaration of 'X' hides global declaration
+        )
+    else()
+        if(arg_NO_WARNINGS_AS_ERRORS)
+            set(warnings_as_errors)
+        else()
+            set(warnings_as_errors "$<$<COMPILE_LANGUAGE:CXX>:-Werror>")
+        endif()
+
+        if(arg_NO_ALL_WARNINGS)
+            set(all_warnings)
+        else()
+            set(all_warnings
+                "$<$<COMPILE_LANGUAGE:CXX>:-Wall>"
+                "$<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>" # only for C++ files
+            )
+        endif()
+
+        target_compile_options(${target} PRIVATE
+            ${all_warnings}
+            ${warnings_as_errors}
+            -fstrict-aliasing
+        )
+    endif()
+endfunction()
+
+####
+# @brief Enable AddressSanitizer and UndefinedBehaviorSanitizer for the given target.
+# Call this function only if MYCI_ASAN is enabled.
+# @param target - target to add the sanitizer flags to.
+function(myci_private_enable_sanitizers target)
+    if(MSVC)
+        target_compile_options(${target} PRIVATE /fsanitize=address /fsanitize=undefined)
+        target_link_options(${target} PRIVATE /fsanitize=address)
+    else()
+        target_compile_options(${target} PRIVATE
+            -fsanitize=address,undefined
+            -fno-omit-frame-pointer
+            -fno-sanitize-recover=all
+        )
+        target_link_options(${target} PRIVATE -fsanitize=address,undefined)
+    endif()
+endfunction()
+
+####
 # @brief Declare library.
 # A target alias will be added as add_library(${PROJECT_NAME}::${name} ALIAS ${name}).
 # By default it will also export the library as package with same name. Exporting can be suppressed using NO_EXPORT option.
@@ -981,50 +1069,18 @@ function(myci_declare_library name)
         target_compile_definitions(${name} PRIVATE $<$<CONFIG:Debug>:DEBUG>)
 
         # enable sane warnings and other compiler options
-        if(MSVC)
-            if(arg_NO_WARNINGS_AS_ERRORS)
-                set(warnings_as_errors)
-            else()
-                set(warnings_as_errors /WX)
-            endif()
+        set(enable_warnings_options)
+        if(arg_NO_WARNINGS_AS_ERRORS)
+            list(APPEND enable_warnings_options NO_WARNINGS_AS_ERRORS)
+        endif()
+        if(arg_NO_ALL_WARNINGS)
+            list(APPEND enable_warnings_options NO_ALL_WARNINGS)
+        endif()
+        myci_private_enable_warnings(${name} ${enable_warnings_options})
 
-            if(arg_NO_ALL_WARNINGS)
-                set(all_warnings)
-            else()
-                set(all_warnings /W4)
-            endif()
-
-            target_compile_options(${name} PRIVATE
-                ${all_warnings}
-                ${warnings_as_errors}
-                # /W4 includes check for non-virtual-destructor.
-                # There is no equivalent for -fstring-aliasing, as MSVS generally assumes a more conservative aliasing model by default.
-
-                # TODO: this list is duplicated in myci_declare_application, avoid duplication.
-                # disable some warnings
-                /wd4458 # local declaration hides class member
-                /wd4100 # unreferenced parameter
-                /wd4456 # declaration of 'X' hides previous local declaration
-                /wd4459 # declaration of 'X' hides global declaration
-            )
-        else()
-            if(arg_NO_WARNINGS_AS_ERRORS)
-                set(warnings_as_errors)
-            else()
-                set(warnings_as_errors -Werror)
-            endif()
-
-            if(arg_NO_ALL_WARNINGS)
-                set(all_warnings)
-            else()
-                set(all_warnings -Wall $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>)
-            endif()
-
-            target_compile_options(${name} PRIVATE
-                ${all_warnings}
-                ${warnings_as_errors}
-                -fstrict-aliasing
-            )
+        # enable address sanitizer and undefined behavior sanitizer
+        if(MYCI_ASAN)
+            myci_private_enable_sanitizers(${name})
         endif()
 
         # force unicode character set under Visual Studio
@@ -1277,10 +1333,14 @@ endfunction()
 #              This option only has effect on Windows, on other systems it has no effect.
 #              On Windows, inidcates that a generated application will provide WinMain() function instead of main() as entry point.
 # @param PREPROCESSOR_DEFINITIONS [<def1>[=<val1>] ...] - preprocessor macro definitions. Optional.
+# @param NO_WARNINGS_AS_ERRORS - if specified, warnings will not be treated as errors. Optional.
+# @param NO_ALL_WARNINGS - if specified, the 'all warnings' flag will not be enabled. Optional.
 # @param NO_FORMAT - if specified, the format-<name> and check-format-<name> targets will not be declared. Optional.
 function(myci_declare_application name)
     set(options
         GUI
+        NO_WARNINGS_AS_ERRORS
+        NO_ALL_WARNINGS
         NO_FORMAT
     )
     set(single
@@ -1322,28 +1382,18 @@ function(myci_declare_application name)
     )
 
     # enable sane warnings and other compiler options
-    if(MSVC)
-        target_compile_options(${name} PRIVATE
-            $<$<COMPILE_LANGUAGE:CXX>:/W4>
-            $<$<COMPILE_LANGUAGE:CXX>:/WX> # warnings = errors
-            # /W4 includes check for non-virtual-destructor.
-            # There is no equivalent for -fstring-aliasing, as MSVS generally assumes a more conservative aliasing model by default.
+    set(enable_warnings_options)
+    if(arg_NO_WARNINGS_AS_ERRORS)
+        list(APPEND enable_warnings_options NO_WARNINGS_AS_ERRORS)
+    endif()
+    if(arg_NO_ALL_WARNINGS)
+        list(APPEND enable_warnings_options NO_ALL_WARNINGS)
+    endif()
+    myci_private_enable_warnings(${name} ${enable_warnings_options})
 
-            # disable some warnings
-            /wd4458 # local declaration hides class member
-            /wd4100 # unreferenced parameter
-            /wd4456 # declaration of 'X' hides previous local declaration
-            /wd4459 # declaration of 'X' hides global declaration
-        )
-    else()
-        target_compile_options(${name} PRIVATE
-            # Enable more warnings only for C++ files.
-            # We don't care much about C files, as C code is only maintained by 3rd party.
-            $<$<COMPILE_LANGUAGE:CXX>:-Wall>
-            $<$<COMPILE_LANGUAGE:CXX>:-Werror>
-            $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor> # only for C++ files
-            -fstrict-aliasing
-        )
+    # enable address sanitizer and undefined behavior sanitizer
+    if(MYCI_ASAN)
+        myci_private_enable_sanitizers(${name})
     endif()
 
     # force unicode character set under Visual Studio
